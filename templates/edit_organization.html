@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Organization - MemberSync{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2><i class="fas fa-edit"></i> Edit Organization</h2>
+                <p class="text-muted">Update organization details</p>
+            </div>
+            <div>
+                {% if session.is_global_superadmin %}
+                <a href="{{ url_for('manage_organizations') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Organizations
+                </a>
+                {% else %}
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-building"></i> Organization Details
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" novalidate>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">
+                            Organization Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="name" 
+                               name="name" 
+                               value="{{ organization.name }}"
+                               required>
+                        <div class="form-text">
+                            This name must be unique across all organizations.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="industry" class="form-label">Industry</label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="industry" 
+                               name="industry" 
+                               value="{{ organization.industry or '' }}"
+                               placeholder="e.g., Healthcare, Education, Technology">
+                        <div class="form-text">
+                            Optional field to categorize your organization.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="location" class="form-label">
+                            Location <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="location" 
+                               name="location" 
+                               value="{{ organization.location or '' }}"
+                               placeholder="e.g., New York, USA"
+                               required>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i>
+                            The physical location of your organization. This helps distinguish organizations with similar names.
+                        </div>
+                    </div>
+
+                    {% if is_global_superadmin %}
+                    <div class="mb-3">
+                        <label for="subscription_package_id" class="form-label">
+                            <i class="fas fa-box"></i> Subscription Package <span class="text-danger">*</span>
+                        </label>
+                        <select class="form-select" 
+                                id="subscription_package_id" 
+                                name="subscription_package_id" 
+                                required>
+                            {% for package in packages %}
+                            <option value="{{ package[0] }}" 
+                                    {% if organization.subscription_package_id == package[0] %}selected{% endif %}
+                                    data-price="{{ package[4] }}"
+                                    data-max-orgs="{{ package[3] }}">
+                                {{ package[1] }} - {{ package[2] }} (Max {{ package[3] }} orgs, ${{ package[4] }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i>
+                            Current: <strong>{{ organization.package_name or 'Admin (Free)' }}</strong>
+                            {% if organization.price %}
+                                - ${{ organization.price }}
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% else %}
+                    <div class="mb-3">
+                        <label class="form-label">
+                            <i class="fas fa-box"></i> Subscription Package
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               value="{{ organization.package_name or 'Admin (Free)' }}" 
+                               readonly>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i>
+                            Contact Global Super Admin to change the subscription package.
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <div class="mb-3">
+                        <label class="form-label">Organization ID</label>
+                        <input type="text" 
+                               class="form-control" 
+                               value="{{ organization.id }}" 
+                               readonly>
+                        <div class="form-text">
+                            This ID cannot be changed.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Created Date</label>
+                        <input type="text" 
+                               class="form-control" 
+                               value="{{ organization.created_at[:10] if organization.created_at else 'N/A' }}" 
+                               readonly>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        {% if session.is_global_superadmin %}
+                        <a href="{{ url_for('manage_organizations') }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                        {% else %}
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                        {% endif %}
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Update Organization
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Organization Stats Card -->
+<div class="row justify-content-center mt-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-chart-bar"></i> Quick Stats
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-md-4">
+                        <div class="border-end">
+                            <h4 class="text-primary mb-1">
+                                <i class="fas fa-users"></i>
+                            </h4>
+                            <p class="text-muted mb-0">Users</p>
+                            <small class="text-muted">Manage in Users section</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="border-end">
+                            <h4 class="text-info mb-1">
+                                <i class="fas fa-id-card"></i>
+                            </h4>
+                            <p class="text-muted mb-0">Members</p>
+                            <small class="text-muted">Manage in Members section</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <h4 class="text-warning mb-1">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </h4>
+                        <p class="text-muted mb-0">Locations</p>
+                        <small class="text-muted">Manage in Locations section</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Form validation
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const nameInput = document.getElementById('name');
+    
+    form.addEventListener('submit', function(e) {
+        if (!nameInput.value.trim()) {
+            e.preventDefault();
+            nameInput.classList.add('is-invalid');
+            
+            // Add error message if not exists
+            let errorDiv = nameInput.parentNode.querySelector('.invalid-feedback');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback';
+                errorDiv.textContent = 'Organization name is required.';
+                nameInput.parentNode.appendChild(errorDiv);
+            }
+        }
+    });
+    
+    nameInput.addEventListener('input', function() {
+        this.classList.remove('is-invalid');
+        const errorDiv = this.parentNode.querySelector('.invalid-feedback');
+        if (errorDiv) {
+            errorDiv.remove();
+        }
+    });
+});
+</script>
+{% endblock %}

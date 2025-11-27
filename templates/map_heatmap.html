@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    #heatmap {
+        height: 700px;
+        width: 100%;
+        border-radius: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4">
+    <h2><i class="fas fa-fire"></i> Member Distribution Heatmap</h2>
+    <div id="heatmap"></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+
+<script>
+    const map = L.map('heatmap').setView([7.3697, 12.3547], 6);
+    
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+    
+    // Heatmap data
+    const heatData = {{ heatmap_data | tojson }};
+    L.heatLayer(heatData, {
+        radius: 25,
+        blur: 15,
+        maxZoom: 10
+    }).addTo(map);
+</script>
+{% endblock %}

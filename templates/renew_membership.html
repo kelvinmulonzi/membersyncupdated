@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Renew Membership - MemberSync{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card renewal-card">
+            <div class="card-header text-center">
+                <h4 class="mb-0"><i class="fas fa-refresh"></i> Renew Membership</h4>
+            </div>
+            <div class="card-body bg-white text-dark">
+                <div class="text-center mb-4">
+                    <h5>{{ member[1] }}</h5>
+                    <p class="text-muted">Membership ID: <strong>{{ member[0] }}</strong></p>
+                    <p class="text-muted">Current Type: <strong>{{ member[4] }}</strong></p>
+                    
+                    {% if member[6] == 'expired' %}
+                        <div class="alert alert-danger">
+                            <i class="fas fa-exclamation-triangle"></i> 
+                            This membership expired on {{ member[5] }}
+                        </div>
+                    {% else %}
+                        <div class="alert alert-warning">
+                            <i class="fas fa-clock"></i> 
+                            This membership expires on {{ member[5] }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <form method="POST">
+                    <div class="mb-4">
+                        <label for="amount" class="form-label">Payment Amount (Optional)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">$</span>
+                            <input type="number" class="form-control" id="amount" name="amount" 
+                                   step="0.01" placeholder="0.00">
+                        </div>
+                        <small class="form-text text-muted">Enter payment amount if renewal payment is being processed</small>
+                    </div>
+
+                    <div class="mb-4">
+                        <h6>Renewal Details:</h6>
+                        <ul class="list-unstyled">
+                            <li><i class="fas fa-check text-success"></i> Membership will be extended based on current type ({{ member[4] }})</li>
+                            <li><i class="fas fa-check text-success"></i> Status will be set to Active</li>
+                            <li><i class="fas fa-check text-success"></i> Notification reminders will be reset</li>
+                            {% if member[2] %}
+                            <li><i class="fas fa-check text-success"></i> Confirmation email will be sent to {{ member[2] }}</li>
+                            {% endif %}
+                        </ul>
+                    </div>
+
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-success btn-lg">
+                            <i class="fas fa-refresh"></i> Confirm Renewal
+                        </button>
+                        <a href="{{ url_for('member_profile', membership_id=member[0]) }}" 
+                           class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

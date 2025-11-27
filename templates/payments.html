@@ -1,0 +1,366 @@
+{% extends "base.html" %}
+{% block title %}Payments - {{ membership_id }} - MemberSync{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2><i class="fas fa-credit-card text-primary"></i> Payment Management</h2>
+                <p class="text-muted mb-0">Manage payments for member: <strong>{{ membership_id }}</strong></p>
+            </div>
+            <div>
+                <a href="{{ url_for('member_profile', membership_id=membership_id) }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> Back to Profile
+                </a>
+            </div>
+        </div>
+
+        <!-- Prepaid Balance Display -->
+        {% if prepaid_balance %}
+        <div class="alert alert-info">
+            <div class="row align-items-center">
+                <div class="col-md-8">
+                    <h5 class="mb-1"><i class="fas fa-wallet"></i> Prepaid Balance Available</h5>
+                    {% set converted_current_balance, current_balance_symbol = convert_price_to_user_currency(prepaid_balance.current_balance) %}
+                    <p class="mb-0">Current Balance: <strong>{{ current_balance_symbol }}{{ "%.2f"|format(converted_current_balance) }}</strong></p>
+                </div>
+                <div class="col-md-4 text-end">
+                    <a href="{{ url_for('prepaid_card_management', membership_id=membership_id) }}" 
+                       class="btn btn-primary">
+                        <i class="fas fa-credit-card"></i> Manage Prepaid Card
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card-body">
+                <!-- Add Payment Form -->
+                <div class="mb-4">
+                    <h5><i class="fas fa-plus-circle text-success"></i> Add New Payment</h5>
+                    <form method="POST" class="row g-3" id="paymentForm">
+                        <div class="col-md-3">
+                            <label for="amount" class="form-label">
+                                <i class="fas fa-dollar-sign"></i> Amount 
+                            </label>
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="amount" 
+                                   name="amount" 
+                                   step="0.01" 
+                                   min="0.01"
+                                   placeholder="0.00" 
+                                   required>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label for="payment_method" class="form-label">
+                                <i class="fas fa-credit-card"></i> Payment Method
+                            </label>
+                            <select class="form-select" id="payment_method" name="payment_method" required>
+                                <option value="cash">Cash</option>
+                                <option value="card">Card/Bank Transfer</option>
+                                {% if prepaid_balance and prepaid_balance.current_balance > 0 %}
+                                    {% set converted_prepaid_balance, prepaid_balance_symbol = convert_price_to_user_currency(prepaid_balance.current_balance) %}
+                                    <option value="prepaid">Prepaid Balance ({{ prepaid_balance_symbol }}{{ "%.2f"|format(converted_prepaid_balance) }})</option>
+                                {% endif %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label for="discount_code" class="form-label">
+                                <i class="fas fa-tag"></i> Discount Code (Optional)
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="discount_code" 
+                                   name="discount_code" 
+                                   placeholder="Enter discount code">
+                            <div id="discountFeedback" class="form-text"></div>
+                        </div>
+                        
+                        <div class="col-md-3">
+                            <label for="notes" class="form-label">
+                                <i class="fas fa-sticky-note"></i> Notes (Optional)
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="notes" 
+                                   name="notes" 
+                                   placeholder="Payment description...">
+                        </div>
+                        
+                        <div class="col-12">
+                            <div id="prepaidWarning" class="alert alert-warning" style="display: none;">
+                                <i class="fas fa-exclamation-triangle"></i> 
+                                <span id="prepaidWarningText"></span>
+                            </div>
+                            
+                            <button type="submit" class="btn btn-success" id="submitPayment">
+                                <i class="fas fa-plus"></i> Add Payment
+                            </button>
+                            
+                            <div id="paymentSummary" class="mt-2" style="display: none;">
+                                <div class="alert alert-info">
+                                    <strong>Payment Summary:</strong>
+                                    <div id="summaryContent"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+
+                <hr>
+
+                <!-- Payment History -->
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history text-info"></i> Payment History
+                    </h5>
+                    {% if payments %}
+                        <span class="badge bg-primary">{{ payments|length }} Payment(s)</span>
+                    {% endif %}
+                </div>
+
+                {% if payments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th><i class="fas fa-dollar-sign"></i> Amount</th>
+                                    <th><i class="fas fa-calendar"></i> Date</th>
+                                    <th><i class="fas fa-credit-card"></i> Method</th>
+                                    <th><i class="fas fa-tag"></i> Discount</th>
+                                    <th><i class="fas fa-sticky-note"></i> Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in payments %}
+                                <tr>
+                                    <td>
+                                        {% if payment|length > 4 and payment[4] and payment[4] > 0 %}
+                                            <!-- Has discount -->
+                                            <div>
+                                                <span class="badge bg-success fs-6">
+                                                    {% set converted_payment_amount, payment_amount_symbol = convert_price_to_user_currency(payment[0]) %}
+                                                    {{ payment_amount_symbol }}{{ "%.2f"|format(converted_payment_amount) }}
+                                                </span>
+                                                <br>
+                                                <small class="text-muted">
+                                                    {% set original_amount = payment[5] if payment|length > 5 else payment[0] %}
+                                                    {% set converted_original_amount, original_amount_symbol = convert_price_to_user_currency(original_amount) %}
+                                                    Original: {{ original_amount_symbol }}{{ "%.2f"|format(converted_original_amount) }}
+                                                </small>
+                                            </div>
+                                        {% else %}
+                                            <span class="badge bg-success fs-6">
+                                                {% set converted_payment_amount_no_discount, payment_amount_no_discount_symbol = convert_price_to_user_currency(payment[0]) %}
+                                                {{ payment_amount_no_discount_symbol }}{{ "%.2f"|format(converted_payment_amount_no_discount) }}
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-calendar-alt text-primary"></i>
+                                        {{ payment[1] }}
+                                    </td>
+                                    <td>
+                                        {% if payment|length > 6 and payment[6] %}
+                                            {% if payment[6] == 'prepaid' %}
+                                                <span class="badge bg-primary"><i class="fas fa-wallet"></i> Prepaid</span>
+                                            {% elif payment[6] == 'card' %}
+                                                <span class="badge bg-info"><i class="fas fa-credit-card"></i> Card</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary"><i class="fas fa-money-bill"></i> Cash</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="badge bg-secondary"><i class="fas fa-money-bill"></i> Cash</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if payment|length > 3 and payment[3] %}
+                                            <span class="badge bg-warning">{{ payment[3] }}</span>
+                                            {% if payment|length > 4 and payment[4] %}
+                                                {% set converted_saved_amount, saved_amount_symbol = convert_price_to_user_currency(payment[4]) %}
+                                                <br><small class="text-success">Saved: {{ saved_amount_symbol }}{{ "%.2f"|format(converted_saved_amount) }}</small>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">No discount</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if payment[2] %}
+                                            <i class="fas fa-comment text-info"></i>
+                                            {{ payment[2] }}
+                                        {% else %}
+                                            <span class="text-muted">No notes</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-info">
+                                    <th>
+                                        {% set total_paid = payments|sum(attribute=0) %}
+                                        {% set converted_total_paid, total_paid_symbol = convert_price_to_user_currency(total_paid) %}
+                                        <strong>Total Paid: {{ total_paid_symbol }}{{ "%.2f"|format(converted_total_paid) }}</strong>
+                                        {% set total_saved = payments|sum(attribute=4) if payments and payments[0]|length > 4 else 0 %}
+                                        {% if total_saved > 0 %}
+                                            {% set converted_total_saved, total_saved_symbol = convert_price_to_user_currency(total_saved) %}
+                                            <br><small class="text-success">Total Saved: {{ total_saved_symbol }}{{ "%.2f"|format(converted_total_saved) }}</small>
+                                        {% endif %}
+                                    </th>
+                                    <th colspan="4"></th>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No payments recorded yet</h5>
+                        <p class="text-muted">Add the first payment using the form above.</p>
+                    </div>
+                {% endif %}
+
+                <!-- Action Buttons -->
+                <div class="d-flex gap-2 mt-4">
+                    <a href="{{ url_for('member_profile', membership_id=membership_id) }}" 
+                       class="btn btn-outline-primary">
+                        <i class="fas fa-arrow-left"></i> Back to Profile
+                    </a>
+                    <a href="{{ url_for('prepaid_card_management', membership_id=membership_id) }}" 
+                       class="btn btn-outline-info">
+                        <i class="fas fa-credit-card"></i> Prepaid Card
+                    </a>
+                    <a href="{{ url_for('members') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-users"></i> All Members
+                    </a>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-info">
+                        <i class="fas fa-tachometer-alt"></i> Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const paymentMethodSelect = document.getElementById('payment_method');
+    const amountInput = document.getElementById('amount');
+    const prepaidWarning = document.getElementById('prepaidWarning');
+    const prepaidWarningText = document.getElementById('prepaidWarningText');
+    const submitButton = document.getElementById('submitPayment');
+    
+    const prepaidBalance = {{ prepaid_balance.current_balance if prepaid_balance else 0 }};
+    
+    function checkPrepaidBalance() {
+        const paymentMethod = paymentMethodSelect.value;
+        const amount = parseFloat(amountInput.value) || 0;
+        
+        if (paymentMethod === 'prepaid') {
+            if (amount > prepaidBalance) {
+                // Convert amounts to user's preferred currency for display
+                const convertedAvailable = convertAmountToUserCurrency(prepaidBalance);
+                const convertedRequired = convertAmountToUserCurrency(amount);
+                prepaidWarningText.textContent = `Insufficient prepaid balance! Available: ${convertedAvailable.symbol}${convertedAvailable.amount.toFixed(2)}, Required: ${convertedRequired.symbol}${convertedRequired.amount.toFixed(2)}`;
+                prepaidWarning.style.display = 'block';
+                submitButton.disabled = true;
+            } else if (amount > 0) {
+                const remainingBalance = prepaidBalance - amount;
+                const convertedRemaining = convertAmountToUserCurrency(remainingBalance);
+                prepaidWarningText.textContent = `Will use prepaid balance. Remaining after payment: ${convertedRemaining.symbol}${convertedRemaining.amount.toFixed(2)}`;
+                prepaidWarning.className = 'alert alert-info';
+                prepaidWarning.style.display = 'block';
+                submitButton.disabled = false;
+            } else {
+                prepaidWarning.style.display = 'none';
+                submitButton.disabled = false;
+            }
+        } else {
+            prepaidWarning.style.display = 'none';
+            submitButton.disabled = false;
+        }
+    }
+    
+    paymentMethodSelect.addEventListener('change', checkPrepaidBalance);
+    amountInput.addEventListener('input', checkPrepaidBalance);
+    
+    // Existing discount validation code remains the same...
+    const discountInput = document.getElementById('discount_code');
+    const feedbackDiv = document.getElementById('discountFeedback');
+    const summaryDiv = document.getElementById('paymentSummary');
+    const summaryContent = document.getElementById('summaryContent');
+    
+    let discountInfo = null;
+    
+    function validateDiscount() {
+        const code = discountInput.value.trim();
+        const amount = parseFloat(amountInput.value);
+        
+        if (!code || !amount) {
+            feedbackDiv.innerHTML = '';
+            summaryDiv.style.display = 'none';
+            return;
+        }
+        
+        fetch('{{ url_for("validate_discount_ajax") }}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                code: code,
+                amount: amount,
+                membership_id: '{{ membership_id }}'
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.valid) {
+                discountInfo = data.discount;
+                feedbackDiv.innerHTML = `<span class="text-success"><i class="fas fa-check"></i> ${data.message}</span>`;
+                const convertedOriginal = convertAmountToUserCurrency(amount);
+                const convertedDiscount = convertAmountToUserCurrency(data.discount.amount);
+                const convertedFinal = convertAmountToUserCurrency(data.discount.final_amount);
+                summaryContent.innerHTML = `
+                    Original Amount: ${convertedOriginal.symbol}${convertedOriginal.amount.toFixed(2)}<br>
+                    Discount: -${convertedDiscount.symbol}${convertedDiscount.amount.toFixed(2)}<br>
+                    <strong>Final Amount: ${convertedFinal.symbol}${convertedFinal.amount.toFixed(2)}</strong>
+                `;
+                summaryDiv.style.display = 'block';
+            } else {
+                discountInfo = null;
+                feedbackDiv.innerHTML = `<span class="text-danger"><i class="fas fa-times"></i> ${data.message}</span>`;
+                summaryDiv.style.display = 'none';
+            }
+            
+            // Recheck prepaid balance with new amount
+            checkPrepaidBalance();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            feedbackDiv.innerHTML = '<span class="text-danger">Error validating discount code</span>';
+            summaryDiv.style.display = 'none';
+        });
+    }
+    
+    discountInput.addEventListener('input', debounce(validateDiscount, 500));
+    
+    function debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
+            clearTimeout(timeout);
+            timeout = setTimeout(later, wait);
+        };
+    }
+});
+</script>
+{% endblock %}

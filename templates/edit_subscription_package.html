@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}Edit Subscription Package - MemberSync{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-edit"></i> Edit Subscription Package</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('edit_subscription_package', package_id=package[0]) }}">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Package Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="name" name="name" value="{{ package[1] }}" required>
+                        <div class="form-text">Unique name for this subscription package</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="description" name="description" rows="3" required>{{ package[2] }}</textarea>
+                        <div class="form-text">Brief description of what this package includes</div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="max_organizations" class="form-label">Max Organizations <span class="text-danger">*</span></label>
+                                <input type="number" class="form-control" id="max_organizations" name="max_organizations" min="1" value="{{ package[3] }}" required>
+                                <div class="form-text">Maximum number of organizations allowed</div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="price" class="form-label">Price ($)</label>
+                                <input type="number" class="form-control" id="price" name="price" min="0" step="0.01" value="{{ package[4] }}">
+                                <div class="form-text">Monthly price (0 for free)</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="features" class="form-label">Features (JSON)</label>
+                        <textarea class="form-control" id="features" name="features" rows="4">{{ package[5] }}</textarea>
+                        <div class="form-text">JSON object defining package features</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_active" name="is_active" {% if package[6] %}checked{% endif %}>
+                            <label class="form-check-label" for="is_active">
+                                Active Package
+                            </label>
+                            <div class="form-text">Inactive packages cannot be assigned to new users/organizations</div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('manage_subscription_packages') }}" class="btn btn-secondary me-md-2">Cancel</a>
+                        <button type="submit" class="btn btn-primary">Update Package</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+

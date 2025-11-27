@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block title %}My Profile - MemberSync{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-user"></i> My Profile</h4>
+            </div>
+            <div class="card-body">
+                {% if user %}
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-user-circle text-primary"></i> Personal Information</h5>
+                        <table class="table table-borderless">
+                            <tr>
+                                <td><strong>Username:</strong></td>
+                                <td>{{ user[1] }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Email:</strong></td>
+                                <td>{{ user[2] or 'Not provided' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Organization:</strong></td>
+                                <td>{{ user[12] or 'Not assigned' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Subscription Package:</strong></td>
+                                <td>{{ user[13] or 'Not assigned' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Account Type:</strong></td>
+                                <td>
+                                    {% if user[6] %}
+                                        <span class="badge bg-success">Admin</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">User</span>
+                                    {% endif %}
+                                    {% if user[7] %}
+                                        <span class="badge bg-warning ms-1">Super Admin</span>
+                                    {% endif %}
+                                    {% if user[8] %}
+                                        <span class="badge bg-danger ms-1">Global Super Admin</span>
+                                    {% endif %}
+                                    {% if user[9] %}
+                                        <span class="badge bg-info ms-1">Global Admin</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Member Since:</strong></td>
+                                <td>{{ user[5][:10] if user[5] else 'Unknown' }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-cog text-primary"></i> Account Settings</h5>
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('update_profile') }}" class="btn btn-outline-primary">
+                                <i class="fas fa-edit"></i> Update Profile
+                            </a>
+                            {% if session.is_global_superadmin or session.is_global_admin %}
+                            <a href="{{ url_for('admin_settings') }}" class="btn btn-outline-secondary">
+                                <i class="fas fa-sliders-h"></i> Organization Settings
+                            </a>
+                            <a href="{{ url_for('manage_organizations') }}" class="btn btn-outline-warning">
+                                <i class="fas fa-building"></i> Manage Organizations
+                            </a>
+                            <a href="{{ url_for('manage_subscription_packages') }}" class="btn btn-outline-info">
+                                <i class="fas fa-box-open"></i> Subscription Packages
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <hr>
+                
+                <div class="row">
+                    <div class="col-12">
+                        <h5><i class="fas fa-info-circle text-primary"></i> Account Information</h5>
+                        <div class="alert alert-info">
+                            <p class="mb-1"><strong>User ID:</strong> {{ user[0] }}</p>
+                            <p class="mb-1"><strong>Organization ID:</strong> {{ user[4] }}</p>
+                            <p class="mb-1"><strong>Subscription Package ID:</strong> {{ user[10] or 'Not assigned' }}</p>
+                            <p class="mb-0"><strong>Last Updated:</strong> {{ user[5] if user[5] else 'Unknown' }}</p>
+                        </div>
+                    </div>
+                </div>
+                
+                {% else %}
+                <div class="alert alert-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <strong>Profile Not Found</strong><br>
+                    Unable to load your profile information. Please try logging in again.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

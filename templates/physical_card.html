@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Physical Membership Card - {{ member.name if member.name else member[1] }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', 'Helvetica', sans-serif;
+            background: #f5f7fa;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            color: #333;
+        }
+
+        /* Standard credit card dimensions: 3.375in × 2.125in (85.6mm × 53.98mm) */
+        .card-container {
+            display: flex;
+            gap: 8mm;
+            margin: 8mm 0;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .physical-card {
+            width: 3.375in; /* 85.6mm - Standard credit card width */
+            height: 2.125in; /* 53.98mm - Standard credit card height */
+            border-radius: 15px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+            transition: transform 0.3s ease;
+        }
+
+        .physical-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.2);
+        }
+
+        /* FRONT SIDE - Premium Gradient */
+        .card-front {
+            background: linear-gradient(135deg, {{ org.card_primary_color|default('#1e3c72') }} 0%, {{ org.card_secondary_color|default('#2a5298') }} 50%, {{ org.card_secondary_color|default('#3d6cb9') }} 100%);
+            width: 100%;
+            height: 100%;
+            position: relative;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: white;
+        }
+
+        /* BACK SIDE - Clean White Design */
+        .card-back {
+            background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 50%, #f0f4ff 100%);
+            width: 100%;
+            height: 100%;
+            position: relative;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: #1e3c72;
+        }
+
+        /* Enhanced Front Side Elements */
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            position: relative;
+            z-index: 10;
+        }
+
+        .company-brand {
+            display: flex;
+            align-items: center;
+            gap: 1.5mm;
+        }
+
+        .brand-logo {
+            width: 28px;
+            height: 28px;
+            background: rgba(255,255,255,0.95);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #1e3c72;
+            font-size: 12px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .company-name {
+            font-size: 10px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .card-type {
+            font-size: 7px;
+            text-align: right;
+            line-height: 1.1;
+            opacity: 0.95;
+            text-transform: uppercase;
+            font-weight: 500;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.2);
+        }
+
+        /* Premium Member Information Panel */
+        .member-info {
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            padding: 8px;
+            margin: 8px 0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .member-info::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.4) 50%, transparent 100%);
+        }
+
+        .member-name {
+            font-size: 11px;
+            font-weight: bold;
+            margin-bottom: 3px;
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .member-id {
+            font-size: 9px;
+            opacity: 0.9;
+            margin-bottom: 3px;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 0.2px;
+        }
+
+        .membership-type {
+            font-size: 8px;
+            background: rgba(255,255,255,0.25);
+            padding: 2px 6px;
+            border-radius: 4px;
+            display: inline-block;
+            text-transform: uppercase;
+            width: fit-content;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            position: relative;
+            z-index: 10;
+        }
+
+        .dates-info {
+            font-size: 6px;
+            line-height: 1.3;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .date-label {
+            opacity: 0.8;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.2px;
+        }
+
+        .date-value {
+            font-weight: bold;
+            font-family: 'Courier New', monospace;
+            margin-bottom: 2px;
+        }
+
+        .status-indicator {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            border-radius: 4px;
+            padding: 3px 6px;
+            font-size: 6px;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.2px;
+            backdrop-filter: blur(5px);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+        }
+
+        .status-active { background: rgba(76, 175, 80, 0.3); border-color: rgba(76, 175, 80, 0.5); }
+        .status-warning { background: rgba(255, 152, 0, 0.3); border-color: rgba(255, 152, 0, 0.5); }
+        .status-expired { background: rgba(244, 67, 54, 0.3); border-color: rgba(244, 67, 54, 0.5); }
+
+        /* Enhanced Back Side Elements */
+        .back-header {
+            text-align: center;
+            margin-bottom: 6px;
+            border-bottom: 1px solid rgba(30,60,114,0.2);
+            padding-bottom: 4px;
+        }
+
+        .back-title {
+            font-size: 10px;
+            font-weight: bold;
+            margin-bottom: 2px;
+            color: #1e3c72;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .back-subtitle {
+            font-size: 6px;
+            opacity: 0.7;
+            color: #1e3c72;
+            line-height: 1.2;
+        }
+
+        .qr-section {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .qr-code {
+            width: 60px;
+            height: 60px;
+            background: white;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin-bottom: 6px;
+            border: 1px solid #1e3c72;
+            box-shadow: 0 2px 6px rgba(30,60,114,0.2);
+            position: relative;
+        }
+
+        .qr-code img {
+            width: 95%;
+            height: 95%;
+            object-fit: contain;
+        }
+
+        .qr-placeholder {
+            font-size: 14px;
+            color: #1e3c72;
+            font-weight: bold;
+        }
+
+        .qr-text {
+            font-size: 6px;
+            text-align: center;
+            opacity: 0.8;
+            line-height: 1.3;
+            color: #1e3c72;
+            max-width: 80px;
+        }
+
+        .back-footer {
+            text-align: center;
+            border-top: 1px solid rgba(30,60,114,0.2);
+            padding-top: 3px;
+        }
+
+        .contact-info {
+            font-size: 5px;
+            line-height: 1.3;
+            opacity: 0.7;
+            color: #1e3c72;
+        }
+
+        .website-info {
+            font-weight: 600;
+            color: #1e3c72;
+            margin: 2px 0;
+        }
+
+        /* Enhanced Decorative Elements */
+        .card-pattern {
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 60px;
+            height: 60px;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 40%, transparent 70%);
+            border-radius: 50%;
+            transform: translate(20px, -20px);
+        }
+
+        .card-pattern::after {
+            content: '';
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            width: 30px;
+            height: 30px;
+            background: radial-gradient(circle, rgba(255,255,255,0.08) 0%, transparent 60%);
+            border-radius: 50%;
+        }
+
+        /* Premium EMV Chip */
+        .chip {
+            position: absolute;
+            top: 20px;
+            left: 12px;
+            width: 20px;
+            height: 16px;
+            background: linear-gradient(145deg, #f8f9fa, #e9ecef, #dee2e6);
+            border-radius: 3px;
+            border: 0.5px solid #adb5bd;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.2);
+            z-index: 5;
+        }
+
+        .chip::before {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            right: 2px;
+            bottom: 2px;
+            background: repeating-linear-gradient(
+                90deg,
+                #f8f9fa 0px,
+                #f8f9fa 2px,
+                #e9ecef 2px,
+                #e9ecef 4px
+            );
+            border-radius: 1px;
+        }
+
+        /* Magnetic Stripe */
+        .magnetic-stripe {
+            position: absolute;
+            top: 24px;
+            left: 0;
+            right: 0;
+            height: 24px;
+            background: linear-gradient(90deg, #1e3c72 0%, #2a5298 25%, #3d6cb9 50%, #2a5298 75%, #1e3c72 100%);
+            z-index: 1;
+        }
+
+        .signature-strip {
+            position: absolute;
+            top: 54px;
+            left: 6px;
+            right: 6px;
+            height: 12px;
+            background: rgba(255,255,255,0.9);
+            border-radius: 2px;
+            border: 0.5px solid #ddd;
+        }
+
+        /* Security Features */
+        .security-strip {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #ffd700, #ffed4e, #ffd700);
+            z-index: 20;
+        }
+
+        .hologram-effect {
+            position: absolute;
+            bottom: 6px;
+            right: 6px;
+            width: 24px;
+            height: 24px;
+            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0.1) 50%, transparent 70%);
+            border-radius: 50%;
+            border: 0.5px solid rgba(255,255,255,0.4);
+            z-index: 15;
+        }
+
+        /* Labels and Controls */
+        .card-label {
+            text-align: center;
+            font-size: 13px;
+            font-weight: 600;
+            color: #1e3c72;
+            margin-bottom: 6mm;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .controls {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 1000;
+            border: 1px solid #e9ecef;
+            max-width: 280px;
+        }
+
+        .controls h4 {
+            color: #1e3c72;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .controls p {
+            font-size: 11px;
+            color: #6c757d;
+            margin: 3px 0 12px 0;
+        }
+
+        .btn {
+            padding: 8px 12px;
+            margin: 3px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 0.2px;
+        }
+
+        .btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        /* Print Optimization */
+        @media print {
+            @page {
+                size: A4 portrait;
+                margin: 10mm;
+            }
+            
+            body {
+                background: white;
+                padding: 0;
+                margin: 0;
+            }
+            
+            .controls, .no-print {
+                display: none !important;
+            }
+            
+            .physical-card {
+                box-shadow: 0 1px 3px rgba(0,0,0,0.3) !important;
+                page-break-inside: avoid;
+            }
+            
+            .card-container {
+                page-break-inside: avoid;
+                margin: 6mm auto;
+                transform: none !important;
+            }
+
+            .preview-scale {
+                transform: none !important;
+                margin: 6mm 0 !important;
+            }
+        }
+
+        /* Multiple Cards Layout */
+        .multiple-cards {
+            display: none;
+        }
+
+        .multiple-cards.active {
+            display: block;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8mm;
+            max-width: 200mm;
+            margin: 0 auto;
+        }
+
+        .card-pair {
+            display: flex;
+            gap: 8mm;
+            align-items: center;
+            justify-content: center;
+            margin: 4mm 0;
+            page-break-inside: avoid;
+        }
+
+        
+        /* Enhanced Preview Scale - Reduced for realistic size */
+        .preview-scale {
+            transform: scale(1.2);
+            transform-origin: center;
+            margin: 15mm 0;
+        }
+
+        /* Responsive Design */
+        @media screen and (max-width: 768px) {
+            .card-container {
+                flex-direction: column;
+                gap: 6mm;
+            }
+            
+            .controls {
+                position: relative;
+                margin-bottom: 20px;
+                width: 100%;
+                max-width: 400px;
+            }
+
+            .preview-scale {
+                transform: scale(1.0);
+                margin: 12mm 0;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            .preview-scale {
+                transform: scale(0.9);
+                margin: 10mm 0;
+            }
+        }
+
+        /* Accessibility */
+        .btn:focus {
+            outline: 2px solid #007bff;
+            outline-offset: 2px;
+        }
+
+        /* Animation */
+        .physical-card {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Enhanced Controls -->
+    <div class="controls no-print">
+        <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+            <div>
+                <h4>🎴 Physical Card Studio</h4>
+                <p>Professional membership cards • ISO standard size</p>
+            </div>
+            <a href="{{ url_for('member_card', membership_id=member.membership_id if member.membership_id else member[0]) }}" class="btn-modern btn-secondary-modern" style="margin-left: 15px;">
+                <i class="fas fa-arrow-left"></i> Back to Profile
+            </a>
+        </div>
+        <div style="margin-bottom: 15px;">
+            <strong>Member:</strong> {{ member.name if member.name else member[1] }}<br>
+            <strong>ID:</strong> {{ member.membership_id if member.membership_id else member[0] }}<br>
+            <strong>Type:</strong> {{ member.membership_type if member.membership_type else member[4] }}
+        </div>
+        
+        <div class="print-options" {% if not session.get('is_global_superadmin') %}style="display: none;"{% endif %}>
+            <div class="print-buttons" style="display: flex; gap: 10px; margin-bottom: 10px; align-items: center;">
+                <button onclick="printCardSide('front')" class="btn-modern btn-primary-modern">
+                    <i class="fas fa-print"></i> Print Front Side
+                </button>
+                <button onclick="printCardSide('back')" class="btn-modern btn-secondary-modern">
+                    <i class="fas fa-print"></i> Print Back Side
+                </button>
+                <span style="margin: 0 10px; color: #666;">or</span>
+                <button onclick="printMultiple()" class="btn-modern" style="background-color: #6c757d;">
+                    <i class="fas fa-layer-group"></i> Batch Print (5 per page)
+                </button>
+            </div>
+        </div>
+        <button onclick="goBack()" class="btn btn-secondary">
+            ← Back to Profile
+        </button>
+    </div>
+
+    <!-- Single Card Preview -->
+    <div class="single-card" id="singleCard">
+        <div class="card-label no-print">🎨 Professional Membership Card Preview</div>
+        
+        <div class="card-container preview-scale">
+            <!-- FRONT SIDE -->
+            <div class="physical-card">
+                <div class="card-front">
+                    <!-- Security Features -->
+                    <div class="security-strip"></div>
+                    <div class="card-pattern"></div>
+                    <div class="hologram-effect"></div>
+                    
+                    <!-- EMV Chip -->
+                    <div class="chip"></div>
+                    
+                    <!-- Header Section -->
+                    <div class="card-header">
+                        <div class="company-brand">
+                            <div class="brand-logo">{{ org.card_company_name[:2].upper() if org.card_company_name else 'MS' }}</div>
+                            <div class="company-name">{{ org.card_company_name }}</div>
+                        </div>
+                        <div class="card-type">
+                            Professional<br>
+                            Membership<br>
+                            Card
+                        </div>
+                    </div>
+
+                    <!-- Member Information Panel -->
+                    <div class="member-info">
+                        <div class="member-name">
+                            {{ member.name if member.name else member[1] }}
+                        </div>
+                        <div class="member-id">
+                            ID: {{ member.membership_id if member.membership_id else member[0] }}
+                        </div>
+                        <div class="membership-type">
+                            {{ member.membership_type if member.membership_type else member[4] }}
+                        </div>
+                    </div>
+
+                    <!-- Footer Section -->
+                    <div class="card-footer">
+                        <div class="dates-info">
+                            <div class="date-label">Member ID</div>
+                            <div class="date-value">{{ member[0] }}</div>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- BACK SIDE -->
+            <div class="physical-card">
+                <div class="card-back">
+                    <!-- Magnetic Stripe -->
+                    <div class="magnetic-stripe"></div>
+                    <div class="signature-strip"></div>
+                    
+                    <!-- Header -->
+                    <div class="back-header">
+                        <div class="back-title">🔐 Membership Verification</div>
+                        <div class="back-subtitle">
+                            Scan QR code for instant digital verification<br>
+                            Valid only with photo identification
+                        </div>
+                    </div>
+
+                    <!-- QR Code Section -->
+                    <div class="qr-section">
+                        <div class="qr-code">
+                            {% set membership_id = member.membership_id if member.membership_id else member[0] %}
+                            {% if membership_id %}
+                                <img src="{{ url_for('static', filename='qr_codes/' + membership_id + '.png') }}" 
+                                     alt="Membership QR Code"
+                                     onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                <div class="qr-placeholder" style="display: none;">
+                                    📱 QR
+                                </div>
+                            {% else %}
+                                <div class="qr-placeholder">📱 QR</div>
+                            {% endif %}
+                        </div>
+                        
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="back-footer">
+                        <div class="contact-info">
+                            <strong>{{ org.card_company_name }} Digital Membership System</strong><br>
+                            Professional membership management solution<br>
+                            <div class="website-info">🌐 Visit our support center for assistance</div>
+                            This card remains property of the issuing organization<br>
+                            Report lost or stolen cards immediately
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="card-label no-print" style="margin-top: 15px;">
+            📏 Standard Credit Card Size: 3.375" × 2.125" • Actual scale preview
+        </div>
+    </div>
+
+    <!-- Multiple Cards Layout for Batch Printing -->
+    <div class="multiple-cards" id="multipleCards">
+        <div class="cards-grid">
+            {% for i in range(5) %}
+            <div class="card-pair">
+                <!-- Front Side -->
+                <div class="physical-card">
+                    <div class="card-front">
+                        <div class="security-strip"></div>
+                        <div class="card-pattern"></div>
+                        <div class="hologram-effect"></div>
+                        <div class="chip"></div>
+                        
+                        <div class="card-header">
+                            <div class="company-brand">
+                                <div class="brand-logo">{{ org.card_company_name[:2].upper() if org.card_company_name else 'MS' }}</div>
+                                <div class="company-name">{{ org.card_company_name }}</div>
+                            </div>
+                            <div class="card-type">
+                                Professional<br>Membership<br>Card
+                            </div>
+                        </div>
+
+                        <div class="member-info">
+                            <div class="member-name">
+                                {{ member.name if member.name else member[1] }}
+                            </div>
+                            <div class="member-id">
+                                ID: {{ member.membership_id if member.membership_id else member[0] }}
+                            </div>
+                            <div class="membership-type">
+                                {{ member.membership_type if member.membership_type else member[4] }}
+                            </div>
+                        </div>
+
+                        <div class="card-footer">
+                            <div class="dates-info">
+                                <div class="date-label">Member Since</div>
+                                <div class="date-value">
+                                    {% if member.created_at %}
+                                        {{ member.created_at[:7] if member.created_at else 'N/A' }}
+                                    {% else %}
+                                        {{ member[7][:7] if member[7] else 'N/A' }}
+                                    {% endif %}
+                                </div>
+                                <div class="date-label" style="margin-top: 0.5mm;">Expires</div>
+                                <div class="date-value">
+                                    {% if member.expiration_date %}
+                                        {{ member.expiration_date[:7] if member.expiration_date else 'N/A' }}
+                                    {% else %}
+                                        {{ member[5][:7] if member[5] else 'N/A' }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="status-indicator 
+                                {% if expiry_status == 'active' %}status-active
+                                {% elif expiry_status == 'warning' %}status-warning
+                                {% else %}status-expired{% endif %}">
+                                {% if expiry_status == 'active' %}
+                                    ✓ ACTIVE
+                                {% elif expiry_status == 'warning' %}
+                                    ⚠ EXPIRING
+                                {% else %}
+                                    ✗ EXPIRED
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Back Side -->
+                <div class="physical-card">
+                    <div class="card-back">
+                        <div class="magnetic-stripe"></div>
+                        <div class="signature-strip"></div>
+                        
+                        <div class="back-header">
+                            <div class="back-title">🔐 Membership Verification</div>
+                            <div class="back-subtitle">
+                                Scan QR code for instant digital verification<br>
+                                Valid only with photo identification
+                            </div>
+                        </div>
+
+                        <div class="qr-section">
+                            <div class="qr-code">
+                                {% if membership_id %}
+                                    <img src="{{ url_for('static', filename='qr_codes/' + membership_id + '.png') }}" 
+                                         alt="Membership QR Code"
+                                         onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                                    <div class="qr-placeholder" style="display: none;">📱 QR</div>
+                                {% else %}
+                                    <div class="qr-placeholder">📱 QR</div>
+                                {% endif %}
+                            </div>
+                            <div class="qr-text">
+                                <strong>Digital Verification</strong><br>
+                                Scan with smartphone camera<br>
+                                or QR code reader app<br>
+                                for instant status check
+                            </div>
+                        </div>
+
+                        <div class="back-footer">
+                            <div class="contact-info">
+                                <strong>{{ org.card_company_name }} Digital Membership System</strong><br>
+                                Professional membership management solution<br>
+                                <div class="website-info">🌐 Visit our support center for assistance</div>
+                                This card remains property of the issuing organization<br>
+                                Report lost or stolen cards immediately
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Add HTML2Canvas library for image export -->
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <script>
+        // Ensure html2canvas is loaded
+        window.html2canvas = window.html2canvas || function() {
+            console.error('html2canvas not loaded!');
+            return Promise.reject('html2canvas not loaded');
+        };
+    </script>
+    
+    <script>
+        // Function to download card as PNG
+        async function downloadAsImage(side) {
+            try {
+                const cardElement = side === 'front' ? 
+                    document.querySelector('.physical-card:first-child') : 
+                    document.querySelector('.physical-card:last-child');
+                
+                const originalText = event.target.innerHTML;
+                event.target.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+                event.target.disabled = true;
+                
+                const canvas = await html2canvas(cardElement, {
+                    scale: 3,
+                    logging: false,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: null
+                });
+                
+                const link = document.createElement('a');
+                link.download = `card-${side}-${new Date().toISOString().slice(0,10)}.png`;
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+                
+                event.target.innerHTML = originalText;
+                event.target.disabled = false;
+                
+            } catch (error) {
+                console.error('Error generating image:', error);
+                alert('Error generating image. Please try again.');
+                event.target.innerHTML = originalText;
+                event.target.disabled = false;
+            }
+        }
+        
+        // Function to download canvas as PNG
+        function downloadCanvasAsPNG(canvas, filename) {
+            const link = document.createElement('a');
+            link.download = filename;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            return Promise.resolve();
+        }
+
+        async function captureCardSide(element, isFront) {
+    const container = document.createElement('div');
+    container.style.position = 'absolute';
+    container.style.left = '-9999px';
+    container.style.top = '0';
+    container.style.padding = '20px';
+    container.style.background = 'transparent';
+    container.style.overflow = 'visible';
+    document.body.appendChild(container);
+
+    // Clone the card
+    const cardClone = element.cloneNode(true);
+    container.appendChild(cardClone);
+
+    // Make card visible and ensure proper sizing
+    cardClone.style.display = 'block';
+    cardClone.style.transform = 'none';
+    cardClone.style.margin = '0';
+    cardClone.style.boxShadow = 'none';
+    cardClone.style.overflow = 'visible';
+    
+    // For back card, ensure content is not cut off and preserve gradient
+    if (!isFront) {
+        const cardBack = cardClone.querySelector('.card-back');
+        if (cardBack) {
+            // Preserve original background and colors
+            const originalBack = document.querySelector('.card-back');
+            if (originalBack) {
+                const styles = window.getComputedStyle(originalBack);
+                // Explicitly set all background properties
+                cardBack.style.background = styles.background;
+                cardBack.style.backgroundColor = styles.backgroundColor;
+                cardBack.style.backgroundImage = styles.backgroundImage;
+                cardBack.style.backgroundSize = styles.backgroundSize;
+                cardBack.style.backgroundPosition = styles.backgroundPosition;
+                cardBack.style.backgroundRepeat = styles.backgroundRepeat;
+            }
+            
+            cardBack.style.overflow = 'visible';
+            cardBack.style.height = 'auto';
+            cardBack.style.minHeight = '100%';
+            cardBack.style.display = 'flex';
+            cardBack.style.flexDirection = 'column';
+            
+            // Adjust specific elements in the back card if needed
+            const qrSection = cardBack.querySelector('.qr-section');
+            if (qrSection) {
+                qrSection.style.margin = '5px 0';
+            }
+            
+            const backFooter = cardBack.querySelector('.back-footer');
+            if (backFooter) {
+                backFooter.style.marginTop = 'auto';
+            }
+        }
+    }
+
+    // Wait for any images to load
+    const images = cardClone.querySelectorAll('img');
+    await Promise.all(Array.from(images).map(img => {
+        if (img.complete) return Promise.resolve();
+        return new Promise((resolve) => {
+            img.onload = resolve;
+            img.onerror = resolve;
+            setTimeout(resolve, 1000);
+        });
+    }));
+
+    // Add small delay to ensure rendering
+    await new Promise(resolve => setTimeout(resolve, 200));
+
+    // Capture the card - use original settings for front, adjusted for back
+    const canvas = await html2canvas(cardClone, {
+        scale: isFront ? 2 : 3,
+        backgroundColor: isFront ? null : '#ffffff',
+        logging: isFront ? true : false,
+        useCORS: true,
+        allowTaint: true,
+        removeContainer: true,
+        scrollX: 0,
+        scrollY: 0,
+        windowWidth: document.documentElement.offsetWidth,
+        windowHeight: document.documentElement.offsetHeight,
+        onclone: (clonedDoc) => {
+            // Only adjust back card in cloned document
+            if (!isFront) {
+                const backCard = clonedDoc.querySelector('.card-back');
+                if (backCard) {
+                    const originalBack = document.querySelector('.card-back');
+                    if (originalBack) {
+                        const styles = window.getComputedStyle(originalBack);
+                        backCard.style.background = styles.background;
+                        backCard.style.backgroundImage = styles.backgroundImage;
+                    }
+                    backCard.style.overflow = 'visible';
+                    backCard.style.height = 'auto';
+                    backCard.style.minHeight = '100%';
+                }
+            }
+        }
+    });
+
+    // Clean up
+    if (container.parentNode) {
+        document.body.removeChild(container);
+    }
+    
+    return canvas;
+}
+
+        // Function to print a specific side of the card
+        async function printCardSide(side) {
+            try {
+                console.log('Printing card side:', side);
+                
+                // Check if user is admin
+                {% if not session.get('is_global_superadmin') %}
+                    alert('This action is restricted to administrators only.');
+                    return false;
+                {% endif %}
+                
+                // Get the button that was clicked
+                const button = event.target.closest('button');
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+                button.disabled = true;
+                
+                const timestamp = new Date().toISOString().slice(0,10);
+                
+                if (side === 'front' || side === 'both') {
+                    const frontCard = document.querySelector('.card-front').parentElement;
+                    const frontCanvas = await captureCardSide(frontCard, true);
+                    await downloadCanvasAsPNG(frontCanvas, `card-front-${timestamp}.png`);
+                }
+                
+                if (side === 'back' || side === 'both') {
+                    const backCard = document.querySelector('.card-back').parentElement;
+                    const backCanvas = await captureCardSide(backCard, false);
+                    await downloadCanvasAsPNG(backCanvas, `card-back-${timestamp}.png`);
+                }
+                
+                // Reset button state
+                button.innerHTML = originalText;
+                button.disabled = false;
+                console.log('Image generation completed');
+                
+            } catch (error) {
+                console.error('Error generating image:', error);
+                alert('Error: ' + (error.message || 'Failed to generate image. Please try again.'));
+                
+                // Clean up in case of error
+                const containers = document.querySelectorAll('div[style*="position: absolute"][style*="left: -9999px"]');
+                containers.forEach(container => {
+                    if (container.parentNode) {
+                        document.body.removeChild(container);
+                    }
+                });
+                
+                // Reset all print buttons
+                const buttons = document.querySelectorAll('.print-buttons button');
+                buttons.forEach(btn => {
+                    const icon = btn.querySelector('i.fas');
+                    if (icon) {
+                        btn.innerHTML = icon.outerHTML + ' ' + btn.textContent.replace(/^\s*\S+\s+/, '');
+                    }
+                    btn.disabled = false;
+                });
+            }
+        }
+
+        function printMultiple() {
+            // Check if user is admin (double check in case someone calls this directly)
+            {% if not session.get('is_global_superadmin') %}
+                alert('Printing is restricted to administrators only.');
+                return false;
+            {% endif %}
+            
+            // Show multiple cards layout
+            document.getElementById('singleCard').style.display = 'none';
+            document.getElementById('multipleCards').classList.add('active');
+            
+            // Add print-specific styling for multiple cards
+            const printStyle = document.createElement('style');
+            printStyle.innerHTML = `
+                @media print {
+                    .card-pair {
+                        margin: 4mm 0 !important;
+                        page-break-inside: avoid !important;
+                    }
+                    .cards-grid {
+                        gap: 4mm !important;
+                    }
+                }
+            `;
+            document.head.appendChild(printStyle);
+            
+            // Trigger print
+            setTimeout(() => {
+                window.print();
+                document.head.removeChild(printStyle);
+            }, 100);
+        }
+
+        function goBack() {
+            // Enhanced back navigation
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                // Fallback to member profile
+                const memberId = '{{ member.membership_id if member.membership_id else member[0] }}';
+                if (memberId) {
+                    window.location.href = `/member/${memberId}`;
+                } else {
+                    window.location.href = '/members';
+                }
+            }
+        }
+
+        // Print event handlers
+        window.addEventListener('beforeprint', function() {
+            document.body.classList.add('printing');
+        });
+
+        window.addEventListener('afterprint', function() {
+            document.body.classList.remove('printing');
+            // Reset to single card view
+            document.getElementById('singleCard').style.display = 'block';
+            document.getElementById('multipleCards').classList.remove('active');
+        });
+
+        // Enhanced keyboard shortcuts
+        document.addEventListener('keydown', function(event) {
+            // Ctrl+P or Cmd+P for single card print
+            if ((event.ctrlKey || event.metaKey) && event.key === 'p') {
+                event.preventDefault();
+                printSingle({}); // Pass empty object as event
+            }
+            // Ctrl+Shift+P for multiple cards
+            if ((event.ctrlKey || event.metaKey) && event.shiftKey && event.key === 'P') {
+                event.preventDefault();
+                printMultiple();
+            }
+            // Escape key to go back
+            if (event.key === 'Escape') {
+                goBack();
+            }
+        });
+
+        // Dynamic status updates based on expiry
+        function updateCardStatus() {
+            const statusIndicators = document.querySelectorAll('.status-indicator');
+            const expiryStatus = '{{ expiry_status }}';
+            
+            statusIndicators.forEach(indicator => {
+                // Remove existing status classes
+                indicator.classList.remove('status-active', 'status-warning', 'status-expired');
+                
+                // Add appropriate status class
+                switch(expiryStatus) {
+                    case 'active':
+                        indicator.classList.add('status-active');
+                        break;
+                    case 'warning':
+                        indicator.classList.add('status-warning');
+                        break;
+                    default:
+                        indicator.classList.add('status-expired');
+                }
+            });
+        }
+
+        // Card animation and interaction effects
+        function initCardEffects() {
+            const cards = document.querySelectorAll('.physical-card');
+            
+            cards.forEach(card => {
+                // Add hover effects for better interaction
+                card.addEventListener('mouseenter', function() {
+                    this.style.transform = 'translateY(-2px) scale(1.02)';
+                });
+                
+                card.addEventListener('mouseleave', function() {
+                    this.style.transform = 'translateY(0) scale(1)';
+                });
+            });
+        }
+
+        // QR Code fallback handling
+        function handleQRCodeError() {
+            const qrImages = document.querySelectorAll('.qr-code img');
+            
+            qrImages.forEach(img => {
+                img.addEventListener('error', function() {
+                    this.style.display = 'none';
+                    const placeholder = this.nextElementSibling;
+                    if (placeholder && placeholder.classList.contains('qr-placeholder')) {
+                        placeholder.style.display = 'block';
+                        placeholder.innerHTML = '📱<br>QR<br>CODE';
+                    }
+                });
+            });
+        }
+
+        // Print quality optimization
+        function optimizeForPrint() {
+            // Ensure high quality rendering for print
+            const cards = document.querySelectorAll('.physical-card');
+            cards.forEach(card => {
+                card.style.imageRendering = 'crisp-edges';
+                card.style.shapeRendering = 'crispEdges';
+            });
+        }
+
+
+        // Initialize all functions when DOM is loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            updateCardStatus();
+            initCardEffects();
+            handleQRCodeError();
+            optimizeForPrint();
+            
+            // Show loading completed message
+            console.log('🎴 ' + '{{ org.card_company_name }}' + ' Physical Card Studio loaded successfully!');
+            
+            // Add subtle fade-in animation
+            const cards = document.querySelectorAll('.physical-card');
+            cards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 200);
+            });
+        });
+
+        // Export functionality for integration
+        window.MemberCardStudio = {
+            printSingle: printSingle,
+            printMultiple: printMultiple,
+            goBack: goBack,
+            updateStatus: updateCardStatus
+        };
+
+        // Service Worker registration for offline capability (optional)
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(function(error) {
+                console.log('Service Worker registration failed:', error);
+            });
+        }
+
+        // Print recommendations notification
+        function showPrintRecommendations() {
+            const recommendations = {
+                paper: 'Use 250-300gsm cardstock for durability',
+                settings: 'Print at 100% scale, high quality',
+                cutting: 'Use precision cutting tools',
+                lamination: 'Consider lamination for longevity',
+                colors: 'Ensure color accuracy for professional appearance'
+            };
+            
+            return recommendations;
+        }
+
+        // Accessibility improvements
+        function enhanceAccessibility() {
+            // Add ARIA labels
+            const buttons = document.querySelectorAll('.btn');
+            buttons.forEach(button => {
+                if (!button.getAttribute('aria-label')) {
+                    button.setAttribute('aria-label', button.textContent.trim());
+                }
+            });
+            
+            // Add keyboard navigation
+            const cards = document.querySelectorAll('.physical-card');
+            cards.forEach((card, index) => {
+                card.setAttribute('tabindex', '0');
+                card.setAttribute('role', 'img');
+                card.setAttribute('aria-label', `Membership card ${index + 1}`);
+            });
+        }
+
+        // Call accessibility enhancements
+        document.addEventListener('DOMContentLoaded', enhanceAccessibility);
+    </script>
+</body>
+</html>

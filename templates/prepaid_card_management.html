@@ -1,0 +1,401 @@
+{% extends "base.html" %}
+{% block title %}Prepaid Card - {{ membership_id }} - MemberSync{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-12">
+        <!-- Header -->
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2><i class="fas fa-credit-card text-primary"></i> Prepaid Card Management</h2>
+                <p class="text-muted mb-0">Member: <strong>{{ member.name }}</strong> ({{ membership_id }})</p>
+            </div>
+            <div>
+                <a href="{{ url_for('member_profile', membership_id=membership_id) }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> Back to Profile
+                </a>
+            </div>
+        </div>
+
+        <!-- Balance Card -->
+        <div class="row mb-4">
+            <div class="col-lg-8">
+                <div class="card bg-gradient-primary text-white">
+                    <div class="card-body">
+                        <div class="row align-items-center">
+                            <div class="col">
+                                {% set converted_balance, balance_symbol = convert_price_to_user_currency(balance_info.current_balance) %}
+                                <h3 class="text-white mb-0">{{ balance_symbol }}{{ "%.2f"|format(converted_balance) }}</h3>
+                                <p class="text-white-50 mb-0">Current Prepaid Balance</p>
+                                <small class="text-white-75">* Stored as ${{ "%.2f"|format(balance_info.current_balance) }} USD</small>
+                            </div>
+                            <div class="col-auto">
+                                <i class="fas fa-wallet fa-3x text-white-50"></i>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <h6 class="text-white-50 mb-1">Total Recharged</h6>
+                                    {% set converted_recharged, recharged_symbol = convert_price_to_user_currency(balance_info.total_recharged) %}
+                                    <h5 class="text-white mb-0">{{ recharged_symbol }}{{ "%.2f"|format(converted_recharged) }}</h5>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <h6 class="text-white-50 mb-1">Total Spent</h6>
+                                    {% set converted_spent, spent_symbol = convert_price_to_user_currency(balance_info.total_spent) %}
+                                    <h5 class="text-white mb-0">{{ spent_symbol }}{{ "%.2f"|format(converted_spent) }}</h5>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="text-center">
+                                    <h6 class="text-white-50 mb-1">Total Bonus</h6>
+                                    {% set converted_bonus, bonus_symbol = convert_price_to_user_currency(balance_info.total_bonus_earned) %}
+                                    <h5 class="text-white mb-0">{{ bonus_symbol }}{{ "%.2f"|format(converted_bonus) }}</h5>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="card h-100">
+                    <div class="card-header">
+                        <h6 class="mb-0"><i class="fas fa-gift text-warning"></i> Bonus Tiers</h6>
+                    </div>
+                    <div class="card-body">
+                        {% if bonus_tiers %}
+                            {% for tier in bonus_tiers %}
+                                {% if tier.is_active %}
+                                <div class="mb-2">
+                                    <small class="text-muted">{{ tier.tier_name }}</small>
+                                    <div class="d-flex justify-content-between">
+                                        {% set converted_min, min_symbol = convert_price_to_user_currency(tier.min_amount) %}
+                                        {% if tier.max_amount %}
+                                            {% set converted_max, max_symbol = convert_price_to_user_currency(tier.max_amount) %}
+                                            <span class="small">{{ min_symbol }}{{ "%.0f"|format(converted_min) }} - {{ max_symbol }}{{ "%.0f"|format(converted_max) }}</span>
+                                        {% else %}
+                                            <span class="small">{{ min_symbol }}{{ "%.0f"|format(converted_min) }}+</span>
+                                        {% endif %}
+                                        <span class="badge bg-warning">{{ tier.bonus_percentage }}%</span>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            <p class="text-muted small">No bonus tiers configured</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Action Cards -->
+        <div class="row mb-4">
+            <!-- Recharge Card -->
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="fas fa-plus-circle"></i> Recharge Prepaid Card</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('prepaid_recharge', membership_id=membership_id) }}" id="rechargeForm">
+                            <div class="mb-3">
+                                <label for="amount" class="form-label">Recharge Amount</label>
+                                <input type="number" class="form-control" id="amount" name="amount" 
+                                       step="0.01" min="0.01" placeholder="0.00" required>
+                                <div id="bonusPreview" class="form-text"></div>
+                            </div>
+                            <div class="mb-3">
+                                <label for="description" class="form-label">Description</label>
+                                <input type="text" class="form-control" id="description" name="description" 
+                                       value="Prepaid card recharge" placeholder="Optional description">
+                            </div>
+                            <div class="mb-3">
+                                <label for="override_bonus_percentage" class="form-label">Bonus Percentage (Optional)</label>
+                                <select class="form-select" id="override_bonus_percentage" name="override_bonus_percentage">
+                                    <option value="">Auto (Use Tier System)</option>
+                                    <option value="0">0% - No Bonus</option>
+                                    <option value="1">1%</option>
+                                    <option value="2">2%</option>
+                                    <option value="3">3%</option>
+                                    <option value="4">4%</option>
+                                    <option value="5">5%</option>
+                                    <option value="6">6%</option>
+                                    <option value="7">7%</option>
+                                    <option value="8">8%</option>
+                                    <option value="9">9%</option>
+                                    <option value="10">10%</option>
+                                </select>
+                                <small class="form-text text-muted">Select a custom bonus percentage (0-20%) or leave as Auto for tier-based calculation</small>
+                            </div>
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="fas fa-credit-card"></i> Recharge Card
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Usage Card -->
+            <div class="col-lg-6">
+                <div class="card">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="fas fa-shopping-cart"></i> Use Prepaid Balance</h5>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('prepaid_usage', membership_id=membership_id) }}" id="usageForm">
+                            <div class="mb-3">
+                                <label for="usage_amount" class="form-label">Usage Amount</label>
+                                <input type="number" class="form-control" id="usage_amount" name="amount" 
+                                       step="0.01" min="0.01" placeholder="0.00" required>
+                                <small class="form-text text-muted">
+                                    {% set converted_available_balance, available_balance_symbol = convert_price_to_user_currency(balance_info.current_balance) %}
+                                    Available balance: {{ available_balance_symbol }}{{ "%.2f"|format(converted_available_balance) }}
+                                </small>
+                            </div>
+                            <div class="mb-3">
+                                <label for="usage_description" class="form-label">Service/Purpose</label>
+                                <select class="form-select" id="usage_description" name="description">
+                                    <option value="Service payment">Service payment</option>
+                                    <option value="Membership fee">Membership fee</option>
+                                    <option value="Product purchase">Product purchase</option>
+                                    <option value="Event ticket">Event ticket</option>
+                                    <option value="Other service">Other service</option>
+                                </select>
+                            </div>
+                            <button type="submit" class="btn btn-info w-100" 
+                                    {% if balance_info.current_balance <= 0 %}disabled{% endif %}>
+                                <i class="fas fa-money-bill-wave"></i> Use Balance
+                            </button>
+                            {% if balance_info.current_balance <= 0 %}
+                                <small class="text-muted d-block mt-2">Insufficient balance for transactions</small>
+                            {% endif %}
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Transaction History -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-history text-info"></i> Transaction History</h5>
+                {% if transactions %}
+                    <span class="badge bg-primary">{{ transactions|length }} Recent Transaction(s)</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if transactions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Bonus</th>
+                                    <th>Balance</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in transactions %}
+                                <tr>
+                                    <td>
+                                        <small>{{ transaction.transaction_date[:16] if transaction.transaction_date else '' }}</small>
+                                    </td>
+                                    <td>
+                                        {% if transaction.transaction_type == 'recharge' %}
+                                            <span class="badge bg-success"><i class="fas fa-plus"></i> Recharge</span>
+                                        {% elif transaction.transaction_type == 'bonus' %}
+                                            <span class="badge bg-warning"><i class="fas fa-gift"></i> Bonus</span>
+                                        {% elif transaction.transaction_type == 'usage' %}
+                                            <span class="badge bg-info"><i class="fas fa-minus"></i> Usage</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% set converted_transaction_amount, transaction_amount_symbol = convert_price_to_user_currency(transaction.amount) %}
+                                        {% if transaction.transaction_type == 'usage' %}
+                                            <span class="text-danger">-{{ transaction_amount_symbol }}{{ "%.2f"|format(converted_transaction_amount) }}</span>
+                                        {% else %}
+                                            <span class="text-success">+{{ transaction_amount_symbol }}{{ "%.2f"|format(converted_transaction_amount) }}</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if transaction.bonus_amount > 0 %}
+                                            <span class="text-warning">
+                                                {% set converted_bonus_amount, bonus_amount_symbol = convert_price_to_user_currency(transaction.bonus_amount) %}
+                                                +{{ bonus_amount_symbol }}{{ "%.2f"|format(converted_bonus_amount) }}
+                                                ({{ "%.1f"|format(transaction.bonus_percentage) }}%)
+                                            </span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% set converted_balance_after, balance_after_symbol = convert_price_to_user_currency(transaction.balance_after) %}
+                                        {% set converted_balance_before, balance_before_symbol = convert_price_to_user_currency(transaction.balance_before) %}
+                                        <strong>{{ balance_after_symbol }}{{ "%.2f"|format(converted_balance_after) }}</strong>
+                                        <br>
+                                        <small class="text-muted">
+                                            From: {{ balance_before_symbol }}{{ "%.2f"|format(converted_balance_before) }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <small>{{ transaction.description or 'No description' }}</small>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No transactions yet</h5>
+                        <p class="text-muted">Start by recharging the prepaid card above.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="d-flex gap-2 mt-4">
+            <a href="{{ url_for('member_profile', membership_id=membership_id) }}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left"></i> Back to Profile
+            </a>
+            <a href="{{ url_for('members') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-users"></i> All Members
+            </a>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-info">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const amountInput = document.getElementById('amount');
+    const bonusPreview = document.getElementById('bonusPreview');
+    const overrideBonusPercentageSelect = document.getElementById('override_bonus_percentage');
+    
+    // Bonus tiers data from server
+    const bonusTiers = {{ bonus_tiers|tojson }};
+    
+    function calculateBonus(amount) {
+        let bonus = 0;
+        let percentage = 0;
+        let tierName = "No Bonus";
+        
+        for (let tier of bonusTiers) {
+            if (tier.is_active && 
+                amount >= tier.min_amount && 
+                (tier.max_amount === null || amount <= tier.max_amount)) {
+                percentage = tier.bonus_percentage;
+                bonus = amount * (percentage / 100);
+                tierName = tier.tier_name;
+                break;
+            }
+        }
+        
+        return { bonus, percentage, tierName };
+    }
+    
+    function updateBonusPreview() {
+        const amount = parseFloat(amountInput.value);
+        const overrideBonusPercentage = overrideBonusPercentageSelect.value;
+        
+        if (!amount || amount <= 0) {
+            bonusPreview.innerHTML = '';
+            return;
+        }
+        
+        if (overrideBonusPercentage) {
+            const bonusPercent = parseFloat(overrideBonusPercentage);
+            const overrideBonusAmount = amount * (bonusPercent / 100);
+            const total = amount + overrideBonusAmount;
+            bonusPreview.innerHTML = `
+                <div class="alert alert-info py-2 mt-2">
+                    <small>
+                        <strong>Custom Bonus Preview (${bonusPercent}%):</strong><br>
+                        Recharge: {{ currency_symbol }}${amount.toFixed(2)}<br>
+                        Bonus: {{ currency_symbol }}${overrideBonusAmount.toFixed(2)} (${bonusPercent}%)<br>
+                        <strong>Total Credit: {{ currency_symbol }}${total.toFixed(2)}</strong>
+                    </small>
+                </div>
+            `;
+            return;
+        }
+        
+        const { bonus, percentage, tierName } = calculateBonus(amount);
+        const total = amount + bonus;
+        
+        if (bonus > 0) {
+            bonusPreview.innerHTML = `
+                <div class="alert alert-success py-2 mt-2">
+                    <small>
+                        <strong>Bonus Preview (${tierName}):</strong><br>
+                        Recharge: {{ currency_symbol }}${amount.toFixed(2)}<br>
+                        Bonus: {{ currency_symbol }}${bonus.toFixed(2)} (${percentage}%)<br>
+                        <strong>Total Credit: {{ currency_symbol }}${total.toFixed(2)}</strong>
+                    </small>
+                </div>
+            `;
+        } else {
+            bonusPreview.innerHTML = `
+                <div class="alert alert-light py-2 mt-2">
+                    <small>
+                        <strong>No Bonus Available</strong><br>
+                        Total Credit: {{ currency_symbol }}${amount.toFixed(2)}
+                    </small>
+                </div>
+            `;
+        }
+    }
+    
+    amountInput.addEventListener('input', updateBonusPreview);
+    overrideBonusPercentageSelect.addEventListener('change', updateBonusPreview);
+    
+    // Form validation
+    document.getElementById('rechargeForm').addEventListener('submit', function(e) {
+        const amount = parseFloat(amountInput.value);
+        
+        if (!amount || amount <= 0) {
+            e.preventDefault();
+            alert('Please enter a valid recharge amount.');
+            return false;
+        }
+        
+        if (!confirm(`Are you sure you want to recharge ${amount.toFixed(2)} to this member's prepaid card?`)) {
+            e.preventDefault();
+            return false;
+        }
+    });
+    
+    document.getElementById('usageForm').addEventListener('submit', function(e) {
+        const amount = parseFloat(document.getElementById('usage_amount').value);
+        const maxBalance = {{ balance_info.current_balance }};
+        
+        if (!amount || amount <= 0) {
+            e.preventDefault();
+            alert('Please enter a valid usage amount.');
+            return false;
+        }
+        
+        if (amount > maxBalance) {
+            e.preventDefault();
+            alert(`Insufficient balance. Maximum available: ${maxBalance.toFixed(2)}`);
+            return false;
+        }
+        
+        if (!confirm(`Are you sure you want to deduct ${amount.toFixed(2)} from this member's prepaid balance?`)) {
+            e.preventDefault();
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

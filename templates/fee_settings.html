@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% block title %}Fee Management Settings - MemberSync{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="fas fa-percentage"></i> Fee Management Settings
+                </h4>
+                <small>Global Admin - Configure deduction fees</small>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle"></i>
+                    <strong>Fee Management:</strong> Configure percentage-based fees that are applied only to prepaid card deductions. 
+                    Recharges and other transactions are not subject to fees.
+                </div>
+
+                <form method="POST">
+                    <div class="mb-4">
+                        <label for="deduction_fee_percentage" class="form-label">
+                            <i class="fas fa-percent"></i> Deduction Fee Percentage
+                        </label>
+                        <div class="input-group">
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="deduction_fee_percentage" 
+                                   name="deduction_fee_percentage" 
+                                   value="{{ current_fee }}" 
+                                   min="0" 
+                                   max="100" 
+                                   step="0.1"
+                                   required>
+                            <span class="input-group-text">%</span>
+                        </div>
+                        <div class="form-text">
+                            <i class="fas fa-lightbulb text-warning"></i>
+                            This percentage will be applied to all prepaid card deductions. 
+                            For example, a 2.5% fee on a $100 deduction will charge $2.50.
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h6><i class="fas fa-calculator"></i> Fee Calculation Examples</h6>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">$50 Deduction</h6>
+                                        <p class="card-text">
+                                            {% set fee_amount = 50 * current_fee / 100 %}
+                                            {% set total_amount = 50 + fee_amount %}
+                                            {% set converted_fee, fee_symbol = convert_price_to_user_currency(fee_amount) %}
+                                            {% set converted_total, total_symbol = convert_price_to_user_currency(total_amount) %}
+                                            Fee: {{ fee_symbol }}{{ "%.2f"|format(converted_fee) }}<br>
+                                            Total: {{ total_symbol }}{{ "%.2f"|format(converted_total) }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="card bg-light">
+                                    <div class="card-body">
+                                        <h6 class="card-title">$200 Deduction</h6>
+                                        <p class="card-text">
+                                            {% set fee_amount = 200 * current_fee / 100 %}
+                                            {% set total_amount = 200 + fee_amount %}
+                                            {% set converted_fee, fee_symbol = convert_price_to_user_currency(fee_amount) %}
+                                            {% set converted_total, total_symbol = convert_price_to_user_currency(total_amount) %}
+                                            Fee: {{ fee_symbol }}{{ "%.2f"|format(converted_fee) }}<br>
+                                            Total: {{ total_symbol }}{{ "%.2f"|format(converted_total) }}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Update Fee Settings
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="card mt-4">
+            <div class="card-header bg-warning text-dark">
+                <h5 class="mb-0">
+                    <i class="fas fa-exclamation-triangle"></i> Important Notes
+                </h5>
+            </div>
+            <div class="card-body">
+                <ul class="mb-0">
+                    <li><strong>Fee Application:</strong> Fees are only applied to prepaid card deductions, not recharges</li>
+                    <li><strong>Real-time Updates:</strong> Fee changes take effect immediately for new transactions</li>
+                    <li><strong>Transaction Tracking:</strong> All fees are tracked separately in transaction history</li>
+                    <li><strong>Balance Impact:</strong> Fees are deducted from the member's prepaid balance</li>
+                    <li><strong>Global Setting:</strong> This setting applies to all organizations in the system</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const feeInput = document.getElementById('deduction_fee_percentage');
+    const examples = document.querySelectorAll('.card-text');
+    
+    function updateExamples() {
+        const fee = parseFloat(feeInput.value) || 0;
+        
+        // Update $50 example
+        const fee50 = 50 * fee / 100;
+        const total50 = 50 + fee50;
+        examples[0].innerHTML = `
+            Fee: $${fee50.toFixed(2)}<br>
+            Total: $${total50.toFixed(2)}
+        `;
+        
+        // Update $200 example
+        const fee200 = 200 * fee / 100;
+        const total200 = 200 + fee200;
+        examples[1].innerHTML = `
+            Fee: $${fee200.toFixed(2)}<br>
+            Total: $${total200.toFixed(2)}
+        `;
+    }
+    
+    feeInput.addEventListener('input', updateExamples);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,394 @@
+{% extends "base.html" %}
+{% block title %}Check-in Reports - MemberSync{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="mb-1">
+            <i class="fas fa-chart-bar text-primary"></i> Check-in Reports
+        </h1>
+        <p class="text-muted mb-0">Analyze facility usage and member visit patterns</p>
+    </div>
+    <div>
+        <a href="{{ url_for('checkin_dashboard') }}" class="btn btn-outline-primary">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- Date Range Filter -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label for="start_date" class="form-label">Start Date</label>
+                <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+            </div>
+            <div class="col-md-4">
+                <label for="end_date" class="form-label">End Date</label>
+                <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-filter"></i> Apply Filter
+                </button>
+                <button type="button" class="btn btn-outline-secondary" onclick="exportData()">
+                    <i class="fas fa-download"></i> Export
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Summary Statistics -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body text-center">
+                <h2 class="mb-1">{{ summary[0] if summary else 0 }}</h2>
+                <p class="mb-0">Total Check-ins</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body text-center">
+                <h2 class="mb-1">{{ summary[1] if summary else 0 }}</h2>
+                <p class="mb-0">Unique Members</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card bg-info text-white h-100">
+            <div class="card-body text-center">
+                <h2 class="mb-1">
+                    {% if summary and summary[2] %}
+                        {{ "%.1f"|format(summary[2]) }}h
+                    {% else %}
+                        0h
+                    {% endif %}
+                </h2>
+                <p class="mb-0">Avg Visit Duration</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card bg-warning text-white h-100">
+            <div class="card-body text-center">
+                <h2 class="mb-1">
+                    {% if summary and summary[0] and summary[1] %}
+                        {{ "%.1f"|format(summary[0] / summary[1]) }}
+                    {% else %}
+                        0
+                    {% endif %}
+                </h2>
+                <p class="mb-0">Visits per Member</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line text-primary"></i> Daily Check-ins
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="dailyChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-clock text-info"></i> Peak Hours
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="hourlyChart" height="300"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Service Types and Top Members -->
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-pie-chart text-success"></i> Service Usage
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if service_breakdown %}
+                    <canvas id="serviceChart" height="300"></canvas>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-chart-pie fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No service data available for selected period</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-trophy text-warning"></i> Top Members
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if top_members %}
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Member</th>
+                                    <th>ID</th>
+                                    <th>Visits</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for member in top_members %}
+                                <tr>
+                                    <td>
+                                        {% if loop.index <= 3 %}
+                                            <i class="fas fa-medal text-warning"></i>
+                                        {% endif %}
+                                        {{ loop.index }}
+                                    </td>
+                                    <td>{{ member[1] }}</td>
+                                    <td>
+                                        <a href="{{ url_for('member_profile', membership_id=member[0]) }}" 
+                                           class="text-decoration-none">
+                                            {{ member[0] }}
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary rounded-pill">{{ member[2] }}</span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No member data available for selected period</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Detailed Activity Log -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-list text-secondary"></i> Recent Activity Log
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if daily_counts %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Total Check-ins</th>
+                                    <th>Unique Members</th>
+                                    <th>Peak Hour</th>
+                                    <th>Most Used Service</th>
+                                    <th>Avg Duration</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for day in daily_counts %}
+                                <tr>
+                                    <td>{{ day[0] }}</td>
+                                    <td>
+                                        <span class="badge bg-primary rounded-pill">{{ day[1] }}</span>
+                                    </td>
+                                    <td>{{ day[1] }}</td>
+                                    <td>
+                                        {% set hour_data = hourly_breakdown | selectattr('0', 'equalto', day[0]) | first %}
+                                        {% if hour_data %}
+                                            {{ hour_data[0] }}:00
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% set service_data = service_breakdown | first %}
+                                        {% if service_data %}
+                                            <span class="badge bg-success">{{ service_data[0] }}</span>
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                                    </td>
+                                    <td>-</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No activity data available for selected period</p>
+                        <a href="{{ url_for('checkin_scan') }}" class="btn btn-primary">
+                            <i class="fas fa-qrcode"></i> Start Recording Check-ins
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Daily Check-ins Chart
+const dailyCtx = document.getElementById('dailyChart');
+if (dailyCtx) {
+    new Chart(dailyCtx, {
+        type: 'line',
+        data: {
+            labels: [{% for day in daily_counts %}'{{ day[0] }}'{% if not loop.last %},{% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Check-ins',
+                data: [{% for day in daily_counts %}{{ day[1] }}{% if not loop.last %},{% endif %}{% endfor %}],
+                borderColor: 'rgb(75, 192, 192)',
+                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                tension: 0.1,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+}
+
+// Hourly Peak Chart
+const hourlyCtx = document.getElementById('hourlyChart');
+if (hourlyCtx) {
+    new Chart(hourlyCtx, {
+        type: 'bar',
+        data: {
+            labels: [{% for hour in hourly_breakdown %}'{{ hour[0] }}:00'{% if not loop.last %},{% endif %}{% endfor %}],
+            datasets: [{
+                label: 'Check-ins',
+                data: [{% for hour in hourly_breakdown %}{{ hour[1] }}{% if not loop.last %},{% endif %}{% endfor %}],
+                backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        stepSize: 1
+                    }
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+}
+
+// Service Types Chart
+{% if service_breakdown %}
+const serviceCtx = document.getElementById('serviceChart');
+if (serviceCtx) {
+    new Chart(serviceCtx, {
+        type: 'doughnut',
+        data: {
+            labels: [{% for service in service_breakdown %}'{{ service[0] }}'{% if not loop.last %},{% endif %}{% endfor %}],
+            datasets: [{
+                data: [{% for service in service_breakdown %}{{ service[1] }}{% if not loop.last %},{% endif %}{% endfor %}],
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.8)',
+                    'rgba(54, 162, 235, 0.8)',
+                    'rgba(255, 205, 86, 0.8)',
+                    'rgba(75, 192, 192, 0.8)',
+                    'rgba(153, 102, 255, 0.8)',
+                    'rgba(255, 159, 64, 0.8)'
+                ],
+                borderWidth: 2,
+                borderColor: '#fff'
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'bottom'
+                }
+            }
+        }
+    });
+}
+{% endif %}
+
+function exportData() {
+    const startDate = document.getElementById('start_date').value;
+    const endDate = document.getElementById('end_date').value;
+    
+    const url = new URL('/checkin/export', window.location.origin);
+    url.searchParams.append('start_date', startDate);
+    url.searchParams.append('end_date', endDate);
+    
+    window.open(url.toString(), '_blank');
+}
+
+// Auto-refresh data every 5 minutes
+setInterval(() => {
+    if (document.getElementById('start_date').value === new Date().toISOString().split('T')[0]) {
+        window.location.reload();
+    }
+}, 300000);
+</script>
+{% endblock %}

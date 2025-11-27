@@ -1,0 +1,247 @@
+{% extends "base.html" %}
+{% block title %}Manage Bonus Tiers - MemberSync{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2><i class="fas fa-gift text-warning"></i> Manage Bonus Tiers</h2>
+                <p class="text-muted mb-0">Configure prepaid card recharge bonuses for your organization</p>
+            </div>
+            <div>
+                <a href="{{ url_for('admin_settings') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-arrow-left"></i> Back to Settings
+                </a>
+            </div>
+        </div>
+
+        <!-- Create New Tier -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-plus-circle text-success"></i> Create New Bonus Tier</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('create_bonus_tier') }}" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="tier_name" class="form-label">Tier Name</label>
+                        <input type="text" class="form-control" id="tier_name" name="tier_name" 
+                               placeholder="e.g., Gold" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="min_amount" class="form-label">Min Amount</label>
+                        <input type="number" class="form-control" id="min_amount" name="min_amount" 
+                               step="0.01" min="0" placeholder="0.00" required>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="max_amount" class="form-label">Max Amount</label>
+                        <input type="number" class="form-control" id="max_amount" name="max_amount" 
+                               step="0.01" min="0" placeholder="Optional">
+                        <small class="form-text text-muted">Leave empty for no upper limit</small>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="bonus_percentage" class="form-label">Bonus %</label>
+                        <input type="number" class="form-control" id="bonus_percentage" name="bonus_percentage" 
+                               step="0.1" min="0" max="100" placeholder="10" required>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">&nbsp;</label>
+                        <button type="submit" class="btn btn-success w-100">
+                            <i class="fas fa-plus"></i> Create Tier
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Existing Tiers -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="fas fa-list text-info"></i> Current Bonus Tiers</h5>
+                {% if bonus_tiers %}
+                    <span class="badge bg-primary">{{ bonus_tiers|length }} Tier(s)</span>
+                {% endif %}
+            </div>
+            <div class="card-body">
+                {% if bonus_tiers %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Tier Name</th>
+                                    <th>Amount Range</th>
+                                    <th>Bonus %</th>
+                                    <th>Status</th>
+                                    <th>Example</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for tier in bonus_tiers %}
+                                <tr class="{% if not tier.is_active %}table-light text-muted{% endif %}">
+                                    <td>
+                                        <strong>{{ tier.tier_name }}</strong>
+                                    </td>
+                                    <td>
+                                        {% set converted_min_amount, min_amount_symbol = convert_price_to_user_currency(tier.min_amount) %}
+                                        {{ min_amount_symbol }}{{ "%.0f"|format(converted_min_amount) }}
+                                        {% if tier.max_amount %}
+                                            {% set converted_max_amount, max_amount_symbol = convert_price_to_user_currency(tier.max_amount) %}
+                                            - {{ max_amount_symbol }}{{ "%.0f"|format(converted_max_amount) }}
+                                        {% else %}
+                                            +
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-warning">{{ tier.bonus_percentage }}%</span>
+                                    </td>
+                                    <td>
+                                        {% if tier.is_active %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Inactive</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">
+                                            {% set example_amount = tier.min_amount + 1000 if tier.min_amount < 50000 else tier.min_amount %}
+                                            {% set bonus = example_amount * (tier.bonus_percentage / 100) %}
+                                            {% set converted_example_amount, example_amount_symbol = convert_price_to_user_currency(example_amount) %}
+                                            {% set converted_bonus, bonus_symbol = convert_price_to_user_currency(bonus) %}
+                                            {{ example_amount_symbol }}{{ "%.0f"|format(converted_example_amount) }} → 
+                                            +{{ bonus_symbol }}{{ "%.0f"|format(converted_bonus) }} bonus
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-primary btn-sm" 
+                                                    onclick="editTier({{ tier.id }})">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            {% if tier.is_active %}
+                                                <button class="btn btn-outline-warning btn-sm" 
+                                                        onclick="toggleTier({{ tier.id }}, false)">
+                                                    <i class="fas fa-pause"></i>
+                                                </button>
+                                            {% else %}
+                                                <button class="btn btn-outline-success btn-sm" 
+                                                        onclick="toggleTier({{ tier.id }}, true)">
+                                                    <i class="fas fa-play"></i>
+                                                </button>
+                                            {% endif %}
+                                            <button class="btn btn-outline-danger btn-sm" 
+                                                    onclick="deleteTier({{ tier.id }})">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-gift fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No bonus tiers configured</h5>
+                        <p class="text-muted">Create your first bonus tier above to start offering recharge bonuses.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Preview Section -->
+        {% if bonus_tiers %}
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-calculator text-info"></i> Bonus Calculator Preview</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <label for="preview_amount" class="form-label">Test Amount</label>
+                        <input type="number" class="form-control" id="preview_amount" 
+                               step="0.01" min="0" placeholder="Enter amount to see bonus">
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label">Bonus Preview</label>
+                        <div id="bonus_preview" class="alert alert-light">
+                            <small class="text-muted">Enter an amount to see the applicable bonus</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const bonusTiers = {{ bonus_tiers|tojson }};
+    const previewAmount = document.getElementById('preview_amount');
+    const bonusPreview = document.getElementById('bonus_preview');
+    
+    if (previewAmount && bonusPreview) {
+        previewAmount.addEventListener('input', function() {
+            const amount = parseFloat(this.value);
+            
+            if (!amount || amount <= 0) {
+                bonusPreview.innerHTML = '<small class="text-muted">Enter an amount to see the applicable bonus</small>';
+                bonusPreview.className = 'alert alert-light';
+                return;
+            }
+            
+            let applicableTier = null;
+            for (let tier of bonusTiers) {
+                if (tier.is_active && 
+                    amount >= tier.min_amount && 
+                    (tier.max_amount === null || amount <= tier.max_amount)) {
+                    applicableTier = tier;
+                    break;
+                }
+            }
+            
+            if (applicableTier) {
+                const bonus = amount * (applicableTier.bonus_percentage / 100);
+                const total = amount + bonus;
+                bonusPreview.innerHTML = `
+                    <strong>${applicableTier.tier_name} Tier (${applicableTier.bonus_percentage}% bonus)</strong><br>
+                    Recharge: {{ currency_symbol }}${amount.toFixed(2)}<br>
+                    Bonus: {{ currency_symbol }}${bonus.toFixed(2)}<br>
+                    <strong>Total Credit: {{ currency_symbol }}${total.toFixed(2)}</strong>
+                `;
+                bonusPreview.className = 'alert alert-success';
+            } else {
+                bonusPreview.innerHTML = `
+                    <strong>No Bonus Applicable</strong><br>
+                    Total Credit: {{ currency_symbol }}${amount.toFixed(2)}
+                `;
+                bonusPreview.className = 'alert alert-warning';
+            }
+        });
+    }
+});
+
+function editTier(tierId) {
+    // TODO: Implement edit functionality
+    alert('Edit functionality to be implemented');
+}
+
+function toggleTier(tierId, activate) {
+    // TODO: Implement toggle functionality
+    const action = activate ? 'activate' : 'deactivate';
+    if (confirm(`Are you sure you want to ${action} this bonus tier?`)) {
+        // Make AJAX call to toggle tier status
+        alert(`${action} functionality to be implemented`);
+    }
+}
+
+function deleteTier(tierId) {
+    if (confirm('Are you sure you want to delete this bonus tier? This action cannot be undone.')) {
+        // TODO: Implement delete functionality
+        alert('Delete functionality to be implemented');
+    }
+}
+</script>
+{% endblock %}

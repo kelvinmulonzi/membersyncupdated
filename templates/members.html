@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+{% block title %}Members List - MemberSync{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h2><i class="fas fa-users"></i> Members List</h2>
+        {% if is_global_superadmin %}
+        <p class="text-muted mb-0">Manage members across all organizations</p>
+        {% else %}
+        <p class="text-muted mb-0">Manage your organization's members</p>
+        {% endif %}
+    </div>
+    <div>
+        <a href="{{ url_for('register') }}" class="btn btn-primary">
+            <i class="fas fa-user-plus"></i> Add Member
+        </a>
+        <a href="{{ url_for('export_members') }}" class="btn btn-success">
+            <i class="fas fa-download"></i> Export CSV
+        </a>
+    </div>
+</div>
+
+<!-- Enhanced Search and Filter -->
+<div class="card mb-4">
+    <div class="card-header bg-primary text-white">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-filter me-2"></i>
+            <h5 class="mb-0">Search & Filter Members</h5>
+        </div>
+    </div>
+    <div class="card-body">
+        <form method="GET">
+            <div class="row g-3">
+                <!-- Search Input -->
+                <div class="col-lg-4 col-md-6">
+                    <label class="form-label fw-bold">
+                        <i class="fas fa-search text-primary me-1"></i>Search Members
+                    </label>
+                    <input type="text" class="form-control" name="search" 
+                           placeholder="Name, email, or membership ID..." 
+                           value="{{ search_query or '' }}">
+                    <div class="form-text">Search across member names, emails, and membership IDs</div>
+                </div>
+                
+                <!-- Status Filter -->
+                <div class="col-lg-2 col-md-6">
+                    <label class="form-label fw-bold">
+                        <i class="fas fa-user-check text-success me-1"></i>Status
+                    </label>
+                    <select name="status" class="form-select">
+                        <option value="all" {{ 'selected' if status_filter == 'all' else '' }}>All Status</option>
+                        <option value="active" {{ 'selected' if status_filter == 'active' else '' }}>Active</option>
+                        <option value="expired" {{ 'selected' if status_filter == 'expired' else '' }}>Expired</option>
+                        <option value="Pending" {{ 'selected' if status_filter == 'Pending' else '' }}>Pending</option>
+                    </select>
+                </div>
+                
+                {% if is_global_superadmin and accessible_orgs %}
+                <!-- Organization Filter -->
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label fw-bold">
+                        <i class="fas fa-building text-info me-1"></i>Organization
+                    </label>
+                    <select name="organization" class="form-select" id="organizationFilter" onchange="updateLocationDropdown()">
+                        <option value="all" {{ 'selected' if selected_org == 'all' else '' }}>All Organizations</option>
+                        {% for org in accessible_orgs %}
+                        <option value="{{ org.id }}" {{ 'selected' if selected_org == org.id|string else '' }}>
+                            {{ org.name if org.name else 'Unnamed Organization (ID: ' ~ org.id ~ ')' }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Location Filter -->
+                <div class="col-lg-2 col-md-6">
+                    <label class="form-label fw-bold">
+                        <i class="fas fa-map-marker-alt text-warning me-1"></i>Location
+                    </label>
+                    <select name="location" class="form-select" id="locationFilter">
+                        <option value="all" {{ 'selected' if selected_location == 'all' else '' }}>All Locations</option>
+                        {% for location in accessible_locations %}
+                        <option value="{{ location.id }}" {{ 'selected' if selected_location == location.id|string else '' }}>
+                            {{ location.name if location.name else 'Unnamed Location (ID: ' ~ location.id ~ ')' }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Search Button -->
+                <div class="col-lg-1 col-md-12">
+                    <label class="form-label fw-bold text-white">.</label>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+                
+                {% elif has_org_superadmin_capabilities and accessible_locations %}
+                <!-- Store Filter for Org Super Admin -->
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label fw-bold">
+                        <i class="fas fa-store text-warning me-1"></i>Store
+                    </label>
+                    <select name="location" class="form-select">
+                        <option value="all" {{ 'selected' if selected_location == 'all' else '' }}>All Stores</option>
+                        {% for location in accessible_locations %}
+                        <option value="{{ location.id }}" {{ 'selected' if selected_location == location.id|string else '' }}>
+                            {{ location.name if location.name else 'Unnamed Store (ID: ' ~ location.id ~ ')' }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <!-- Search Button -->
+                <div class="col-lg-3 col-md-6">
+                    <label class="form-label fw-bold text-white">.</label>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-2"></i>Search
+                    </button>
+                </div>
+                
+                {% else %}
+                <!-- Regular Search Button -->
+                <div class="col-lg-5 col-md-12">
+                    <label class="form-label fw-bold text-white">.</label>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-search me-2"></i>Search Members
+                    </button>
+                </div>
+                {% endif %}
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if members %}
+<div class="card">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead class="table-dark">
+                <tr>
+                    <th>ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Type</th>
+                    {% if is_global_superadmin %}
+                    <th>Organization</th>
+                    {% endif %}
+                    <th>Expires</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for member in members %}
+                    {% set exp_date = member.expiration_date %}
+                    {% set status = member.status %}
+                    {% set membership_id = member.membership_id %}
+                    {% set name = member.name %}
+                    {% set email = member.email %}
+                    {% set phone = member.phone %}
+                    {% set membership_type = member.membership_type %}
+                    {% set organization_name = member.organization_name if member.organization_name else 'N/A' %}
+                    
+                    {% set days_diff = 0 %}
+                    {% set expiry_class = '' %}
+                    {% if exp_date and status == 'active' %}
+                        {% set exp_datetime = moment(exp_date) if moment is defined else exp_date %}
+                        {% set today = moment() if moment is defined else '' %}
+                        {% if today %}
+                            {% set days_diff = (exp_datetime.timestamp - today.timestamp) // 86400 %}
+                        {% endif %}
+                        {% if days_diff < 0 %}
+                            {% set expiry_class = 'table-danger' %}
+                        {% elif days_diff <= 7 %}
+                            {% set expiry_class = 'table-warning' %}
+                        {% endif %}
+                    {% endif %}
+
+                    <tr class="{{ expiry_class if expiry_class else '' }}{{ ' table-secondary' if status == 'Pending' else '' }}">
+                        <td><span class="badge bg-primary">{{ membership_id }}</span></td>
+                        <td>
+                            <strong>{{ name }}</strong>
+                            {% if status == 'Pending' %}
+                            <br><small class="text-muted">Payment pending</small>
+                            {% endif %}
+                        </td>
+                        <td>{{ email or 'N/A' }}</td>
+                        <td>{{ phone or 'N/A' }}</td>
+                        <td>
+                            <span class="badge bg-{% if membership_type == 'Platinum' %}warning{% elif membership_type == 'Gold' %}info{% elif membership_type == 'Silver' %}secondary{% else %}dark{% endif %}">
+                                {{ membership_type }}
+                            </span>
+                        </td>
+                        {% if is_global_superadmin %}
+                        <td>
+                            <small class="text-muted"><span class="notranslate" translate="no">{{ organization_name }}</span></small>
+                        </td>
+                        {% endif %}
+                        <td>
+                            {% if exp_date %}
+                                {{ exp_date }}
+                                {% if status == 'active' and days_diff is defined %}
+                                    {% if days_diff < 0 %}
+                                        <br><span class="badge bg-danger">EXPIRED</span>
+                                    {% elif days_diff <= 7 %}
+                                        <br><span class="badge bg-warning">{{ days_diff }} days left</span>
+                                    {% endif %}
+                                {% endif %}
+                            {% else %}
+                                <span class="text-muted">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-{% if status == 'Active' or status == 'active' %}success{% elif status == 'Pending' %}warning{% else %}danger{% endif %}">
+                                {{ status.title() if status else 'Unknown' }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{{ url_for('member_profile', membership_id=membership_id) }}" 
+                                   class="btn btn-sm btn-outline-primary" title="View Profile">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{{ url_for('edit_member', membership_id=membership_id) }}" 
+                                   class="btn btn-sm btn-outline-warning" title="Edit Member">   
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{{ url_for('member_card', membership_id=membership_id) }}" 
+                                   class="btn btn-sm btn-outline-info" title="Member Card">      
+                                    <i class="fas fa-id-card"></i>
+                                </a>
+                                <a href="{{ url_for('payments', membership_id=membership_id) }}" 
+                                   class="btn btn-sm btn-outline-success" title="Payments">      
+                                    <i class="fas fa-dollar-sign"></i>
+                                </a>
+                                {% if status == 'expired' or (days_diff is defined and days_diff <= 7) %}
+                                    <a href="{{ url_for('renew_membership', membership_id=membership_id) }}"
+                                       class="btn btn-sm btn-outline-success" title="Renew Membership">
+                                        <i class="fas fa-sync-alt"></i>
+                                    </a>
+                                {% endif %}
+                                <a href="{{ url_for('delete_member', membership_id=membership_id) }}"
+                                   class="btn btn-sm btn-outline-danger" title="Delete Member"
+                                   onclick="return confirm('Are you sure you want to delete this member?')">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Member Statistics -->
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card text-center bg-primary text-white">
+            <div class="card-body">
+                <h5 class="card-title">{{ members|length }}</h5>
+                <p class="card-text">Total Members</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center bg-success text-white">
+            <div class="card-body">
+                <h5 class="card-title">{{ members|selectattr('status', 'in', ['Active', 'active'])|list|length }}</h5>
+                <p class="card-text">Active Members</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center bg-warning text-white">
+            <div class="card-body">
+                <h5 class="card-title">{{ members|selectattr('status', 'equalto', 'Pending')|list|length }}</h5>
+                <p class="card-text">Pending Payment</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-center bg-danger text-white">
+            <div class="card-body">
+                <h5 class="card-title">{{ members|selectattr('status', 'equalto', 'expired')|list|length }}</h5>
+                <p class="card-text">Expired Members</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="text-center py-5">
+    <i class="fas fa-users fa-3x text-muted mb-3"></i>
+    <h4 class="text-muted">No members found</h4>
+    {% if search_query or status_filter != 'all' %}
+        <p class="text-muted">Try adjusting your search criteria or filters.</p>
+        <a href="{{ url_for('members') }}" class="btn btn-outline-secondary me-2">
+            <i class="fas fa-times"></i> Clear Filters
+        </a>
+    {% else %}
+        <p class="text-muted">Start by registering your first member.</p>
+    {% endif %}
+    <a href="{{ url_for('register') }}" class="btn btn-primary">
+        <i class="fas fa-user-plus"></i> Register New Member
+    </a>
+</div>
+{% endif %}
+
+<script>
+// Global Super Admin: Cascading dropdown functionality
+function updateLocationDropdown() {
+    const orgSelect = document.getElementById('organizationFilter');
+    const locationSelect = document.getElementById('locationFilter');
+    
+    if (!orgSelect || !locationSelect) return;
+    
+    const selectedOrgId = orgSelect.value;
+    
+    // Clear location dropdown
+    locationSelect.innerHTML = '<option value="all">All Locations</option>';
+    
+    if (selectedOrgId && selectedOrgId !== 'all') {
+        // Fetch locations for selected organization via AJAX
+        fetch(`/api/locations/${selectedOrgId}`)
+            .then(response => response.json())
+            .then(data => {
+                data.locations.forEach(location => {
+                    const option = document.createElement('option');
+                    option.value = location.id;
+                    option.textContent = location.name;
+                    locationSelect.appendChild(option);
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching locations:', error);
+            });
+    }
+}
+
+// Initialize location dropdown on page load
+document.addEventListener('DOMContentLoaded', function() {
+    updateLocationDropdown();
+});
+</script>
+
+{% endblock %}

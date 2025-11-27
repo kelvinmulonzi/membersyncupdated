@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block title %}Manage Organization Admins - MemberSync{% endblock %}
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <h4 class="mb-0"><i class="fas fa-users-cog"></i> Manage Organization Admins</h4>
+                    <a href="{{ url_for('create_org_admin') }}" class="btn btn-light">
+                        <i class="fas fa-user-plus"></i> Add Admin
+                    </a>
+                </div>
+                <div class="card-body">
+                    {% if admins %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th><i class="fas fa-hashtag"></i> User ID</th>
+                                    <th><i class="fas fa-user"></i> Username</th>
+                                    <th><i class="fas fa-envelope"></i> Email</th>
+                                    {% if is_global_superadmin %}
+                                    <th><i class="fas fa-building"></i> Organization</th>
+                                    {% endif %}
+                                    <th><i class="fas fa-user-shield"></i> Role</th>
+                                    <th><i class="fas fa-map-marker-alt"></i> Location</th>
+                                    <th><i class="fas fa-calendar"></i> Created</th>
+                                    <th><i class="fas fa-cog"></i> Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for admin in admins %}
+                                <tr>
+                                    <td>
+                                        <span class="badge bg-secondary"><i class="fas fa-id-badge"></i> {{ admin[1] }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <i class="fas fa-user-circle text-primary me-2"></i>
+                                            <strong>{{ admin[2] }}</strong>
+                                        </div>
+                                    </td>
+                                    <td><small>{{ admin[3] }}</small></td>
+                                    {% if is_global_superadmin %}
+                                    <td>
+                                        <span class="badge bg-primary" translate="no">
+                                            <i class="fas fa-building"></i> {{ admin[7] or 'N/A' }}
+                                        </span>
+                                    </td>
+                                    {% endif %}
+                                    <td>
+                                        {% if admin[5] %}
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="fas fa-crown"></i> Org Superadmin
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-info">
+                                                <i class="fas fa-user-tie"></i> Location Admin
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if admin[9] %}
+                                            <span class="badge bg-success" translate="no">
+                                                <i class="fas fa-map-marker-alt"></i> {{ admin[9] }}
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">
+                                                <i class="fas fa-building"></i> All Locations
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td><small class="text-muted">{{ admin[6][:10] if admin[6] else 'N/A' }}</small></td>
+                                    <td>
+                                        <div class="btn-group" role="group">
+                                            <a href="{{ url_for('edit_org_admin', admin_id=admin[0]) }}" 
+                                               class="btn btn-sm btn-outline-primary" title="Edit Admin">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            {% if admin[0] != session.user_id %}
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-danger" 
+                                                    onclick="confirmDeleteAdmin({{ admin[0] }}, '{{ admin[2]|e }}')"
+                                                    title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                            {% else %}
+                                            <span class="btn btn-sm btn-outline-secondary disabled" title="Cannot delete yourself">
+                                                <i class="fas fa-user-shield"></i>
+                                            </span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No admins found</h5>
+                        <p class="text-muted">Create your first organization admin to get started.</p>
+                        <a href="{{ url_for('create_org_admin') }}" class="btn btn-primary">
+                            <i class="fas fa-user-plus"></i> Add First Admin
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDeleteAdmin(adminId, adminName) {
+    if (confirm(`Are you sure you want to delete admin "${adminName}"? This action cannot be undone.`)) {
+        // Create a form and submit it
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/org_admin/${adminId}/delete`;
+        form.style.display = 'none';
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+{% endblock %}

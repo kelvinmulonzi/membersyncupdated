@@ -1,0 +1,397 @@
+{% extends "base.html" %}
+{% block title %}Settings - MemberSync{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-10 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="mb-0">
+                    <i class="fas fa-cog text-primary"></i>
+                    Application Settings
+                </h3>
+            </div>
+            
+            <!-- Navigation Tabs -->
+            <ul class="nav nav-tabs" id="settingsTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="general-tab" data-bs-toggle="tab" 
+                            data-bs-target="#general" type="button" role="tab" 
+                            aria-controls="general" aria-selected="true">
+                        <i class="fas fa-cog me-1"></i> General
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="card-tab" data-bs-toggle="tab" 
+                            data-bs-target="#card" type="button" role="tab" 
+                            aria-controls="card" aria-selected="false">
+                        <i class="fas fa-address-card me-1"></i> Membership Card
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="card-body">
+                <form method="POST">
+                    <div class="tab-content" id="settingsTabContent">
+                        <!-- General Settings Tab -->
+                        <div class="tab-pane fade show active" id="general" role="tabpanel" aria-labelledby="general-tab">
+                            <!-- Currency Settings Section -->
+                            <div class="mb-4">
+                                <h5 class="mb-3"><i class="fas fa-coins text-primary"></i> Currency Settings</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="currency_code" class="form-label">
+                                        <i class="fas fa-globe"></i> Currency
+                                    </label>
+                                    <select class="form-select" id="currency_code" name="currency_code" required>
+                                        {% for symbol, code, name in currencies %}
+                                        <option value="{{ code }}" 
+                                                data-symbol="{{ symbol }}"
+                                                {% if code == current_code %}selected{% endif %}>
+                                            {{ symbol }} - {{ code }} ({{ name }})
+                                        </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text">
+                                        Current: {{ current_symbol }} {{ current_code }}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="currency_symbol" class="form-label">
+                                        <i class="fas fa-dollar-sign"></i> Currency Symbol
+                                    </label>
+                                    <input type="text"
+                                           class="form-control"
+                                           id="currency_symbol"
+                                           name="currency_symbol"
+                                           value="{{ current_symbol }}"
+                                           maxlength="5"
+                                           required>
+                                    <div class="form-text">
+                                        Symbol used in payment displays
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="alert alert-info">
+                            <i class="fas fa-info-circle"></i>
+                            <strong>Preview:</strong>
+                            Payment amounts will display as <strong><span id="preview">{{ current_symbol }}100.00</span></strong>
+                        </div>
+                    </div>
+
+                    <!-- Language Settings Section -->
+                    <div class="mb-4">
+                        <h5 class="mb-3"><i class="fas fa-language text-primary"></i> Language Settings</h5>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="default_language" class="form-label">Default Language</label>
+                                    <select class="form-select" id="default_language" name="default_language">
+                                        {% for code, name in LANGUAGES.items() %}
+                                            <option value="{{ code }}" {% if code == current_language %}selected{% endif %}>
+                                                {{ name }}
+                                            </option>
+                                        {% endfor %}
+                                    </select>
+                                    <div class="form-text">This will be the default language for new users</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="form-label">Current Language</label>
+                                    <div class="form-control-plaintext">
+                                        <span class="badge bg-primary">{{ LANGUAGES[current_language] }}</span>
+                                    </div>
+                                    <div class="form-text">Your current interface language</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Form Actions for General Tab -->
+                    <div class="d-flex gap-2 mt-4">
+                        <button type="submit" name="save_general" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save General Settings
+                        </button>
+                        <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to Dashboard
+                        </a>
+                    </div>
+                </div>  <!-- End of General Tab -->
+                
+                <!-- Card Design Tab -->
+                <div class="tab-pane fade" id="card" role="tabpanel" aria-labelledby="card-tab">
+                    <div class="mb-4">
+                        <h5 class="mb-3"><i class="fas fa-palette text-primary"></i> Card Design</h5>
+                        
+                        <!-- Company Name -->
+                        <div class="mb-4">
+                            <label for="card_company_name" class="form-label">
+                                <i class="fas fa-building"></i> Company/Organization Name
+                            </label>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="card_company_name" 
+                                   name="card_company_name"
+                                   value="{{ card_company_name or '' }}"
+                                   placeholder="Enter your organization name to display on cards">
+                            <div class="form-text">
+                                This will appear at the top of membership cards
+                            </div>
+                        </div>
+                        
+                        <!-- Color Theme -->
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <label for="card_primary_color" class="form-label">
+                                    <i class="fas fa-fill-drip"></i> Primary Color
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">#</span>
+                                    <input type="color" 
+                                           class="form-control form-control-color" 
+                                           id="card_primary_color" 
+                                           name="card_primary_color"
+                                           value="{{ card_primary_color or '#667eea' }}"
+                                           title="Choose primary color">
+                                    <input type="text" 
+                                           class="form-control" 
+                                           value="{{ card_primary_color or '#667eea' }}"
+                                           id="card_primary_color_text"
+                                           maxlength="7"
+                                           placeholder="#667eea">
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-6">
+                                <label for="card_secondary_color" class="form-label">
+                                    <i class="fas fa-fill"></i> Secondary Color
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">#</span>
+                                    <input type="color" 
+                                           class="form-control form-control-color" 
+                                           id="card_secondary_color" 
+                                           name="card_secondary_color"
+                                           value="{{ card_secondary_color or '#764ba2' }}"
+                                           title="Choose secondary color">
+                                    <input type="text" 
+                                           class="form-control" 
+                                           value="{{ card_secondary_color or '#764ba2' }}"
+                                           id="card_secondary_color_text"
+                                           maxlength="7"
+                                           placeholder="#764ba2">
+                                </div>
+                            </div>
+                            <div class="form-text mt-2">
+                                These colors will be used for the card's gradient background
+                            </div>
+                        </div>
+                        
+                        <!-- Card Preview -->
+                        <div class="mb-4">
+                            <label class="form-label">Card Preview</label>
+                            {% set primary_color = card_primary_color or '#667eea' %}
+                            {% set secondary_color = card_secondary_color or '#764ba2' %}
+                            <div class="card-preview" 
+                                 style="background: linear-gradient(135deg, {{ primary_color }} 0%, {{ secondary_color }} 100%);
+                                        border-radius: 12px; padding: 20px; color: white; max-width: 350px; margin: 0 auto;">
+                                <div class="text-center mb-3">
+                                    <h5 class="mb-0">{{ card_company_name or 'Your Organization' }}</h5>
+                                    <small class="opacity-75">MEMBER CARD</small>
+                                </div>
+                                <div class="text-center mb-3">
+                                    <div class="avatar-preview" 
+                                         style="width: 80px; height: 80px; border-radius: 50%; 
+                                                background-color: rgba(255,255,255,0.2); 
+                                                margin: 0 auto 10px; 
+                                                display: flex; 
+                                                align-items: center; 
+                                                justify-content: center;">
+                                        <i class="fas fa-user fa-2x"></i>
+                                    </div>
+                                    <h5 class="mb-1">John Doe</h5>
+                                    <small class="opacity-75">Member ID: MBR-123456</small>
+                                </div>
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <small class="d-block opacity-75">Member Since</small>
+                                        <strong>Jan 2023</strong>
+                                    </div>
+                                    <div class="text-end">
+                                        <small class="d-block opacity-75">Type</small>
+                                        <strong>Premium</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Form Actions for Card Tab -->
+                        <div class="d-flex gap-2">
+                            <button type="submit" name="save_card" class="btn btn-primary">
+                                <i class="fas fa-save"></i> Save Card Design
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" onclick="resetCardDesign()">
+                                <i class="fas fa-undo"></i> Reset to Default
+                            </button>
+                        </div>
+                    </div>
+                </div>  <!-- End of Card Design Tab -->
+                
+                <!-- Form Actions -->
+                <div class="d-flex gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Save All Settings
+                    </button>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                        <i class="fas fa-arrow-left"></i> Back to Dashboard
+                    </a>
+                </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Settings Info -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="fas fa-question-circle"></i> About Settings</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-coins text-primary"></i> Currency Changes</h6>
+                        <ul class="list-unstyled mb-3">
+                            <li><i class="fas fa-check text-success"></i> Apply to all payment displays</li>
+                            <li><i class="fas fa-check text-success"></i> Existing amounts are not converted</li>
+                            <li><i class="fas fa-check text-success"></i> Appear in dashboard, payments, and reports</li>
+                            <li><i class="fas fa-info text-info"></i> Inform users about currency changes</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-language text-primary"></i> Language Changes</h6>
+                        <ul class="list-unstyled mb-0">
+                            <li><i class="fas fa-check text-success"></i> Apply to new user registrations</li>
+                            <li><i class="fas fa-check text-success"></i> Update interface elements</li>
+                            <li><i class="fas fa-check text-success"></i> Affect email notifications</li>
+                            <li><i class="fas fa-info text-info"></i> Users can override in their profile</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Reset card design to default values
+function resetCardDesign() {
+    if (confirm('Are you sure you want to reset the card design to default values?')) {
+        document.getElementById('card_primary_color').value = '#667eea';
+        document.getElementById('card_primary_color_text').value = '#667eea';
+        document.getElementById('card_secondary_color').value = '#764ba2';
+        document.getElementById('card_secondary_color_text').value = '#764ba2';
+        document.getElementById('card_company_name').value = '';
+        updateCardPreview();
+    }
+}
+
+// Update the card preview when colors or text change
+function updateCardPreview() {
+    const primaryColor = document.getElementById('card_primary_color').value;
+    const secondaryColor = document.getElementById('card_secondary_color').value;
+    const companyName = document.getElementById('card_company_name').value || 'Your Organization';
+    
+    // Update the preview card
+    const previewCard = document.querySelector('.card-preview');
+    if (previewCard) {
+        previewCard.style.background = `linear-gradient(135deg, ${primaryColor} 0%, ${secondaryColor} 100%)`;
+    }
+    
+    // Update the company name in preview
+    const companyNameElement = previewCard?.querySelector('h5');
+    if (companyNameElement) {
+        companyNameElement.textContent = companyName;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Sync color pickers with text inputs
+    const colorInputs = [
+        { picker: 'card_primary_color', text: 'card_primary_color_text' },
+        { picker: 'card_secondary_color', text: 'card_secondary_color_text' }
+    ];
+    
+    colorInputs.forEach(input => {
+        const picker = document.getElementById(input.picker);
+        const text = document.getElementById(input.text);
+        
+        if (picker && text) {
+            // Update text input when picker changes
+            picker.addEventListener('input', function() {
+                text.value = this.value;
+                updateCardPreview();
+            });
+            
+            // Update picker when text input changes (with validation)
+            text.addEventListener('input', function() {
+                const color = this.value;
+                if (/^#[0-9A-Fa-f]{6}$/i.test(color)) {
+                    picker.value = color;
+                    updateCardPreview();
+                }
+            });
+        }
+    });
+    
+    // Update preview when company name changes
+    const companyNameInput = document.getElementById('card_company_name');
+    if (companyNameInput) {
+        companyNameInput.addEventListener('input', updateCardPreview);
+    }
+    
+    // Initialize the preview
+    updateCardPreview();
+    
+    // Auto-update currency symbol when currency code changes
+    const currencyCodeSelect = document.getElementById('currency_code');
+    const symbolInput = document.getElementById('currency_symbol');
+    const preview = document.getElementById('preview');
+
+    if (currencyCodeSelect && symbolInput && preview) {
+        currencyCodeSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const symbol = selectedOption.getAttribute('data-symbol');
+            
+            if (symbol) {
+                symbolInput.value = symbol;
+                preview.textContent = symbol + '100.00';
+            }
+        });
+
+        // Update preview when symbol is manually changed
+        symbolInput.addEventListener('input', function() {
+            preview.textContent = this.value + '100.00';
+        });
+    }
+
+    // Form validation
+    const form = document.querySelector('form');
+    if (form) {
+        form.addEventListener('submit', function(e) {
+            const currencySymbol = document.getElementById('currency_symbol').value.trim();
+            if (!currencySymbol) {
+                e.preventDefault();
+                alert('Please provide a currency symbol.');
+                return false;
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

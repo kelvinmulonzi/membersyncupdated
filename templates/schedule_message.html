@@ -1,0 +1,239 @@
+{% extends "base.html" %}
+{% block title %}Scheduled Messages - MemberSync{% endblock %}
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-clock text-info"></i> Scheduled Messages</h2>
+            <div>
+                <a href="{{ url_for('communication_center') }}" class="btn btn-outline-primary">
+                    <i class="fas fa-broadcast-tower"></i> Communication Center
+                </a>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+        
+        <!-- Create New Scheduled Task -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-plus-circle"></i> Create Scheduled Task</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="task_name" class="form-label"><strong>Task Name:</strong></label>
+                                <input type="text" class="form-control" name="task_name" id="task_name" 
+                                       placeholder="e.g., Monthly Newsletter" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="task_type" class="form-label"><strong>Task Type:</strong></label>
+                                <select class="form-select" name="task_type" id="task_type" required>
+                                    <option value="">Select task type...</option>
+                                    <option value="custom">Custom Message (All Active Members)</option>
+                                    <option value="inactive">Inactive Member Reminder</option>
+                                    <option value="birthday">Birthday Wishes (Future Feature)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="schedule_time" class="form-label"><strong>Schedule:</strong></label>
+                                <select class="form-select" name="schedule_time" id="schedule_time" required>
+                                    <option value="">Select frequency...</option>
+                                    <option value="daily">Daily (9 AM)</option>
+                                    <option value="weekly">Weekly (Monday 9 AM)</option>
+                                    <option value="monthly">Monthly (1st day, 9 AM)</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <!-- Task Type Info -->
+                            <div class="mb-3">
+                                <label class="form-label"><strong>Task Info:</strong></label>
+                                <div id="task-info" class="alert alert-info" style="display: none;">
+                                    <small id="task-description"></small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Custom Message Content (shown only for custom task type) -->
+                    <div id="custom-message-section" style="display: none;">
+                        <div class="mb-3">
+                            <label for="message_subject" class="form-label"><strong>Message Subject:</strong></label>
+                            <input type="text" class="form-control" name="message_subject" id="message_subject" 
+                                   placeholder="Enter message subject">
+                        </div>
+                        <div class="mb-3">
+                            <label for="message_content" class="form-label"><strong>Message Content:</strong></label>
+                            <textarea class="form-control" name="message_content" id="message_content" rows="6" 
+                                      placeholder="Enter your message content here..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-success">
+                            <i class="fas fa-save"></i> Create Scheduled Task
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Existing Scheduled Tasks -->
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-list"></i> Active Scheduled Tasks</h5>
+            </div>
+            <div class="card-body">
+                {% if scheduled_tasks %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>Task Name</th>
+                                    <th>Type</th>
+                                    <th>Schedule</th>
+                                    <th>Status</th>
+                                    <th>Last Run</th>
+                                    <th>Next Run</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for task in scheduled_tasks %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ task.name }}</strong>
+                                        {% if task.type == 'custom' and task.subject %}
+                                            <br><small class="text-muted">{{ task.subject }}</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if task.type == 'custom' %}bg-primary{% endif %}
+                                            {% if task.type == 'inactive' %}bg-warning{% endif %}
+                                            {% if task.type == 'birthday' %}bg-info{% endif %}">
+                                            {% if task.type == 'custom' %}Custom Message{% endif %}
+                                            {% if task.type == 'inactive' %}Inactive Reminder{% endif %}
+                                            {% if task.type == 'birthday' %}Birthday Wishes{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <i class="fas fa-clock"></i> 
+                                        {% if task.schedule == 'daily' %}Daily (9 AM){% endif %}
+                                        {% if task.schedule == 'weekly' %}Weekly (Mon 9 AM){% endif %}
+                                        {% if task.schedule == 'monthly' %}Monthly (1st, 9 AM){% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge 
+                                            {% if task.is_active %}bg-success{% else %}bg-secondary{% endif %}">
+                                            {% if task.is_active %}Active{% else %}Paused{% endif %}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if task.last_run %}
+                                            {{ task.last_run.strftime('%Y-%m-%d %H:%M') }}
+                                        {% else %}
+                                            <span class="text-muted">Never</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if task.next_run and task.is_active %}
+                                            {{ task.next_run.strftime('%Y-%m-%d %H:%M') }}
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <a href="{{ url_for('toggle_scheduled_task', task_id=task.id) }}" 
+                                               class="btn btn-outline-{% if task.is_active %}warning{% else %}success{% endif %}" 
+                                               title="{% if task.is_active %}Pause{% else %}Resume{% endif %} Task">
+                                                <i class="fas fa-{% if task.is_active %}pause{% else %}play{% endif %}"></i>
+                                            </a>
+                                            <a href="{{ url_for('delete_scheduled_task', task_id=task.id) }}" 
+                                               class="btn btn-outline-danger" title="Delete Task"
+                                               onclick="return confirm('Are you sure you want to delete this scheduled task?')">
+                                                <i class="fas fa-trash"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-clock fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">No Scheduled Tasks Yet</h5>
+                        <p class="text-muted">Create your first scheduled task using the form above.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const taskTypeSelect = document.getElementById('task_type');
+    const taskInfo = document.getElementById('task-info');
+    const taskDescription = document.getElementById('task-description');
+    const customMessageSection = document.getElementById('custom-message-section');
+    
+    const taskDescriptions = {
+        'custom': 'Send a custom message to all active members at the scheduled time.',
+        'inactive': 'Automatically send reminders to members who haven\'t been active recently.',
+        'birthday': 'Send birthday wishes to members on their special day. (Coming soon)'
+    };
+    
+    taskTypeSelect.addEventListener('change', function() {
+        const selectedType = this.value;
+        
+        if (selectedType && taskDescriptions[selectedType]) {
+            taskDescription.textContent = taskDescriptions[selectedType];
+            taskInfo.style.display = 'block';
+            
+            // Show/hide custom message section
+            if (selectedType === 'custom') {
+                customMessageSection.style.display = 'block';
+                document.getElementById('message_subject').required = true;
+                document.getElementById('message_content').required = true;
+            } else {
+                customMessageSection.style.display = 'none';
+                document.getElementById('message_subject').required = false;
+                document.getElementById('message_content').required = false;
+            }
+        } else {
+            taskInfo.style.display = 'none';
+            customMessageSection.style.display = 'none';
+        }
+    });
+});
+</script>
+
+{% endblock %}

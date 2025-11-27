@@ -1,0 +1,340 @@
+{% extends "base.html" %}
+{% block title %}Organization Signup - MemberSync{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card">
+            <div class="card-header text-center bg-gradient" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h3 class="mb-0 text-white">
+                    <i class="fas fa-crown text-warning"></i>
+                    Organization Super Admin Signup
+                </h3>
+                <p class="text-white-50 mb-0">Create your organization with full administrative privileges</p>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="org_name" class="form-label">
+                            <i class="fas fa-building"></i> Organization Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="org_name" 
+                               name="org_name" 
+                               placeholder="Enter your organization name"
+                               required 
+                               autocomplete="organization">
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i>
+                            The name of your business, gym, or organization
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="industry" class="form-label">
+                            <i class="fas fa-industry"></i> Industry
+                        </label>
+                        <select class="form-select" id="industry" name="industry">
+                            <option value="">Select industry (optional)</option>
+                            <option value="Fitness & Health">Fitness & Health</option>
+                            <option value="Education">Education</option>
+                            <option value="Healthcare">Healthcare</option>
+                            <option value="Retail">Retail</option>
+                            <option value="Entertainment">Entertainment</option>
+                            <option value="Professional Services">Professional Services</option>
+                            <option value="Non-Profit">Non-Profit</option>
+                            <option value="Other">Other</option>
+                        </select>
+                        <div class="form-text">
+                            <i class="fas fa-tag"></i>
+                            Help us categorize your organization
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="location" class="form-label">
+                            <i class="fas fa-map-marker-alt"></i> Location <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="location" 
+                               name="location" 
+                               placeholder="Enter your organization's location (e.g., New York, USA)"
+                               required
+                               autocomplete="organization-location">
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i>
+                            Where is your organization located? This helps distinguish organizations with similar names.
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">
+                            <i class="fas fa-envelope"></i> Email Address <span class="text-danger">*</span>
+                        </label>
+                        <input type="email" 
+                               class="form-control" 
+                               id="email" 
+                               name="email" 
+                               placeholder="Enter your email address"
+                               required 
+                               autocomplete="email">
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i>
+                            We'll use this for account notifications and recovery
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="username" class="form-label">
+                            <i class="fas fa-user"></i> Username <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="username" 
+                               name="username" 
+                               placeholder="Enter username"
+                               required 
+                               autocomplete="username">
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i>
+                            Choose a unique username for your admin account
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="password" class="form-label">
+                            <i class="fas fa-lock"></i> Password <span class="text-danger">*</span>
+                        </label>
+                        <input type="password" 
+                               class="form-control" 
+                               id="password" 
+                               name="password" 
+                               placeholder="Enter password"
+                               required 
+                               autocomplete="new-password"
+                               minlength="6">
+                        <div class="form-text">
+                            <i class="fas fa-shield-alt"></i>
+                            Use a strong password (minimum 6 characters)
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-crown"></i> Create Super Admin Account
+                        </button>
+                    </div>
+                    
+                    <!-- Role Information Alert -->
+                    <div class="alert alert-info mt-3 mb-0" role="alert">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Super Admin Privileges:</strong> You will have full control over your organization including member management, payment processing, user creation, and all administrative features.
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-center">
+                <!-- Language Selector -->
+                <div class="mb-3">
+                    <div class="custom-translate-widget">
+                        <select id="custom-language-selector" class="custom-language-selector" onchange="changeLanguageCustom(this.value)">
+                            <option value="en" selected>🇺🇸 English</option>
+                            <option value="fr">🇫🇷 Français</option>
+                            <option value="es">🇪🇸 Español</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <p class="mb-0 text-muted">
+                    Already have an account?
+                    <a href="{{ url_for('login') }}" class="text-decoration-none">
+                        <i class="fas fa-sign-in-alt"></i> Login here
+                    </a>
+                </p>
+            </div>
+        </div>
+
+        <!-- Additional Information Card -->
+        <div class="card mt-4 border-primary">
+            <div class="card-header bg-primary text-white">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-crown"></i>
+                    Organization Super Admin Benefits
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success"></i>
+                        <strong>Full Member Management</strong> - Register, edit, and manage all members
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success"></i>
+                        <strong>Payment & Financial Control</strong> - Track payments, prepaid cards, and discounts
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success"></i>
+                        <strong>User & Admin Creation</strong> - Create additional admins and users
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success"></i>
+                        <strong>Check-in System</strong> - Monitor facility access and member attendance
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success"></i>
+                        <strong>Communication Center</strong> - Send email/SMS to members
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check-circle text-success"></i>
+                        <strong>Advanced Reports & Analytics</strong> - Export data and view insights
+                    </li>
+                    <li class="mb-0">
+                        <i class="fas fa-check-circle text-success"></i>
+                        <strong>Organization Settings</strong> - Configure prepaid, discounts, and settings
+                    </li>
+                </ul>
+            </div>
+            <div class="card-footer text-center bg-light">
+                <small class="text-muted">
+                    <i class="fas fa-shield-alt text-primary"></i>
+                    You will have the highest level of access within your organization
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Form validation and enhancement
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.querySelector('form');
+        const orgNameInput = document.getElementById('org_name');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const emailInput = document.getElementById('email');
+
+        // Organization name validation
+        orgNameInput.addEventListener('input', function() {
+            const orgName = this.value.trim();
+            if (orgName.length < 2) {
+                this.setCustomValidity('Organization name must be at least 2 characters long');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+
+        // Username validation
+        usernameInput.addEventListener('input', function() {
+            const username = this.value.trim();
+            if (username.length < 3) {
+                this.setCustomValidity('Username must be at least 3 characters long');
+            } else if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+                this.setCustomValidity('Username can only contain letters, numbers, and underscores');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+
+        // Email validation
+        emailInput.addEventListener('input', function() {
+            const email = this.value.trim();
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (email && !emailRegex.test(email)) {
+                this.setCustomValidity('Please enter a valid email address');
+            } else {
+                this.setCustomValidity('');
+            }
+        });
+
+        // Password strength indicator
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            const strength = getPasswordStrength(password);
+            
+            // Remove existing feedback
+            const existingFeedback = this.parentNode.querySelector('.password-strength');
+            if (existingFeedback) {
+                existingFeedback.remove();
+            }
+
+            // Add strength indicator
+            if (password.length > 0) {
+                const strengthDiv = document.createElement('div');
+                strengthDiv.className = 'password-strength form-text mt-2';
+                strengthDiv.innerHTML = `
+                    <div class="progress" style="height: 4px;">
+                        <div class="progress-bar bg-${strength.color}" 
+                             style="width: ${strength.percentage}%"></div>
+                    </div>
+                    <small class="text-${strength.color}">
+                        <i class="fas fa-${strength.icon}"></i> ${strength.text}
+                    </small>
+                `;
+                this.parentNode.appendChild(strengthDiv);
+            }
+        });
+
+        function getPasswordStrength(password) {
+            let score = 0;
+            if (password.length >= 8) score++;
+            if (/[a-z]/.test(password)) score++;
+            if (/[A-Z]/.test(password)) score++;
+            if (/[0-9]/.test(password)) score++;
+            if (/[^A-Za-z0-9]/.test(password)) score++;
+
+            const strengths = [
+                { color: 'danger', icon: 'times-circle', text: 'Very Weak', percentage: 20 },
+                { color: 'warning', icon: 'exclamation-triangle', text: 'Weak', percentage: 40 },
+                { color: 'info', icon: 'info-circle', text: 'Fair', percentage: 60 },
+                { color: 'success', icon: 'check-circle', text: 'Strong', percentage: 80 },
+                { color: 'success', icon: 'shield-alt', text: 'Very Strong', percentage: 100 }
+            ];
+
+            return strengths[Math.min(score, 4)];
+        }
+
+        // Form submission validation
+        form.addEventListener('submit', function(e) {
+            const orgName = orgNameInput.value.trim();
+            const username = usernameInput.value.trim();
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+
+            if (!orgName || orgName.length < 2) {
+                e.preventDefault();
+                orgNameInput.focus();
+                return false;
+            }
+
+            if (!username || username.length < 3) {
+                e.preventDefault();
+                usernameInput.focus();
+                return false;
+            }
+
+            if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+                e.preventDefault();
+                emailInput.focus();
+                return false;
+            }
+
+            if (!password || password.length < 6) {
+                e.preventDefault();
+                passwordInput.focus();
+                return false;
+            }
+            
+            const location = document.getElementById('location').value.trim();
+            if (!location || location.length < 2) {
+                e.preventDefault();
+                document.getElementById('location').focus();
+                return false;
+            }
+        });
+    });
+</script>
+{% endblock %}
+

@@ -1,0 +1,426 @@
+{% extends "base.html" %}
+
+{% block title %}Manage Organizations - MemberSync{% endblock %}
+
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-building"></i> Manage Organizations</h2>
+            <a href="{{ url_for('create_organization') }}" class="btn btn-gradient">
+                <i class="fas fa-plus"></i> Add Organization
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter Section -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-4">
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" 
+                                   class="form-control" 
+                                   id="searchOrganizations" 
+                                   placeholder="Search organizations by name, industry, or ID...">
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="filterStatus">
+                            <option value="">All Status</option>
+                            <option value="active">Active Only</option>
+                            <option value="inactive">Inactive Only</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select" id="filterPackage">
+                            <option value="">All Packages</option>
+                            {% for package in packages %}
+                            <option value="{{ package.name }}">{{ package.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="button" class="btn btn-outline-secondary w-100" id="clearFilters">
+                            <i class="fas fa-times"></i> Clear
+                        </button>
+                    </div>
+                </div>
+                <div class="row mt-2">
+                    <div class="col-12">
+                        <small class="text-muted">
+                            <span id="searchResults"></span>
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>ID</th>
+                                <th>Name</th>
+                                <th>Industry</th>
+                                <th>Package</th>
+                                <th>Status</th>
+                                <th>Users</th>
+                                <th>Members</th>
+                                <th>Locations</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for org in organizations %}
+                            <tr>
+                                <td>{{ org.id }}</td>
+                                <td>
+                                    <i class="fas fa-building text-primary me-2"></i>
+                                    <strong><span translate="no">{{ org.name if org.name else 'No Name' }}</span></strong>
+                                </td>
+                                <td>
+                                    <span class="text-muted" title="{{ org.industry or 'N/A' }}">
+                                        {{ (org.industry or 'N/A')[:50] }}{% if org.industry and org.industry|length > 50 %}...{% endif %}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">
+                                        <i class="fas fa-box"></i> {{ org.package_name }}
+                                    </span>
+                                    <br>
+                                    <small class="text-muted">Max: {{ org.package_max_orgs }} orgs</small>
+                                </td>
+                                <td>
+                                    {% if org.is_active %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-check-circle"></i> Active
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">
+                                            <i class="fas fa-pause-circle"></i> Inactive
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <span class="badge bg-primary">
+                                        <i class="fas fa-users"></i> {{ org.user_count }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-info">
+                                        <i class="fas fa-id-card"></i> {{ org.member_count }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <span class="badge bg-warning">
+                                        <i class="fas fa-map-marker-alt"></i> {{ org.location_count }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <small class="text-muted">
+                                        {{ org.created_at if org.created_at else 'N/A' }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <div class="btn-group" role="group">
+                                        <a href="{{ url_for('view_organization', org_id=org.id) }}" 
+                                           class="btn btn-sm btn-outline-primary" 
+                                           title="View Details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                        
+                                        <a href="{{ url_for('edit_organization', org_id=org.id) }}" 
+                                           class="btn btn-sm btn-outline-secondary" 
+                                           title="Edit">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        
+                                        
+                                        {% if session.get('is_global_superadmin') %}
+                                        <a href="{{ url_for('switch_organization', org_id=org.id) }}" 
+                                           class="btn btn-sm btn-outline-success" 
+                                           title="Switch To">
+                                            <i class="fas fa-exchange-alt"></i>
+                                        </a>
+                                        {% endif %}
+                                        
+                                        {% if session.get('is_global_superadmin') or (session.get('is_superadmin') and org.id == session.get('organization_id')) %}
+                                            {% if org.is_active %}
+                                            <!-- Deactivate Button -->
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-warning" 
+                                                    onclick="confirmDeactivate({{ org.id }}, '{{ org.name|e }}')"
+                                                    title="Deactivate">
+                                                <i class="fas fa-pause"></i>
+                                            </button>
+                                            {% else %}
+                                            <!-- Activate Button -->
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-success" 
+                                                    onclick="confirmActivate({{ org.id }}, '{{ org.name|e }}')"
+                                                    title="Activate">
+                                                <i class="fas fa-play"></i>
+                                            </button>
+                                            {% endif %}
+                                            
+                                            <!-- Delete Button -->
+                                            <button type="button" 
+                                                    class="btn btn-sm btn-outline-danger" 
+                                                    onclick="confirmDelete({{ org.id }}, '{{ org.name|e }}')"
+                                                    title="Delete">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="9" class="text-center text-muted py-4">
+                                    <i class="fas fa-building fa-3x mb-3"></i>
+                                    <p>No organizations found.</p>
+                                    <a href="{{ url_for('create_organization') }}" class="btn btn-gradient">
+                                        <i class="fas fa-plus"></i> Create First Organization
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+{% if organizations %}
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="card-title">Total Organizations</h5>
+                        <h3 class="mb-0">{{ organizations|length }}</h3>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-building fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="card-title">Active Organizations</h5>
+                        <h3 class="mb-0">{{ organizations|selectattr('is_active')|list|length }}</h3>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-check-circle fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="card-title">Total Users</h5>
+                        <h3 class="mb-0">{{ organizations|sum(attribute='user_count') }}</h3>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="card-title">Total Members</h5>
+                        <h3 class="mb-0">{{ organizations|sum(attribute='member_count') }}</h3>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-id-card fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+
+<!-- Activate Confirmation Modal -->
+<div class="modal fade" id="activateModal" tabindex="-1" aria-labelledby="activateModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="activateModalLabel">Confirm Activation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to activate the organization "<strong id="activateOrgName"></strong>"?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form id="activateForm" method="POST" style="display: inline;">
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-play"></i> Activate
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+<script>
+// Search and Filter Functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('searchOrganizations');
+    const statusFilter = document.getElementById('filterStatus');
+    const packageFilter = document.getElementById('filterPackage');
+    const clearButton = document.getElementById('clearFilters');
+    const searchResults = document.getElementById('searchResults');
+    const tableRows = document.querySelectorAll('tbody tr');
+    
+    let allRows = Array.from(tableRows);
+    let visibleRows = allRows;
+    
+    function filterOrganizations() {
+        const searchTerm = searchInput.value.toLowerCase().trim();
+        const statusValue = statusFilter.value;
+        const packageValue = packageFilter.value;
+        
+        visibleRows = allRows.filter(row => {
+            const id = row.cells[0].textContent.trim();
+            const name = row.cells[1].textContent.toLowerCase().trim();
+            const industry = row.cells[2].textContent.toLowerCase().trim();
+            const packageName = row.cells[3].textContent.toLowerCase().trim();
+            const status = row.cells[4].textContent.toLowerCase().trim();
+            
+            // Search filter
+            const matchesSearch = !searchTerm || 
+                id.includes(searchTerm) ||
+                name.includes(searchTerm) ||
+                industry.includes(searchTerm);
+            
+            // Status filter
+            const matchesStatus = !statusValue ||
+                (statusValue === 'active' && status.includes('active')) ||
+                (statusValue === 'inactive' && status.includes('inactive'));
+            
+            // Package filter
+            const matchesPackage = !packageValue ||
+                packageName.includes(packageValue.toLowerCase());
+            
+            return matchesSearch && matchesStatus && matchesPackage;
+        });
+        
+        // Hide all rows first
+        allRows.forEach(row => row.style.display = 'none');
+        
+        // Show matching rows
+        visibleRows.forEach(row => row.style.display = '');
+        
+        // Update search results text
+        updateSearchResults();
+    }
+    
+    function updateSearchResults() {
+        const totalCount = allRows.length;
+        const visibleCount = visibleRows.length;
+        
+        if (visibleCount === totalCount) {
+            searchResults.textContent = `Showing all ${totalCount} organizations`;
+        } else {
+            searchResults.textContent = `Showing ${visibleCount} of ${totalCount} organizations`;
+        }
+    }
+    
+    function clearFilters() {
+        searchInput.value = '';
+        statusFilter.value = '';
+        packageFilter.value = '';
+        filterOrganizations();
+    }
+    
+    // Event listeners
+    searchInput.addEventListener('input', filterOrganizations);
+    statusFilter.addEventListener('change', filterOrganizations);
+    packageFilter.addEventListener('change', filterOrganizations);
+    clearButton.addEventListener('click', clearFilters);
+    
+    // Initial search results update
+    updateSearchResults();
+});
+
+// Confirmation functions
+function confirmDelete(orgId, orgName) {
+    const message = `Are you sure you want to DELETE the organization "${orgName}"?\n\n⚠️ WARNING: This action cannot be undone!\n\nThis will permanently delete:\n• All organization data\n• All members and users\n• All reports and analytics\n\nConsider deactivating instead if you want to preserve data.`;
+    
+    if (confirm(message)) {
+        // Create and submit form
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/organization/${orgId}/delete`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function confirmActivate(orgId, orgName) {
+    const message = `Are you sure you want to ACTIVATE the organization "${orgName}"?\n\n✅ This will:\n• Allow all users to log in again\n• Restore full access to organization data\n• Enable member management\n• Restore reporting and analytics\n\nAll users will be able to access the system immediately.`;
+    
+    if (confirm(message)) {
+        // Create and submit form
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/organization/${orgId}/activate`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function confirmDeactivate(orgId, orgName) {
+    const message = `Are you sure you want to DEACTIVATE the organization "${orgName}"?\n\n⚠️ This will:\n• Log out all users immediately\n• Prevent users from logging in until reactivated\n• Disable all organization features\n• Make member management unavailable\n\nYou can reactivate this organization at any time.`;
+    
+    if (confirm(message)) {
+        // Create and submit form
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/organization/${orgId}/deactivate`;
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+
+{% endblock %}

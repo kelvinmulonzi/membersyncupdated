@@ -1,0 +1,252 @@
+{% extends "base.html" %}
+
+{% block title %}{{ organization.name }} - Organization Details{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2>
+                    <i class="fas fa-building"></i> 
+                    <span translate="no">{{ organization.name if organization.name else 'No Name' }}</span>
+                </h2>
+                <p class="text-muted">Organization Details & Statistics</p>
+            </div>
+            <div>
+                {% if session.is_global_superadmin %}
+                <a href="{{ url_for('manage_organizations') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Organizations
+                </a>
+                <a href="{{ url_for('edit_organization', org_id=organization.id) }}" class="btn btn-primary">
+                    <i class="fas fa-edit"></i> Edit Organization
+                </a>
+                {% else %}
+                <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+                {% if session.is_admin %}
+                <a href="{{ url_for('edit_organization', org_id=organization.id) }}" class="btn btn-primary">
+                    <i class="fas fa-edit"></i> Edit Organization
+                </a>
+                {% endif %}
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Organization Info Cards -->
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="card-title">Total Users</h5>
+                        <h3 class="mb-0">{{ organization.user_count }}</h3>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-users fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="card-title">Total Members</h5>
+                        <h3 class="mb-0">{{ organization.member_count }}</h3>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-id-card fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="card-title">Locations</h5>
+                        <h3 class="mb-0">{{ organization.location_count }}</h3>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-map-marker-alt fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col">
+                        <h5 class="card-title">Status</h5>
+                        <h5 class="mb-0">
+                            <i class="fas fa-check-circle"></i> Active
+                        </h5>
+                    </div>
+                    <div class="col-auto">
+                        <i class="fas fa-heartbeat fa-2x"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Organization Details -->
+<div class="row">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle"></i> Organization Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <table class="table table-borderless">
+                    <tr>
+                        <td><strong>ID:</strong></td>
+                        <td>{{ organization.id }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Name:</strong></td>
+                        <td><span translate="no">{{ organization.name if organization.name else 'No Name' }}</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Industry:</strong></td>
+                        <td>{{ organization.industry or 'Not specified' }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Location:</strong></td>
+                        <td>{{ organization.location or 'Not specified' }}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Created:</strong></td>
+                        <td>{{ organization.created_at[:10] if organization.created_at else 'N/A' }}</td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-map-marker-alt"></i> Locations
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if locations %}
+                <div class="list-group list-group-flush">
+                    {% for location in locations %}
+                    <div class="list-group-item px-0">
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div>
+                                <h6 class="mb-1"><span class="notranslate" translate="no">{{ location.name }}</span></h6>
+                                <p class="mb-1 text-muted small">
+                                    {{ location.address }}
+                                    {% if location.city %}, {{ location.city }}{% endif %}
+                                    {% if location.state %}, {{ location.state }}{% endif %}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-3">
+                    <i class="fas fa-map-marker-alt fa-2x mb-2"></i><br>
+                    No locations configured yet.
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-users"></i> Recent Users
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_users %}
+                <div class="list-group list-group-flush">
+                    {% for user in recent_users %}
+                    <div class="list-group-item px-0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">
+                                    {{ user.username }}
+                                    {% if user.is_admin %}
+                                    <span class="badge bg-primary ms-1">Admin</span>
+                                    {% endif %}
+                                </h6>
+                                <p class="mb-1 text-muted small">{{ user.email }}</p>
+                            </div>
+                            <small class="text-muted">
+                                {{ user.created_at[:10] if user.created_at else 'N/A' }}
+                            </small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-3">
+                    <i class="fas fa-users fa-2x mb-2"></i><br>
+                    No users found.
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-id-card"></i> Recent Members
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_members %}
+                <div class="list-group list-group-flush">
+                    {% for member in recent_members %}
+                    <div class="list-group-item px-0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1">{{ member.first_name }} {{ member.last_name }}</h6>
+                                <p class="mb-1 text-muted small">{{ member.email or 'No email' }}</p>
+                            </div>
+                            <small class="text-muted">
+                                {{ member.created_at[:10] if member.created_at else 'N/A' }}
+                            </small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-3">
+                    <i class="fas fa-id-card fa-2x mb-2"></i><br>
+                    No members found.
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

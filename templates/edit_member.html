@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+{% block title %}Edit Member - {{ membership_id }}{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="mb-0"><i class="fas fa-edit"></i> Edit Member - {{ membership_id }}</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <!-- Membership ID - Read Only -->
+                            <div class="mb-3">
+                                <label for="membership_id" class="form-label">Membership ID</label>
+                                <input type="text" class="form-control" id="membership_id" name="membership_id" 
+                                       value="{{ membership_id }}" readonly 
+                                       style="background-color: #f8f9fa; cursor: not-allowed;">
+                                <div class="form-text">
+                                    <i class="fas fa-lock text-muted"></i> 
+                                    Membership ID cannot be changed once assigned
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Full Name *</label>
+                                <input type="text" class="form-control" id="name" name="name" value="{{ member[0] or '' }}" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="email" name="email" value="{{ member[1] or '' }}">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="phone" class="form-label">Phone Number</label>
+                                <input type="text" class="form-control" id="phone" name="phone" value="{{ member[2] or '' }}">
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="membership_type" class="form-label">Membership Type *</label>
+                                <select class="form-control" id="membership_type" name="membership_type" required>
+                                    <option value="Silver" {{ 'selected' if member[3] == 'Silver' else '' }}>Silver</option>
+                                    <option value="Gold" {{ 'selected' if member[3] == 'Gold' else '' }}>Gold</option>
+                                    <option value="Platinum" {{ 'selected' if member[3] == 'Platinum' else '' }}>Platinum</option>
+                                </select>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="expiration_date" class="form-label">Expiration Date *</label>
+                                <input type="date" class="form-control" id="expiration_date" name="expiration_date" value="{{ member[4] or '' }}" required>
+                            </div>
+
+                            {% if is_global_superadmin %}
+                            <div class="mb-3">
+                                <label for="organization_id" class="form-label">
+                                    <i class="fas fa-building"></i> Organization Assignment
+                                </label>
+                                <select class="form-control" id="organization_id" name="organization_id">
+                                    <option value="">Select Organization</option>
+                                    {% for org in organizations %}
+                                        <option value="{{ org[0] }}" 
+                                                {% if member[6] == org[0] %}selected{% endif %}>
+                                            {{ org[1] if org[1] else 'Unnamed Organization' }} {% if org[2] %}({{ org[2] }}){% endif %}
+                                        </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle"></i>
+                                    Current: {{ member[7] or 'Not assigned' }}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label class="form-label">Member Photo</label>
+                                
+                                <!-- Current Photo Display -->
+                                <div class="text-center mb-3">
+                                    <div id="current-photo-container" class="current-photo-container">
+                                        {% if member[5] %}
+                                            <img src="{{ url_for('member_photo', membership_id=membership_id) }}" 
+                                                 alt="Current Photo" class="current-photo">
+                                            <div class="photo-overlay">
+                                                <button type="button" class="btn btn-sm btn-danger" onclick="showRemovePhotoOption()">
+                                                    <i class="fas fa-trash"></i> Remove
+                                                </button>
+                                            </div>
+                                        {% else %}
+                                            <div class="no-photo-placeholder">
+                                                <i class="fas fa-user fa-4x text-muted"></i>
+                                                <p class="mt-2 text-muted">No Photo</p>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                
+                                <!-- Remove Photo Option -->
+                                <div id="remove-photo-option" class="mb-3" style="display: none;">
+                                    <div class="alert alert-warning">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="remove_photo" name="remove_photo">
+                                            <label class="form-check-label" for="remove_photo">
+                                                <i class="fas fa-exclamation-triangle"></i> Remove current photo
+                                            </label>
+                                        </div>
+                                        <button type="button" class="btn btn-sm btn-secondary mt-2" onclick="hideRemovePhotoOption()">
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <!-- New Photo Upload -->
+                                <div class="mb-3">
+                                    <label for="photo" class="form-label">Upload New Photo</label>
+                                    <div id="photo-preview" class="photo-preview-container mb-2">
+                                        <div class="photo-placeholder">
+                                            <i class="fas fa-camera fa-2x text-muted"></i>
+                                            <p class="mt-2 text-muted small">Choose New Photo</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <input type="file" class="form-control" id="photo" name="photo" 
+                                           accept="image/*" onchange="previewNewPhoto(event)">
+                                    <small class="form-text text-muted">
+                                        Leave empty to keep current photo. Accepted: JPG, PNG, GIF. Max: 5MB
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-warning">
+                            <i class="fas fa-save"></i> Save Changes
+                        </button>
+                        <a href="{{ url_for('member_profile', membership_id=membership_id) }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.current-photo-container {
+    position: relative;
+    width: 200px;
+    height: 250px;
+    margin: 0 auto;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 2px solid #ddd;
+    background: #f8f9fa;
+}
+
+.current-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.no-photo-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: #6c757d;
+}
+
+.photo-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.current-photo-container:hover .photo-overlay {
+    opacity: 1;
+}
+
+.photo-preview-container {
+    width: 150px;
+    height: 180px;
+    border: 2px dashed #ddd;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    overflow: hidden;
+    position: relative;
+    background: #f8f9fa;
+    cursor: pointer;
+}
+
+.photo-placeholder {
+    text-align: center;
+    color: #6c757d;
+}
+
+.photo-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.photo-preview-container:hover {
+    border-color: #007bff;
+    background: #e3f2fd;
+}
+
+.photo-preview-container.has-image {
+    border-style: solid;
+    border-color: #28a745;
+}
+</style>
+
+<script>
+function showRemovePhotoOption() {
+    document.getElementById('remove-photo-option').style.display = 'block';
+}
+
+function hideRemovePhotoOption() {
+    document.getElementById('remove-photo-option').style.display = 'none';
+    document.getElementById('remove_photo').checked = false;
+}
+
+function previewNewPhoto(event) {
+    const file = event.target.files[0];
+    const previewContainer = document.getElementById('photo-preview');
+    
+    if (file) {
+        // Check file size (5MB limit)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('File size must be less than 5MB');
+            event.target.value = '';
+            return;
+        }
+        
+        // Check file type
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('Please select a valid image file (JPG, PNG, or GIF)');
+            event.target.value = '';
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewContainer.innerHTML = `
+                <img src="${e.target.result}" alt="New Photo Preview" class="photo-preview">
+            `;
+            previewContainer.classList.add('has-image');
+        };
+        reader.readAsDataURL(file);
+    } else {
+        // Reset to placeholder
+        previewContainer.innerHTML = `
+            <div class="photo-placeholder">
+                <i class="fas fa-camera fa-2x text-muted"></i>
+                <p class="mt-2 text-muted small">Choose New Photo</p>
+            </div>
+        `;
+        previewContainer.classList.remove('has-image');
+    }
+}
+
+// Click to upload functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const photoContainer = document.getElementById('photo-preview');
+    const photoInput = document.getElementById('photo');
+    
+    if (photoContainer && photoInput) {
+        photoContainer.addEventListener('click', function() {
+            photoInput.click();
+        });
+    }
+    
+    // Hide remove photo option when new photo is selected
+    photoInput.addEventListener('change', function() {
+        if (this.files && this.files[0]) {
+            hideRemovePhotoOption();
+        }
+    });
+});
+</script>
+{% endblock %}

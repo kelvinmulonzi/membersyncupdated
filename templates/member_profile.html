@@ -1,0 +1,1333 @@
+{% extends "base.html" %}
+{% block title %}{{ member[1] }} - Member Profile - MemberSync{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="mb-1">
+            <i class="fas fa-user text-primary"></i> Member Profile
+        </h1>
+        <p class="text-muted mb-0">Complete member information and activity</p>
+    </div>
+    <div>
+        <a href="{{ url_for('edit_member', membership_id=member[0]) }}" class="btn btn-outline-primary">
+            <i class="fas fa-edit"></i> Edit Profile
+        </a>
+        <a href="{{ url_for('members') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left"></i> Back to Members
+        </a>
+    </div>
+</div>
+
+<!-- Member Header Card -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-3 text-center">
+                <img src="{{ url_for('member_photo', membership_id=member[0]) }}" 
+                     alt="{{ member[1] }}" 
+                     class="rounded-circle mb-3" 
+                     style="width: 150px; height: 150px; object-fit: cover;">
+                <h4 class="mb-1">{{ member[1] }}</h4>
+                <p class="text-muted mb-0">{{ member[0] }}</p>
+                
+                <!-- Status Badges -->
+                <div class="mt-2">
+                    {% if member[6] == 'active' %}
+                        <span class="badge bg-success rounded-pill">Active Member</span>
+                    {% else %}
+                        <span class="badge bg-danger rounded-pill">{{ member[6]|title }}</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="col-md-9">
+                <div class="row">
+                    <!-- Basic Information -->
+                    <div class="col-md-6">
+                        <h5 class="text-primary">
+                            <i class="fas fa-info-circle"></i> Basic Information
+                        </h5>
+                        <table class="table table-borderless table-sm">
+                            <tr>
+                                <td><strong>Email:</strong></td>
+                                <td>{{ member[2] or 'Not provided' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Phone:</strong></td>
+                                <td>{{ member[3] or 'Not provided' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Membership Type:</strong></td>
+                                <td><span class="badge bg-primary">{{ member[4] }}</span></td>
+                            </tr>
+                            <tr>
+                                <td><strong>Member Since:</strong></td>
+                                <td>{{ member[7][:10] if member[7] else 'Unknown' }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                    
+                    <!-- Membership Status -->
+                    <div class="col-md-6">
+                        <h5 class="text-primary">
+                            <i class="fas fa-calendar"></i> Membership Status
+                        </h5>
+                        <table class="table table-borderless table-sm">
+                            <tr>
+                                <td><strong>Expires:</strong></td>
+                                <td>
+                                    {% if member[5] %}
+                                        {{ member[5] }}
+                                        {% if days_until_expiry is not none %}
+                                            {% if days_until_expiry < 0 %}
+                                                <span class="badge bg-danger ms-2">Expired {{ days_until_expiry|abs }} days ago</span>
+                                            {% elif days_until_expiry == 0 %}
+                                                <span class="badge bg-warning ms-2">Expires Today</span>
+                                            {% elif days_until_expiry <= 7 %}
+                                                <span class="badge bg-warning ms-2">{{ days_until_expiry }} days left</span>
+                                            {% else %}
+                                                <span class="badge bg-success ms-2">{{ days_until_expiry }} days left</span>
+                                            {% endif %}
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted">Not set</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Status:</strong></td>
+                                <td>
+                                    {% if member[6] == 'active' %}
+                                        <span class="text-success"><i class="fas fa-check-circle"></i> Active</span>
+                                    {% else %}
+                                        <span class="text-danger"><i class="fas fa-times-circle"></i> {{ member[6]|title }}</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <td><strong>Organization:</strong></td>
+                                <td>
+                                    <span class="badge bg-info">{{ member[10] }}</span>
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dashboard Cards Row -->
+<div class="row mb-4">
+    <!-- Prepaid Balance Card -->
+    <div class="col-lg-4 mb-3">
+        <div class="card h-100 {% if prepaid_balance.current_balance <= 0 %}border-danger{% elif prepaid_balance.current_balance < 10 %}border-warning{% else %}border-success{% endif %}">
+            <div class="card-header {% if prepaid_balance.current_balance <= 0 %}bg-danger text-white{% elif prepaid_balance.current_balance < 10 %}bg-warning text-dark{% else %}bg-success text-white{% endif %}">
+                <h6 class="mb-0">
+                    <i class="fas fa-credit-card"></i> Prepaid Balance
+                </h6>
+            </div>
+            <div class="card-body text-center">
+                <h2 class="{% if prepaid_balance.current_balance <= 0 %}text-danger{% elif prepaid_balance.current_balance < 10 %}text-warning{% else %}text-success{% endif %} mb-3">
+                    {% if prepaid_balance and prepaid_balance.current_balance is defined %}
+                        {% set converted_balance, balance_symbol = convert_price_to_user_currency(prepaid_balance.current_balance|float) %}
+                        {{ balance_symbol }}{{ "%.2f"|format(converted_balance) }}
+                    {% else %}
+                        $0.00
+                    {% endif %}
+                </h2>
+                
+                <div class="row text-center mb-3">
+                    <div class="col-6">
+                        <small class="text-muted d-block">Total Recharged</small>
+                        {% if prepaid_balance and prepaid_balance.total_recharged is defined %}
+                            {% set converted_recharged, recharged_symbol = convert_price_to_user_currency(prepaid_balance.total_recharged|float) %}
+                            <strong>{{ recharged_symbol }}{{ "%.2f"|format(converted_recharged) }}</strong>
+                        {% else %}
+                            <strong>$0.00</strong>
+                        {% endif %}
+                    </div>
+                    <div class="col-6">
+                        <small class="text-muted d-block">Total Spent</small>
+                        {% if prepaid_balance and prepaid_balance.total_spent is defined %}
+                            {% set converted_spent, spent_symbol = convert_price_to_user_currency(prepaid_balance.total_spent|float) %}
+                            <strong>{{ spent_symbol }}{{ "%.2f"|format(converted_spent) }}</strong>
+                        {% else %}
+                            <strong>$0.00</strong>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="text-center mb-3">
+                    <small class="text-muted d-block">Bonus Earned</small>
+                    {% if prepaid_balance and prepaid_balance.total_bonus_earned is defined %}
+                        {% set converted_bonus, bonus_symbol = convert_price_to_user_currency(prepaid_balance.total_bonus_earned|float) %}
+                        <span class="badge bg-warning text-dark">{{ bonus_symbol }}{{ "%.2f"|format(converted_bonus) }}</span>
+                    {% else %}
+                        <span class="badge bg-warning text-dark">$0.00</span>
+                    {% endif %}
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <button class="btn btn-success btn-sm" onclick="showRechargeModal()">
+                        <i class="fas fa-plus"></i> Quick Recharge
+                    </button>
+                    <a href="{{ url_for('prepaid_card_management', membership_id=member[0]) }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-cog"></i> Manage Prepaid
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Check-in Status Card -->
+    <div class="col-lg-4 mb-3">
+        <div class="card h-100 {% if current_checkin %}border-warning{% else %}border-info{% endif %}">
+            <div class="card-header {% if current_checkin %}bg-warning text-dark{% else %}bg-info text-white{% endif %}">
+                <h6 class="mb-0">
+                    <i class="fas fa-qrcode"></i> Check-in Status
+                </h6>
+            </div>
+            <div class="card-body text-center">
+                {% if current_checkin %}
+                    <div class="text-warning mb-3">
+                        <i class="fas fa-user-clock fa-3x"></i>
+                    </div>
+                    <h5 class="text-warning">Currently Checked In</h5>
+                    <p class="mb-2">
+                        <strong>Since:</strong> {{ current_checkin[1] }}<br>
+                        <strong>Service:</strong> {{ current_checkin[2] or 'Not specified' }}
+                    </p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('checkin_scan') }}" class="btn btn-warning btn-sm">
+                            <i class="fas fa-sign-out-alt"></i> Check Out
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-info mb-3">
+                        <i class="fas fa-door-open fa-3x"></i>
+                    </div>
+                    <h5 class="text-info">Available for Check-in</h5>
+                    <p class="text-muted mb-3">Ready to access facilities</p>
+                    <div class="d-grid gap-2">
+                        <a href="{{ url_for('checkin_scan') }}" class="btn btn-info btn-sm">
+                            <i class="fas fa-qrcode"></i> Check In Now
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Visit Statistics Card -->
+    <div class="col-lg-4 mb-3">
+        <div class="card h-100 border-primary">
+            <div class="card-header bg-primary text-white">
+                <h6 class="mb-0">
+                    <i class="fas fa-chart-bar"></i> Visit Statistics
+                </h6>
+            </div>
+            <div class="card-body text-center">
+                <div class="row text-center mb-3">
+                    <div class="col-6">
+                        <h4 class="text-primary mb-1">{{ checkin_stats[0] if checkin_stats else 0 }}</h4>
+                        <small class="text-muted">Total Visits</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-success mb-1">{{ checkin_stats[1] if checkin_stats else 0 }}</h4>
+                        <small class="text-muted">Last 30 Days</small>
+                    </div>
+                </div>
+                
+                <div class="row text-center mb-3">
+                    <div class="col-6">
+                        <h4 class="text-info mb-1">{{ checkin_stats[2] if checkin_stats else 0 }}</h4>
+                        <small class="text-muted">This Week</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-warning mb-1">
+                            {% if checkin_stats and checkin_stats[3] %}
+                                {{ "%.1f"|format(checkin_stats[3]) }}h
+                            {% else %}
+                                0h
+                            {% endif %}
+                        </h4>
+                        <small class="text-muted">Avg Duration</small>
+                    </div>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('member_checkin_history', membership_id=member[0]) }}" class="btn btn-outline-primary btn-sm">
+                        <i class="fas fa-history"></i> View History
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Activity Tabs -->
+<div class="card">
+    <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs" id="activityTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="checkins-tab" data-bs-toggle="tab" data-bs-target="#checkins" type="button" role="tab">
+                    <i class="fas fa-qrcode"></i> Recent Check-ins
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="prepaid-tab" data-bs-toggle="tab" data-bs-target="#prepaid" type="button" role="tab">
+                    <i class="fas fa-credit-card"></i> Prepaid Activity
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="payments-tab" data-bs-toggle="tab" data-bs-target="#payments" type="button" role="tab">
+                    <i class="fas fa-dollar-sign"></i> Payment History
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="actions-tab" data-bs-toggle="tab" data-bs-target="#actions" type="button" role="tab">
+                    <i class="fas fa-tools"></i> Quick Actions
+                </button>
+            </li>
+        </ul>
+    </div>
+    <div class="card-body">
+        <div class="tab-content" id="activityTabsContent">
+            <!-- Recent Check-ins Tab -->
+            <div class="tab-pane fade show active" id="checkins" role="tabpanel">
+                {% if recent_checkins %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Check-in Time</th>
+                                    <th>Check-out Time</th>
+                                    <th>Service</th>
+                                    <th>Duration</th>
+                                    <th>Status</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for checkin in recent_checkins %}
+                                <tr>
+                                    <td>
+                                        <i class="fas fa-sign-in-alt text-success"></i>
+                                        {{ checkin[0] }}
+                                    </td>
+                                    <td>
+                                        {% if checkin[1] %}
+                                            <i class="fas fa-sign-out-alt text-warning"></i>
+                                            {{ checkin[1] }}
+                                        {% else %}
+                                            <span class="text-muted">Still checked in</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if checkin[2] %}
+                                            <span class="badge bg-primary">{{ checkin[2] }}</span>
+                                        {% else %}
+                                            <span class="text-muted">Not specified</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if checkin[5] %}
+                                            <span class="badge bg-info">{{ checkin[5] }}h</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if checkin[3] == 'checked_in' %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Completed</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if checkin[4] %}
+                                            <small class="text-muted">{{ checkin[4][:50] }}{% if checkin[4]|length > 50 %}...{% endif %}</small>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('member_checkin_history', membership_id=member[0]) }}" class="btn btn-outline-primary">
+                            <i class="fas fa-history"></i> View Complete History
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-qrcode fa-3x text-muted mb-3"></i>
+                        <h5>No Check-in History</h5>
+                        <p class="text-muted">This member hasn't checked in yet</p>
+                        <a href="{{ url_for('checkin_scan') }}" class="btn btn-primary">
+                            <i class="fas fa-qrcode"></i> Check In Now
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Prepaid Activity Tab -->
+            <div class="tab-pane fade" id="prepaid" role="tabpanel">
+                {% if recent_prepaid_transactions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Amount</th>
+                                    <th>Bonus</th>
+                                    <th>Balance After</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for transaction in recent_prepaid_transactions %}
+                                <tr>
+                                    <td>{{ transaction[4] if transaction|length > 4 else 'N/A' }}</td>
+                                    <td>
+                                        {% if transaction|length > 0 %}
+                                            {% if transaction[0] == 'recharge' %}
+                                                <span class="badge bg-success">
+                                                    <i class="fas fa-plus"></i> Recharge
+                                                </span>
+                                            {% elif transaction[0] == 'usage' %}
+                                                <span class="badge bg-warning">
+                                                    <i class="fas fa-minus"></i> Usage
+                                                </span>
+                                            {% elif transaction[0] == 'bonus' %}
+                                                <span class="badge bg-info">
+                                                    <i class="fas fa-gift"></i> Bonus
+                                                </span>
+                                            {% else %}
+                                                <span class="badge bg-secondary">{{ transaction[0] }}</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">Unknown</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if transaction|length > 1 and transaction[1] is number %}
+                                            {% set converted_amount, amount_symbol = convert_price_to_user_currency(transaction[1]|float) %}
+                                            {% if transaction[0] == 'usage' %}
+                                                <span class="text-danger">-{{ amount_symbol }}{{ "%.2f"|format(converted_amount) }}</span>
+                                            {% else %}
+                                                <span class="text-success">+{{ amount_symbol }}{{ "%.2f"|format(converted_amount) }}</span>
+                                            {% endif %}
+                                        {% else %}
+                                            <span class="text-muted">$0.00</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if transaction|length > 2 and transaction[2] and transaction[2] > 0 %}
+                                            {% set converted_bonus_amount, bonus_amount_symbol = convert_price_to_user_currency(transaction[2]|float) %}
+                                            <span class="badge bg-warning text-dark">+{{ bonus_amount_symbol }}{{ "%.2f"|format(converted_bonus_amount) }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if transaction|length > 3 and transaction[3] is number %}
+                                            {% set converted_balance, balance_symbol = convert_price_to_user_currency(transaction[3]|float) %}
+                                            <strong>{{ balance_symbol }}{{ "%.2f"|format(converted_balance) }}</strong>
+                                        {% else %}
+                                            <span class="text-muted">$0.00</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">{{ transaction[5] if transaction|length > 5 else 'No description' }}</small>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('prepaid_card_management', membership_id=member[0]) }}" class="btn btn-outline-success">
+                            <i class="fas fa-credit-card"></i> Manage Prepaid Card
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-credit-card fa-3x text-muted mb-3"></i>
+                        <h5>No Prepaid Activity</h5>
+                        <p class="text-muted">No prepaid transactions recorded</p>
+                        <a href="{{ url_for('prepaid_card_management', membership_id=member[0]) }}" class="btn btn-success">
+                            <i class="fas fa-plus"></i> Add Initial Balance
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Payment History Tab -->
+            <div class="tab-pane fade" id="payments" role="tabpanel">
+                {% if recent_payments %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Amount</th>
+                                    <th>Type</th>
+                                    <th>Discount</th>
+                                    <th>Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for payment in recent_payments %}
+                                <tr>
+                                    <td>{{ payment[1] if payment|length > 1 else 'N/A' }}</td>
+                                    <td>
+                                        {% if payment|length > 0 and payment[0] is number %}
+                                            {% set converted_payment, payment_symbol = convert_price_to_user_currency(payment[0]|float) %}
+                                            <strong class="text-success">{{ payment_symbol }}{{ "%.2f"|format(converted_payment) }}</strong>
+                                        {% else %}
+                                            <span class="text-muted">N/A</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-primary">{{ payment[3] if payment|length > 3 else 'Payment' }}</span>
+                                    </td>
+                                    <td>
+                                        {% if payment|length > 4 and payment[4] and payment[4] > 0 %}
+                                            {% set converted_fee, fee_symbol = convert_price_to_user_currency(payment[4]|float) %}
+                                            <span class="badge bg-warning text-dark">-{{ fee_symbol }}{{ "%.2f"|format(converted_fee) }}</span>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <small class="text-muted">{{ payment[2] if payment|length > 2 else 'No notes' }}</small>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="text-center mt-3">
+                        <a href="{{ url_for('payments', membership_id=member[0]) }}" class="btn btn-outline-info">
+                            <i class="fas fa-dollar-sign"></i> View All Payments
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-dollar-sign fa-3x text-muted mb-3"></i>
+                        <h5>No Payment History</h5>
+                        <p class="text-muted">No payments recorded for this member</p>
+                        <a href="{{ url_for('payments', membership_id=member[0]) }}" class="btn btn-primary">
+                            <i class="fas fa-plus"></i> Add Payment
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+            
+            <!-- Quick Actions Tab -->
+            <div class="tab-pane fade" id="actions" role="tabpanel">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5 class="text-primary">
+                            <i class="fas fa-user-cog"></i> Member Management
+                        </h5>
+                        <div class="d-grid gap-2 mb-4">
+                            <a href="{{ url_for('edit_member', membership_id=member[0]) }}" class="btn btn-outline-primary">
+                                <i class="fas fa-edit"></i> Edit Profile
+                            </a>
+                            <button class="btn btn-outline-warning" onclick="updateMemberStatus('{{ member[0]|e }}', '{{ member[1]|e }}')">
+                                <i class="fas fa-user-edit"></i> Update Status
+                            </button>
+                            <button class="btn btn-outline-success" onclick="showExtensionModal()">
+                                <i class="fas fa-calendar-plus"></i> Extend Membership
+                            </button>
+                            <a href="{{ url_for('send_manual_reminder', membership_id=member[0]) }}" class="btn btn-outline-warning">
+                                <i class="fas fa-bell"></i> Send Reminder
+                            </a>
+                        </div>
+                        
+                        <h5 class="text-success">
+                            <i class="fas fa-credit-card"></i> Prepaid Management
+                        </h5>
+                        <div class="d-grid gap-2 mb-4">
+                            <button class="btn btn-outline-success" onclick="showRechargeModal()">
+                                <i class="fas fa-plus"></i> Quick Recharge
+                            </button>
+                            <a href="{{ url_for('prepaid_card_management', membership_id=member[0]) }}" class="btn btn-outline-primary">
+                                <i class="fas fa-cog"></i> Manage Prepaid Card
+                            </a>
+                        </div>
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h5 class="text-info">
+                            <i class="fas fa-qrcode"></i> Check-in Actions
+                        </h5>
+                        <div class="d-grid gap-2 mb-4">
+                            {% if current_checkin %}
+                                <a href="{{ url_for('checkin_scan') }}" class="btn btn-warning">
+                                    <i class="fas fa-sign-out-alt"></i> Check Out Member
+                                </a>
+                            {% else %}
+                                <a href="{{ url_for('checkin_scan') }}" class="btn btn-success">
+                                    <i class="fas fa-sign-in-alt"></i> Check In Member
+                                </a>
+                            {% endif %}
+                            <a href="{{ url_for('member_checkin_history', membership_id=member[0]) }}" class="btn btn-outline-info">
+                                <i class="fas fa-history"></i> Check-in History
+                            </a>
+                        </div>
+                        
+                        <h5 class="text-secondary">
+                            <i class="fas fa-share"></i> Digital Cards
+                        </h5>
+                        <div class="d-grid gap-2">
+                            <a href="{{ url_for('member_card', membership_id=member[0]) }}" class="btn btn-outline-secondary" target="_blank">
+                                <i class="fas fa-id-card"></i> Digital Card
+                            </a>
+                            {% if session.get('is_global_superadmin') %}
+                            <a href="{{ url_for('physical_card', membership_id=member[0]) }}" class="btn btn-outline-secondary" target="_blank">
+                                <i class="fas fa-print"></i> Print Card
+                            </a>
+                            {% endif %}
+                            <button class="btn btn-outline-primary" onclick="emailDigitalCard()">
+                                <i class="fas fa-envelope"></i> Email Card
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Recharge Modal -->
+<div class="modal fade" id="rechargeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-plus-circle text-success"></i> Quick Recharge
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('prepaid_recharge', membership_id=member[0]) }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="recharge-amount" class="form-label">Recharge Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text">{{ currency_symbol }}</span>
+                            <input type="number" class="form-control" id="recharge-amount" name="amount" 
+                                   step="0.01" min="1" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="recharge-description" class="form-label">Description (Optional)</label>
+                        <input type="text" class="form-control" id="recharge-description" name="description" 
+                               placeholder="Quick recharge from member profile">
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        {% if prepaid_balance and prepaid_balance.current_balance is defined %}
+                            {% set converted_current_balance, current_balance_symbol = convert_price_to_user_currency(prepaid_balance.current_balance|float) %}
+                            <strong>Current Balance:</strong> {{ current_balance_symbol }}{{ "%.2f"|format(converted_current_balance) }}
+                        {% else %}
+                            <strong>Current Balance:</strong> $0.00
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-credit-card"></i> Recharge Now
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Email Digital Card Modal -->
+<div class="modal fade" id="emailCardModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-envelope text-primary"></i> Email Digital Card
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="emailCardForm">
+                    <div class="mb-3">
+                        <label for="recipient-email" class="form-label">Recipient Email</label>
+                        <input type="email" class="form-control" id="recipient-email" 
+                               value="{{ member[2] }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email-subject" class="form-label">Subject</label>
+                        <input type="text" class="form-control" id="email-subject" 
+                               value="Your Digital Membership Card - {{ member[0] }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email-message" class="form-label">Message</label>
+                        <textarea class="form-control" id="email-message" rows="4" required>Hello {{ member[1] }},
+
+Please find your digital membership card attached. You can save this image to your phone and show it at any of our locations.
+
+Best regards,
+The MemberSync Team</textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="sendDigitalCard()">
+                    <i class="fas fa-paper-plane"></i> Send Email
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- Membership Extension Modal -->
+<div class="modal fade" id="extensionModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-calendar-plus text-success"></i> Extend Membership
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form action="{{ url_for('renew_membership', membership_id=member[0]) }}" method="POST">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="extension-months" class="form-label">Extension Period</label>
+                        <select class="form-select" id="extension-months" name="extension_months">
+                            <option value="1">1 Month</option>
+                            <option value="3">3 Months</option>
+                            <option value="6">6 Months</option>
+                            <option value="12" selected>1 Year</option>
+                            <option value="24">2 Years</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="extension-amount" class="form-label">Payment Amount (Optional)</label>
+                        <div class="input-group">
+                            <span class="input-group-text">{{ currency_symbol }}</span>
+                            <input type="number" class="form-control" id="extension-amount" name="amount" 
+                                   step="0.01" min="0" placeholder="0.00">
+                        </div>
+                        <small class="text-muted">Leave blank if no payment is required</small>
+                    </div>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Current Expiration:</strong> {{ member[5] or 'Not set' }}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-calendar-check"></i> Extend Membership
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showRechargeModal() {
+    new bootstrap.Modal(document.getElementById('rechargeModal')).show();
+}
+
+function emailDigitalCard() {
+    new bootstrap.Modal(document.getElementById('emailCardModal')).show();
+}
+
+function updateMemberStatus(membershipId, memberName) {
+    if (confirm('Do you want to update the status for "' + memberName + '"?\n\nThis will open the edit form where you can change the member status and payment status.')) {
+        window.location.href = '/edit/' + membershipId;
+    }
+}
+
+function showExtensionModal() {
+    new bootstrap.Modal(document.getElementById('extensionModal')).show();
+}
+
+function sendDigitalCard() {
+    const recipientEmail = document.getElementById('recipient-email').value;
+    const emailSubject = document.getElementById('email-subject').value;
+    const emailMessage = document.getElementById('email-message').value;
+    
+    if (!recipientEmail || !emailSubject || !emailMessage) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    // Show loading state
+    const sendBtn = document.querySelector('#emailCardModal .btn-primary');
+    const originalText = sendBtn.innerHTML;
+    sendBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sending...';
+    sendBtn.disabled = true;
+    
+    // Simulate API call - replace with actual implementation
+    fetch('/api/send_digital_card', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            membership_id: '{{ member[0] }}',
+            recipient_email: recipientEmail,
+            subject: emailSubject,
+            message: emailMessage
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Digital card sent successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('emailCardModal')).hide();
+        } else {
+            alert('Failed to send digital card: ' + (data.error || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error sending digital card. Please try again.');
+    })
+    .finally(() => {
+        sendBtn.innerHTML = originalText;
+        sendBtn.disabled = false;
+    });
+}
+
+// Auto-refresh functionality removed to prevent 404 errors
+// Member status updates are now handled through the edit form
+
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    // Initialize tabs
+    var triggerTabList = [].slice.call(document.querySelectorAll('#activityTabs button'));
+    triggerTabList.forEach(function (triggerEl) {
+        var tabTrigger = new bootstrap.Tab(triggerEl);
+        
+        triggerEl.addEventListener('click', function (event) {
+            event.preventDefault();
+            tabTrigger.show();
+        });
+    });
+});
+
+// Handle form submissions with loading states
+document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', function(e) {
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+            const originalText = submitBtn.innerHTML;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+            submitBtn.disabled = true;
+            
+            // Re-enable after 5 seconds as fallback
+            setTimeout(() => {
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            }, 5000);
+        }
+    });
+});
+
+// Add keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Ctrl + E = Edit member
+    if (e.ctrlKey && e.key === 'e') {
+        e.preventDefault();
+        window.location.href = '{{ url_for("edit_member", membership_id=member[0]) }}';
+    }
+    
+    // Ctrl + R = Quick recharge
+    if (e.ctrlKey && e.key === 'r') {
+        e.preventDefault();
+        showRechargeModal();
+    }
+    
+    // Ctrl + S = Scanner (check-in)
+    if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        window.location.href = '{{ url_for("checkin_scan") }}';
+    }
+    
+    // Ctrl + U = Update status
+    if (e.ctrlKey && e.key === 'u') {
+        e.preventDefault();
+        updateMemberStatus('{{ member[0]|e }}', '{{ member[1]|e }}');
+    }
+    
+    // Ctrl + X = Extend membership
+    if (e.ctrlKey && e.key === 'x') {
+        e.preventDefault();
+        showExtensionModal();
+    }
+});
+
+// Tab switching with keyboard
+document.addEventListener('keydown', function(e) {
+    if (e.altKey) {
+        let tabIndex = -1;
+        switch(e.key) {
+            case '1':
+                tabIndex = 0; // Check-ins
+                break;
+            case '2':
+                tabIndex = 1; // Prepaid
+                break;
+            case '3':
+                tabIndex = 2; // Payments
+                break;
+            case '4':
+                tabIndex = 3; // Actions
+                break;
+        }
+        
+        if (tabIndex >= 0) {
+            e.preventDefault();
+            const tabs = document.querySelectorAll('#activityTabs button');
+            if (tabs[tabIndex]) {
+                tabs[tabIndex].click();
+            }
+        }
+    }
+});
+
+// Auto-save form data for better UX
+function saveFormData(formId, data) {
+    try {
+        sessionStorage.setItem(`memberSync_${formId}`, JSON.stringify(data));
+    } catch (e) {
+        console.log('Could not save form data:', e);
+    }
+}
+
+function loadFormData(formId) {
+    try {
+        const data = sessionStorage.getItem(`memberSync_${formId}`);
+        return data ? JSON.parse(data) : null;
+    } catch (e) {
+        console.log('Could not load form data:', e);
+        return null;
+    }
+}
+
+// Auto-save recharge form data
+document.getElementById('recharge-amount')?.addEventListener('input', function() {
+    saveFormData('recharge', {
+        amount: this.value,
+        description: document.getElementById('recharge-description').value
+    });
+});
+
+document.getElementById('recharge-description')?.addEventListener('input', function() {
+    saveFormData('recharge', {
+        amount: document.getElementById('recharge-amount').value,
+        description: this.value
+    });
+});
+
+// Load saved form data on page load
+window.addEventListener('load', function() {
+    const savedRechargeData = loadFormData('recharge');
+    if (savedRechargeData) {
+        const amountField = document.getElementById('recharge-amount');
+        const descField = document.getElementById('recharge-description');
+        if (amountField && savedRechargeData.amount) {
+            amountField.value = savedRechargeData.amount;
+        }
+        if (descField && savedRechargeData.description) {
+            descField.value = savedRechargeData.description;
+        }
+    }
+});
+
+// Clear saved data when forms are submitted successfully
+document.querySelectorAll('form').forEach(form => {
+    form.addEventListener('submit', function() {
+        if (form.id === 'rechargeForm' || form.closest('#rechargeModal')) {
+            sessionStorage.removeItem('memberSync_recharge');
+        }
+    });
+});
+
+// Enhanced error handling
+window.addEventListener('error', function(e) {
+    console.error('JavaScript error:', e.error);
+});
+
+// Print functionality for member profile
+function printMemberProfile() {
+    window.print();
+}
+
+// Export member data (placeholder)
+function exportMemberData() {
+    // This would implement CSV/PDF export functionality
+    alert('Export functionality would be implemented here');
+}
+
+// Quick actions from keyboard
+document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.shiftKey) {
+        switch(e.key) {
+            case 'P':
+                e.preventDefault();
+                printMemberProfile();
+                break;
+            case 'E':
+                e.preventDefault();
+                exportMemberData();
+                break;
+        }
+    }
+});
+</script>
+
+<style>
+/* Custom styles for member profile */
+.card {
+    transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    border-radius: 12px;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.nav-tabs .nav-link {
+    transition: all 0.3s ease;
+
+        // Auto-save recharge form data
+        document.getElementById('recharge-amount')?.addEventListener('input', function() {
+            saveFormData('recharge', {
+                amount: this.value,
+                description: document.getElementById('recharge-description').value
+            });
+        });
+
+        document.getElementById('recharge-description')?.addEventListener('input', function() {
+            saveFormData('recharge', {
+                amount: document.getElementById('recharge-amount').value,
+                description: this.value
+            });
+        });
+
+        // Load saved form data on page load
+        window.addEventListener('load', function() {
+            const savedRechargeData = loadFormData('recharge');
+            if (savedRechargeData) {
+                const amountField = document.getElementById('recharge-amount');
+                const descField = document.getElementById('recharge-description');
+                if (amountField && savedRechargeData.amount) {
+                    amountField.value = savedRechargeData.amount;
+                }
+                if (descField && savedRechargeData.description) {
+                    descField.value = savedRechargeData.description;
+                }
+            }
+        });
+    font-size: 0.75em;
+    padding: 0.375em 0.75em;
+    font-weight: 500;
+}
+
+.table td {
+    vertical-align: middle;
+    padding: 0.75rem 0.5rem;
+}
+
+.table th {
+    border-top: none;
+    font-weight: 600;
+    color: #495057;
+}
+
+.btn {
+    transition: all 0.2s ease;
+    border-radius: 8px;
+    font-weight: 500;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.modal-content {
+    border: none;
+    border-radius: 15px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+}
+
+.modal-header {
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 15px 15px 0 0;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.alert {
+    border-radius: 10px;
+    border: none;
+}
+
+.alert-info {
+    background: linear-gradient(135deg, #d1ecf1 0%, #bee5eb 100%);
+    color: #0c5460;
+}
+
+.alert-warning {
+    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+    color: #856404;
+}
+
+/* Status indicators */
+.text-success { color: #28a745 !important; }
+.text-warning { color: #ffc107 !important; }
+.text-danger { color: #dc3545 !important; }
+.text-info { color: #17a2b8 !important; }
+
+/* Enhanced dashboard cards */
+.dashboard-card {
+    border-left: 4px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.dashboard-card.border-success {
+    border-left-color: #28a745;
+}
+
+.dashboard-card.border-warning {
+    border-left-color: #ffc107;
+}
+
+.dashboard-card.border-danger {
+    border-left-color: #dc3545;
+}
+
+.dashboard-card.border-info {
+    border-left-color: #17a2b8;
+}
+
+/* Responsive improvements */
+@media (max-width: 768px) {
+    .col-md-3, .col-md-9 {
+        margin-bottom: 1rem;
+    }
+    
+    .d-grid.gap-2 .btn {
+        margin-bottom: 0.5rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.875rem;
+    }
+    
+    .nav-tabs {
+        font-size: 0.875rem;
+        flex-wrap: wrap;
+    }
+    
+    .nav-tabs .nav-link {
+        padding: 0.5rem 0.75rem;
+        margin-bottom: 0.25rem;
+    }
+    
+    .modal-dialog {
+        margin: 1rem;
+    }
+    
+    .card-body {
+        padding: 1rem;
+    }
+    
+    h1 {
+        font-size: 1.75rem;
+    }
+    
+    h4 {
+        font-size: 1.25rem;
+    }
+    
+    h5 {
+        font-size: 1.1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .row.text-center .col-6 {
+        margin-bottom: 1rem;
+    }
+    
+    .btn {
+        font-size: 0.875rem;
+        padding: 0.5rem 1rem;
+    }
+    
+    .table td, .table th {
+        padding: 0.5rem 0.25rem;
+        font-size: 0.875rem;
+    }
+}
+
+/* Loading states */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.fa-spin {
+    animation: fa-spin 2s infinite linear;
+}
+
+@keyframes fa-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Accessibility improvements */
+.btn:focus, .form-control:focus, .form-select:focus {
+    outline: 2px solid #007bff;
+    outline-offset: 2px;
+}
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    background: rgba(220, 240, 255, 0.95);
+    white-space: nowrap;
+    border: 0;
+}
+
+/* Print styles */
+@media print {
+    .btn, .modal, nav, .nav-tabs {
+        display: none !important;
+    }
+    
+    .card {
+        border: 1px solid #dee2e6 !important;
+        box-shadow: none !important;
+    }
+    
+    .page-break {
+        page-break-before: always;
+    }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+    .card {
+     background-color: #e3f2fd; /* Material Design light blue */
+    border-color: #90caf9;
+    }
+    
+    .table {
+        color: #e2e8f0;
+    }
+    
+    .text-muted {
+        color: #a0aec0 !important;
+    }
+}
+
+/* Enhanced animations */
+.fade-in {
+    animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* Custom scrollbar for tables */
+.table-responsive::-webkit-scrollbar {
+    height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+    background: #1a2639; /* Modern dark blue-gray */
+    border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+/* Improve text visibility on blue backgrounds */
+.card {
+    background-color: #e3f2fd;
+    border-color: #90caf9;
+    color: #1a237e; /* Dark blue text */
+}
+
+.card-body {
+    color: #1a237e; /* Dark blue text for card content */
+}
+
+.table {
+    color: #1a237e; /* Dark blue text for tables */
+}
+
+.text-muted {
+    color: #3949ab !important; /* Darker muted text */
+}
+
+.modal-content {
+    color: #212529; /* Standard dark text for modals */
+}
+
+/* Ensure form elements have good contrast */
+.form-control, .form-select {
+    background-color: #ffffff;
+    color: #212529;
+}
+
+/* Make sure badges remain readable */
+.badge.bg-primary { background-color: #1976d2 !important; }
+.badge.bg-success { background-color: #388e3c !important; }
+.badge.bg-warning { background-color: #f57c00 !important; color: #fff !important; }
+.badge.bg-info { background-color: #0288d1 !important; }
+</style>
+{% endblock %}

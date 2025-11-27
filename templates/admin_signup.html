@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+{% block title %}Global Admin Signup - MemberSync{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 col-lg-5">
+        <div class="card border-danger">
+            <div class="card-header text-center bg-danger text-white">
+                <h3 class="mb-0">
+                    <i class="fas fa-user-shield"></i>
+                    Global Admin Signup
+                </h3>
+                <p class="mb-0">Restricted access - Secret key required</p>
+            </div>
+            <div class="card-body p-4">
+                <div class="alert alert-danger">
+                    <i class="fas fa-shield-alt"></i>
+                    <strong>SECURITY WARNING:</strong> This is for system owners only. 
+                    Unauthorized access attempts will be logged and monitored.
+                    You must have the secret key to proceed.
+                </div>
+
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">
+                            <i class="fas fa-user"></i> Username <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="username" 
+                               name="username" 
+                               placeholder="Enter username"
+                               required 
+                               autocomplete="username">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="email" class="form-label">
+                            <i class="fas fa-envelope"></i> Email Address <span class="text-danger">*</span>
+                        </label>
+                        <input type="email" 
+                               class="form-control" 
+                               id="email" 
+                               name="email" 
+                               placeholder="Enter email address"
+                               required 
+                               autocomplete="email">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="password" class="form-label">
+                            <i class="fas fa-lock"></i> Password <span class="text-danger">*</span>
+                        </label>
+                        <input type="password" 
+                               class="form-control" 
+                               id="password" 
+                               name="password" 
+                               placeholder="Enter password"
+                               required 
+                               autocomplete="new-password"
+                               minlength="6">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">
+                            <i class="fas fa-lock"></i> Confirm Password <span class="text-danger">*</span>
+                        </label>
+                        <input type="password" 
+                               class="form-control" 
+                               id="confirm_password" 
+                               name="confirm_password" 
+                               placeholder="Confirm password"
+                               required 
+                               autocomplete="new-password">
+                    </div>
+
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" 
+                                   type="checkbox" 
+                                   id="is_global_superadmin" 
+                                   name="is_global_superadmin" 
+                                   value="1">
+                            <label class="form-check-label" for="is_global_superadmin">
+                                <i class="fas fa-globe"></i> Global Superadmin Access
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="mb-3" id="organizationSelect" style="display: none;">
+                        <label for="organization_id" class="form-label">
+                            <i class="fas fa-building"></i> Organization
+                        </label>
+                        <select class="form-select" id="organization_id" name="organization_id">
+                            <option value="">Select Organization</option>
+                            {% for org in organizations %}
+                            <option value="{{ org.id }}">{{ org.name if org.name else 'Unnamed Organization (ID: ' ~ org.id ~ ')' }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="secret_key" class="form-label">
+                            <i class="fas fa-key"></i> Secret Key <span class="text-danger">*</span>
+                        </label>
+                        <input type="password" 
+                               class="form-control" 
+                               id="secret_key" 
+                               name="secret_key" 
+                               placeholder="Enter global admin secret key"
+                               required>
+                        <div class="form-text text-danger">
+                            <i class="fas fa-shield-alt"></i>
+                            Required for global administrator access
+                        </div>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-danger btn-lg">
+                            <i class="fas fa-user-shield"></i> Create Global Admin Account
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-center">
+                <p class="mb-0 text-muted">
+                    Looking for regular signup?
+                    <a href="{{ url_for('signup') }}" class="text-decoration-none">
+                        <i class="fas fa-building"></i> Organization Signup
+                    </a>
+                    |
+                    <a href="{{ url_for('login') }}" class="text-decoration-none">
+                        <i class="fas fa-sign-in-alt"></i> Login
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const globalAdminCheck = document.getElementById('is_global_superadmin');
+    const organizationSelect = document.getElementById('organizationSelect');
+    const passwordInput = document.getElementById('password');
+    const confirmPasswordInput = document.getElementById('confirm_password');
+    
+    // Toggle organization selection based on global admin checkbox
+    globalAdminCheck.addEventListener('change', function() {
+        if (this.checked) {
+            organizationSelect.style.display = 'none';
+            document.getElementById('organization_id').required = false;
+        } else {
+            organizationSelect.style.display = 'block';
+            document.getElementById('organization_id').required = true;
+        }
+    });
+    
+    // Password confirmation validation
+    function validatePasswords() {
+        if (passwordInput.value !== confirmPasswordInput.value) {
+            confirmPasswordInput.setCustomValidity('Passwords do not match');
+        } else {
+            confirmPasswordInput.setCustomValidity('');
+        }
+    }
+    
+    passwordInput.addEventListener('input', validatePasswords);
+    confirmPasswordInput.addEventListener('input', validatePasswords);
+});
+</script>
+{% endblock %}

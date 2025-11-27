@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Member Verification - MemberSync</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .verification-container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .verification-card {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transform: perspective(1000px) rotateX(5deg);
+            transition: all 0.3s ease;
+        }
+
+        .verification-card:hover {
+            transform: perspective(1000px) rotateX(0deg) translateY(-10px);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+            position: relative;
+        }
+
+        .card-header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .verification-status {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .verification-title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        .member-photo-section {
+            text-align: center;
+            padding: 30px 25px 20px;
+        }
+
+        .member-photo {
+            width: 120px;
+            height: 150px;
+            border-radius: 15px;
+            object-fit: cover;
+            border: 4px solid #e9ecef;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .member-photo:hover {
+            transform: scale(1.05);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+        }
+
+        .default-avatar {
+            width: 120px;
+            height: 150px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            color: white;
+            font-size: 3rem;
+            box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+        }
+
+        .member-details {
+            padding: 0 25px 30px;
+        }
+
+        .member-name {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 8px;
+        }
+
+        .member-id {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 1rem;
+            margin-bottom: 25px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .info-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #34495e;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-value {
+            color: #2c3e50;
+            font-weight: 500;
+            text-align: right;
+        }
+
+        .status-badge {
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .status-active {
+            background: linear-gradient(135deg, #2ecc71, #27ae60);
+            color: white;
+        }
+
+        .status-warning {
+            background: linear-gradient(135deg, #f39c12, #e67e22);
+            color: white;
+            animation: pulse 2s infinite;
+        }
+
+        .status-expired {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .status-invalid {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            color: white;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .error-card {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            text-align: center;
+            padding: 40px 25px;
+        }
+
+        .error-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .error-title {
+            font-size: 1.8rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .error-message {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .organization-info {
+            background: #e3f2fd;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        .organization-name {
+            font-weight: 600;
+            color: #1976d2;
+        }
+
+        .verification-time {
+            text-align: center;
+            color: #6c757d;
+            font-size: 0.9rem;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+
+        .back-button {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            color: #667eea;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 10px 15px;
+            border-radius: 25px;
+            text-decoration: none;
+            font-weight: 600;
+            backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            z-index: 1000;
+        }
+
+        .back-button:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            color: #667eea;
+        }
+
+        .qr-info {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            background: #f0f8ff;
+            border-radius: 10px;
+            border: 1px solid #b3d9ff;
+        }
+
+        .photo-verification-badge {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 10px;
+        }
+
+        .photo-verification-badge.no-photo {
+            background: #f8d7da;
+            border-color: #f5c6cb;
+            color: #721c24;
+        }
+
+        @media (max-width: 480px) {
+            .verification-card {
+                margin: 0 15px;
+                transform: none;
+            }
+            
+            .verification-card:hover {
+                transform: translateY(-5px);
+            }
+            
+            .member-photo, .default-avatar {
+                width: 100px;
+                height: 125px;
+            }
+            
+            .member-name {
+                font-size: 1.5rem;
+            }
+
+            .back-button {
+                position: relative;
+                margin-bottom: 20px;
+                display: inline-block;
+            }
+        }
+
+        /* Photo modal styles */
+        .photo-modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .photo-modal-content {
+            position: relative;
+            max-width: 90%;
+            max-height: 90%;
+            text-align: center;
+        }
+        
+        .photo-modal-image {
+            max-width: 100%;
+            max-height: 80vh;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+        
+        .photo-modal-close {
+            position: absolute;
+            top: -40px;
+            right: -10px;
+            color: white;
+            font-size: 30px;
+            cursor: pointer;
+            background: rgba(0,0,0,0.5);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .photo-modal-info {
+            color: white;
+            margin-top: 20px;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="text-center mb-3">
+        <a href="javascript:history.back()" class="back-button">
+            <i class="fas fa-arrow-left"></i> Back
+        </a>
+    </div>
+
+    <div class="verification-container">
+        {% if error %}
+            <!-- Error State -->
+            <div class="verification-card">
+                <div class="error-card">
+                    <div class="error-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="error-title">Verification Failed</div>
+                    <div class="error-message">{{ error }}</div>
+                    
+                    <div class="mt-4">
+                        <a href="javascript:history.back()" class="btn btn-light">
+                            <i class="fas fa-arrow-left"></i> Go Back
+                        </a>
+                    </div>
+                </div>
+            </div>
+        {% else %}
+            <!-- Success State -->
+            <div class="verification-card">
+                <div class="card-header">
+                    <div class="verification-status">
+                        {% if expiry_status == 'active' %}
+                            <i class="fas fa-check-circle"></i>
+                        {% elif expiry_status == 'warning' %}
+                            <i class="fas fa-exclamation-triangle"></i>
+                        {% elif expiry_status == 'expired' %}
+                            <i class="fas fa-times-circle"></i>
+                        {% else %}
+                            <i class="fas fa-question-circle"></i>
+                        {% endif %}
+                    </div>
+                    <h3 class="verification-title">Member Verification</h3>
+                    <p class="mb-0">Identity Confirmed</p>
+                </div>
+
+                <!-- Member Photo Section -->
+                <div class="member-photo-section">
+                    {% if member and member|length > 8 and member[8] %}
+                        <img src="{{ url_for('member_photo', membership_id=member[0]) }}" 
+                             alt="Member Photo" class="member-photo" 
+                             onclick="openPhotoModal(this.src)"
+                             style="cursor: pointer;"
+                             title="Click to enlarge">
+                        <div class="photo-verification-badge">
+                            <i class="fas fa-shield-alt"></i>
+                            Photo ID Verified
+                        </div>
+                    {% else %}
+                        <div class="default-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div class="photo-verification-badge no-photo">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            No Photo ID
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Member Details -->
+                <div class="member-details">
+                    <div class="member-name">{{ member[1] if member else 'Unknown' }}</div>
+                    <div class="member-id">ID: {{ member[0] if member else 'N/A' }}</div>
+
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-crown"></i>
+                                <span>Membership</span>
+                            </div>
+                            <div class="info-value">{{ member[4] if member and member|length > 4 else 'N/A' }}</div>
+                        </div>
+
+                        {% if member and member|length > 2 and member[2] %}
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-envelope"></i>
+                                <span>Email</span>
+                            </div>
+                            <div class="info-value">{{ member[2] }}</div>
+                        </div>
+                        {% endif %}
+
+                        {% if member and member|length > 3 and member[3] %}
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-phone"></i>
+                                <span>Phone</span>
+                            </div>
+                            <div class="info-value">{{ member[3] }}</div>
+                        </div>
+                        {% endif %}
+
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-calendar"></i>
+                                <span>Member Since</span>
+                            </div>
+                            <div class="info-value">
+                                {% if member and member|length > 7 and member[7] %}
+                                    {{ member[7][:10] }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-clock"></i>
+                                <span>Expires</span>
+                            </div>
+                            <div class="info-value">
+                                {% if member and member|length > 5 and member[5] %}
+                                    {{ member[5] }}
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        <div class="info-item">
+                            <div class="info-label">
+                                <i class="fas fa-shield-alt"></i>
+                                <span>Status</span>
+                            </div>
+                            <div class="info-value">
+                                <span class="status-badge 
+                                    {% if expiry_status == 'active' %}status-active
+                                    {% elif expiry_status == 'warning' %}status-warning
+                                    {% elif expiry_status == 'expired' %}status-expired
+                                    {% else %}status-invalid{% endif %}">
+                                    {% if expiry_status == 'active' %}
+                                        <i class="fas fa-check"></i> ACTIVE
+                                    {% elif expiry_status == 'warning' %}
+                                        <i class="fas fa-exclamation"></i> EXPIRING
+                                        {% if days_diff is not none %}
+                                            ({{ days_diff }} days)
+                                        {% endif %}
+                                    {% elif expiry_status == 'expired' %}
+                                        <i class="fas fa-times"></i> EXPIRED
+                                        {% if days_diff is not none %}
+                                            ({{ -days_diff }} days ago)
+                                        {% endif %}
+                                    {% else %}
+                                        <i class="fas fa-question"></i> UNKNOWN
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Organization Info -->
+                    {% if member and member|length > 9 and member[9] %}
+                    <div class="organization-info">
+                        <i class="fas fa-building"></i>
+                        <span class="organization-name">{{ member[9] }}</span>
+                    </div>
+                    {% endif %}
+
+                    <!-- QR Code Info -->
+                    <div class="qr-info">
+                        <i class="fas fa-qrcode"></i>
+                        <strong>QR Code Verification</strong><br>
+                        <small class="text-muted">
+                            This verification was performed by scanning the member's QR code
+                            {% if member and member|length > 8 and member[8] %}
+                                <br>✅ Photo ID verification available
+                            {% else %}
+                                <br>⚠️ No photo ID on file
+                            {% endif %}
+                        </small>
+                    </div>
+
+                    <!-- Verification Timestamp -->
+                    <div class="verification-time">
+                        <i class="fas fa-clock"></i>
+                        Verified at: <span id="current-time"></span>
+                    </div>
+                </div>
+            </div>
+        {% endif %}
+    </div>
+
+    <script>
+        // Display current timestamp
+        document.addEventListener('DOMContentLoaded', function() {
+            const timeElement = document.getElementById('current-time');
+            if (timeElement) {
+                const now = new Date();
+                const options = {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                };
+                timeElement.textContent = now.toLocaleDateString('en-US', options);
+            }
+
+            // Add animation to card entrance
+            const card = document.querySelector('.verification-card');
+            if (card) {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(50px) perspective(1000px) rotateX(15deg)';
+                
+                setTimeout(() => {
+                    card.style.transition = 'all 0.8s ease-out';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0) perspective(1000px) rotateX(5deg)';
+                }, 100);
+            }
+        });
+
+        // Photo modal functionality
+        function openPhotoModal(imageSrc) {
+            const modal = document.createElement('div');
+            modal.className = 'photo-modal-overlay';
+            modal.innerHTML = `
+                <div class="photo-modal-content">
+                    <span class="photo-modal-close">&times;</span>
+                    <img src="${imageSrc}" alt="Member Photo" class="photo-modal-image">
+                    <div class="photo-modal-info">
+                        <h5>{{ member[0] if member else 'Unknown ID' }}</h5>
+                        <p>{{ member[1] if member else 'Unknown Member' }}</p>
+                        <small>Photo ID Verification</small>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            document.body.style.overflow = 'hidden';
+            
+            // Close modal functionality
+            function closeModal() {
+                document.body.removeChild(modal);
+                document.body.style.overflow = 'auto';
+            }
+            
+            modal.querySelector('.photo-modal-close').addEventListener('click', closeModal);
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+            
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeModal();
+                }
+            });
+        }
+
+        // Auto-refresh functionality for active verifications
+        {% if not error and expiry_status == 'active' %}
+        let refreshTimer = setTimeout(() => {
+            // Subtle refresh indicator
+            const timeElement = document.getElementById('current-time');
+            if (timeElement) {
+                timeElement.style.opacity = '0.5';
+                setTimeout(() => {
+                    timeElement.style.opacity = '1';
+                    location.reload();
+                }, 500);
+            }
+        }, 60000); // Refresh after 1 minute
+
+        // Stop auto-refresh on user interaction
+        document.addEventListener('click', () => {
+            if (refreshTimer) {
+                clearTimeout(refreshTimer);
+                refreshTimer = null;
+            }
+        });
+        {% endif %}
+
+        // Add verification sound (optional, very quiet)
+        function playVerificationSound() {
+            try {
+                const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                const oscillator = audioContext.createOscillator();
+                const gainNode = audioContext.createGain();
+                
+                oscillator.connect(gainNode);
+                gainNode.connect(audioContext.destination);
+                
+                oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+                gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+                gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+                
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + 0.3);
+            } catch (e) {
+                // Ignore audio errors
+            }
+        }
+
+        // Play sound for successful verification
+        {% if not error %}
+        document.addEventListener('DOMContentLoaded', () => {
+            setTimeout(playVerificationSound, 500);
+        });
+        {% endif %}
+    </script>
+</body>
+</html>

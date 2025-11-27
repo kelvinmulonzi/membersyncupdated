@@ -1,0 +1,405 @@
+{% extends "base.html" %}
+{% block title %}Prepaid Reports - MemberSync{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2><i class="fas fa-chart-line text-primary"></i> Prepaid Card Reports</h2>
+                <p class="text-muted mb-0">Comprehensive prepaid transaction reports with filters</p>
+                {% if is_location_admin and location_name %}
+                <div class="alert alert-info mt-2 mb-0 py-2">
+                    <i class="fas fa-map-marker-alt"></i> <strong>Viewing reports for:</strong> {{ location_name }}
+                </div>
+                {% endif %}
+            </div>
+            <div>
+                <a href="{{ url_for('export_prepaid_reports_csv') }}?start_date={{ start_date }}&end_date={{ end_date }}&transaction_type={{ transaction_type }}&member_id={{ member_id }}{% if location_id %}&location_id={{ location_id }}{% endif %}" 
+                   class="btn btn-success">
+                    <i class="fas fa-file-csv"></i> Export CSV
+                </a>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- Statistics Cards -->
+        <div class="row mb-4">
+            <div class="col-lg-2 col-md-4 mb-3">
+                <div class="card bg-primary text-white h-100">
+                    <div class="card-body text-center">
+                        <h4 class="mb-0">{{ statistics.total_transactions }}</h4>
+                        <small>Total Transactions</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 mb-3">
+                <div class="card bg-success text-white h-100">
+                    <div class="card-body text-center">
+                        {% set converted_recharges, recharges_symbol = convert_price_to_user_currency(statistics.total_recharges) %}
+                        <h5 class="mb-0">{{ recharges_symbol }}{{ "%.2f"|format(converted_recharges) }}</h5>
+                        <small>Total Recharges</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 mb-3">
+                <div class="card bg-warning text-dark h-100">
+                    <div class="card-body text-center">
+                        {% set converted_usage, usage_symbol = convert_price_to_user_currency(statistics.total_usage) %}
+                        <h5 class="mb-0">{{ usage_symbol }}{{ "%.2f"|format(converted_usage) }}</h5>
+                        <small>Total Usage</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 mb-3">
+                <div class="card bg-danger text-white h-100">
+                    <div class="card-body text-center">
+                        {% set converted_fees, fees_symbol = convert_price_to_user_currency(statistics.total_fees) %}
+                        <h5 class="mb-0">{{ fees_symbol }}{{ "%.2f"|format(converted_fees) }}</h5>
+                        <small>Total Fees</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 mb-3">
+                <div class="card bg-info text-white h-100">
+                    <div class="card-body text-center">
+                        {% set converted_bonuses, bonuses_symbol = convert_price_to_user_currency(statistics.total_bonuses) %}
+                        <h5 class="mb-0">{{ bonuses_symbol }}{{ "%.2f"|format(converted_bonuses) }}</h5>
+                        <small>Total Bonuses</small>
+                    </div>
+                </div>
+            </div>
+            <div class="col-lg-2 col-md-4 mb-3">
+                <div class="card bg-secondary text-white h-100">
+                    <div class="card-body text-center">
+                        <h5 class="mb-0">{{ statistics.unique_members }}</h5>
+                        <small>Unique Members</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-filter"></i> Filters</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-2">
+                        <label for="start_date" class="form-label">Start Date</label>
+                        <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="end_date" class="form-label">End Date</label>
+                        <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="transaction_type" class="form-label">Type</label>
+                        <select class="form-select" id="transaction_type" name="transaction_type">
+                            <option value="all" {% if transaction_type == 'all' %}selected{% endif %}>All Types</option>
+                            <option value="recharge" {% if transaction_type == 'recharge' %}selected{% endif %}>Recharges</option>
+                            <option value="usage" {% if transaction_type == 'usage' %}selected{% endif %}>Usage</option>
+                            <option value="fee" {% if transaction_type == 'fee' %}selected{% endif %}>Fees</option>
+                            <option value="bonus" {% if transaction_type == 'bonus' %}selected{% endif %}>Bonuses</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="member_id" class="form-label">Member ID</label>
+                        <input type="text" class="form-control" id="member_id" name="member_id" value="{{ member_id }}" placeholder="MBR-0001">
+                    </div>
+                    {% if is_global_superadmin and organizations %}
+                    <div class="col-md-2">
+                        <label for="org_id" class="form-label">Organization</label>
+                        <select class="form-select" id="org_id" name="org_id">
+                            <option value="">All Organizations</option>
+                            {% for org in organizations %}
+                            <option value="{{ org[0] }}">{{ org[1] if org[1] else 'Unnamed Organization (ID: ' ~ org[0] ~ ')' }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                    {% if is_org_superadmin and accessible_locations %}
+                    <div class="col-md-2">
+                        <label for="location_id" class="form-label">Location/Store</label>
+                        <select class="form-select" id="location_id" name="location_id">
+                            <option value="">All Locations</option>
+                            {% for location in accessible_locations %}
+                            <option value="{{ location[0] }}" {% if location_id == location[0] %}selected{% endif %}>
+                                {{ location[1] }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% endif %}
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Apply Filters
+                        </button>
+                        <a href="{{ url_for('prepaid_reports') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-redo"></i> Reset
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Transactions Table -->
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-list"></i> Transaction History</h5>
+            </div>
+            <div class="card-body">
+                {% if transactions %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm">
+                        <thead>
+                            <tr>
+                                <th>Date/Time</th>
+                                <th>Member ID</th>
+                                <th>Member Name</th>
+                                <th>Type</th>
+                                <th>Amount</th>
+                                <th>Bonus</th>
+                                <th>Balance Before</th>
+                                <th>Balance After</th>
+                                <th>Description</th>
+                                {% if is_org_superadmin and not is_location_admin %}
+                                <th>Location/Store</th>
+                                {% endif %}
+                                {% if is_global_superadmin %}
+                                <th>Organization</th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for trans in transactions %}
+                            <tr>
+                                <td><small>{{ trans[9][:16] if trans[9] else 'N/A' }}</small></td>
+                                <td>
+                                    <a href="{{ url_for('member_profile', membership_id=trans[1]) }}" class="text-decoration-none">
+                                        <strong>{{ trans[1] }}</strong>
+                                    </a>
+                                </td>
+                                <td>{{ trans[2] }}</td>
+                                <td>
+                                    {% if trans[3] == 'recharge' %}
+                                        <span class="badge bg-success"><i class="fas fa-plus"></i> Recharge</span>
+                                    {% elif trans[3] == 'usage' %}
+                                        <span class="badge bg-warning"><i class="fas fa-minus"></i> Usage</span>
+                                    {% elif trans[3] == 'fee' %}
+                                        <span class="badge bg-danger"><i class="fas fa-percentage"></i> Fee</span>
+                                    {% elif trans[3] == 'bonus' %}
+                                        <span class="badge bg-info"><i class="fas fa-gift"></i> Bonus</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% set converted_amount, symbol = convert_price_to_user_currency(trans[4]|float) %}
+                                    {% if trans[3] in ['usage', 'fee'] %}
+                                        <span class="text-danger">-{{ symbol }}{{ "%.2f"|format(converted_amount) }}</span>
+                                    {% else %}
+                                        <span class="text-success">+{{ symbol }}{{ "%.2f"|format(converted_amount) }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if trans[5] and trans[5] > 0 %}
+                                        {% set converted_bonus_amount, bonus_amount_symbol = convert_price_to_user_currency(trans[5]|float) %}
+                                        <span class="badge bg-warning text-dark">+{{ bonus_amount_symbol }}{{ "%.2f"|format(converted_bonus_amount) }}</span>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                {% set converted_balance_before, balance_before_symbol = convert_price_to_user_currency(trans[6]|float) %}
+                                {% set converted_balance_after, balance_after_symbol = convert_price_to_user_currency(trans[7]|float) %}
+                                <td>{{ balance_before_symbol }}{{ "%.2f"|format(converted_balance_before) }}</td>
+                                <td><strong>{{ balance_after_symbol }}{{ "%.2f"|format(converted_balance_after) }}</strong></td>
+                                <td><small class="text-muted">{{ trans[8] or 'N/A' }}</small></td>
+                                {% if is_org_superadmin and not is_location_admin %}
+                                <td><small><i class="fas fa-map-marker-alt text-info"></i> {{ trans[11] or 'N/A' }}</small></td>
+                                {% endif %}
+                                {% if is_global_superadmin %}
+                                <td><small>{{ trans[10] }}</small></td>
+                                {% endif %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info text-center">
+                    <i class="fas fa-info-circle"></i>
+                    No transactions found for the selected filters.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Summary Card -->
+        <div class="card mt-4">
+            <div class="card-header bg-success text-white">
+                <h5 class="mb-0"><i class="fas fa-calculator"></i> Financial Summary</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded mb-2">
+                            <span><i class="fas fa-plus text-success"></i> Total Recharges:</span>
+                            {% set converted_summary_recharges, summary_recharges_symbol = convert_price_to_user_currency(statistics.total_recharges) %}
+                            <strong class="text-success">{{ summary_recharges_symbol }}{{ "%.2f"|format(converted_summary_recharges) }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded mb-2">
+                            <span><i class="fas fa-minus text-warning"></i> Total Usage:</span>
+                            {% set converted_summary_usage, summary_usage_symbol = convert_price_to_user_currency(statistics.total_usage) %}
+                            <strong class="text-warning">{{ summary_usage_symbol }}{{ "%.2f"|format(converted_summary_usage) }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded mb-2">
+                            <span><i class="fas fa-percentage text-danger"></i> Total Fees:</span>
+                            {% set converted_summary_fees, summary_fees_symbol = convert_price_to_user_currency(statistics.total_fees) %}
+                            <strong class="text-danger">{{ summary_fees_symbol }}{{ "%.2f"|format(converted_summary_fees) }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded mb-2">
+                            <span><i class="fas fa-gift text-info"></i> Total Bonuses:</span>
+                            {% set converted_summary_bonuses, summary_bonuses_symbol = convert_price_to_user_currency(statistics.total_bonuses) %}
+                            <strong class="text-info">{{ summary_bonuses_symbol }}{{ "%.2f"|format(converted_summary_bonuses) }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded mb-2">
+                            <span><i class="fas fa-balance-scale text-primary"></i> Net Balance:</span>
+                            {% set converted_summary_net_balance, summary_net_balance_symbol = convert_price_to_user_currency(statistics.net_balance) %}
+                            <strong class="text-primary">{{ summary_net_balance_symbol }}{{ "%.2f"|format(converted_summary_net_balance) }}</strong>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-between align-items-center p-3 bg-light rounded mb-2">
+                            <span><i class="fas fa-users text-secondary"></i> Unique Members:</span>
+                            <strong class="text-secondary">{{ statistics.unique_members }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Location Breakdown for Org Super Admins -->
+        {% if is_org_superadmin and location_breakdown %}
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-store"></i> Prepaid Reports by Location/Store</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover table-striped">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Location/Store</th>
+                                <th class="text-center">Unique Members</th>
+                                <th class="text-center">Total Transactions</th>
+                                <th class="text-end">Total Recharges</th>
+                                <th class="text-end">Total Usage</th>
+                                <th class="text-end">Total Bonus</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for location in location_breakdown %}
+                            <tr>
+                                <td>
+                                    <i class="fas fa-map-marker-alt text-info"></i>
+                                    <strong>{{ location[1] }}</strong>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-secondary">{{ location[2] or 0 }}</span>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-primary">{{ location[3] or 0 }}</span>
+                                </td>
+                                <td class="text-end">
+                                    {% if location[4] is defined and location[4] is number %}
+                                        {% set converted_loc_recharge, loc_recharge_symbol = convert_price_to_user_currency(location[4]|float) %}
+                                        <strong class="text-success">{{ loc_recharge_symbol }}{{ "%.2f"|format(converted_loc_recharge) }}</strong>
+                                    {% else %}
+                                        <strong class="text-success">$0.00</strong>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    {% if location[5] is defined and location[5] is number %}
+                                        {% set converted_loc_usage, loc_usage_symbol = convert_price_to_user_currency(location[5]|float) %}
+                                        <strong class="text-warning">{{ loc_usage_symbol }}{{ "%.2f"|format(converted_loc_usage) }}</strong>
+                                    {% else %}
+                                        <strong class="text-warning">$0.00</strong>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">
+                                    {% if location[6] is defined and location[6] is number %}
+                                        {% set converted_loc_bonus, loc_bonus_symbol = convert_price_to_user_currency(location[6]|float) %}
+                                        <strong class="text-info">{{ loc_bonus_symbol }}{{ "%.2f"|format(converted_loc_bonus) }}</strong>
+                                    {% else %}
+                                        <strong class="text-info">$0.00</strong>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    <a href="{{ url_for('prepaid_reports', location_id=location[0], start_date=start_date, end_date=end_date, transaction_type=transaction_type) }}" 
+                                       class="btn btn-sm btn-outline-primary">
+                                        <i class="fas fa-filter"></i> Filter
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <th>Total</th>
+                                <th class="text-center">
+                                    <span class="badge bg-secondary">{{ location_breakdown|sum(attribute=2) }}</span>
+                                </th>
+                                <th class="text-center">
+                                    <span class="badge bg-primary">{{ location_breakdown|sum(attribute=3) }}</span>
+                                </th>
+                                <th class="text-end">
+                                    {% set total_loc_recharges = location_breakdown|sum(attribute=4) %}
+                                    {% if total_loc_recharges is number %}
+                                        {% set converted_total_loc_recharge, total_loc_recharge_symbol = convert_price_to_user_currency(total_loc_recharges|float) %}
+                                        <strong class="text-success">{{ total_loc_recharge_symbol }}{{ "%.2f"|format(converted_total_loc_recharge) }}</strong>
+                                    {% else %}
+                                        <strong class="text-success">$0.00</strong>
+                                    {% endif %}
+                                </th>
+                                <th class="text-end">
+                                    {% set total_loc_usage = location_breakdown|sum(attribute=5) %}
+                                    {% if total_loc_usage is number %}
+                                        {% set converted_total_loc_usage, total_loc_usage_symbol = convert_price_to_user_currency(total_loc_usage|float) %}
+                                        <strong class="text-warning">{{ total_loc_usage_symbol }}{{ "%.2f"|format(converted_total_loc_usage) }}</strong>
+                                    {% else %}
+                                        <strong class="text-warning">$0.00</strong>
+                                    {% endif %}
+                                </th>
+                                <th class="text-end">
+                                    {% set total_loc_bonus = location_breakdown|sum(attribute=6) %}
+                                    {% if total_loc_bonus is number %}
+                                        {% set converted_total_loc_bonus, total_loc_bonus_symbol = convert_price_to_user_currency(total_loc_bonus|float) %}
+                                        <strong class="text-info">{{ total_loc_bonus_symbol }}{{ "%.2f"|format(converted_total_loc_bonus) }}</strong>
+                                    {% else %}
+                                        <strong class="text-info">$0.00</strong>
+                                    {% endif %}
+                                </th>
+                                <th></th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+

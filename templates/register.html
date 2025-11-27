@@ -1,0 +1,343 @@
+{% extends "base.html" %}
+{% block title %}Register Member - MemberSync{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-user-plus"></i> Register New Member</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <div class="mb-3">
+                                <label for="name" class="form-label">Full Name *</label>
+                                <input type="text" class="form-control" id="name" name="name" required>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="email" name="email">
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="phone" class="form-label">
+                                    <i class="fas fa-phone"></i> Phone Number (Cameroon) *
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <img src="https://flagcdn.com/w20/cm.png" alt="CM" class="me-1"> +237
+                                    </span>
+                                    <input type="tel" class="form-control" id="phone" name="phone" 
+                                           placeholder="6 XX XX XX XX" 
+                                           pattern="[0-9\s\+\-\(\)]+"
+                                           required>
+                                </div>
+                                <small class="form-text text-muted">
+                                    <i class="fas fa-info-circle"></i>
+                                    Examples: +237 6 89 68 62 24 or 689686224 or 6 89 68 62 24
+                                </small>
+                                <div id="phone-validation-feedback" class="mt-1"></div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="membership_type" class="form-label">Membership Type *</label>
+                                <select class="form-control" id="membership_type" name="membership_type" required>
+                                    <option value="">Select Membership Type</option>
+                                    <option value="Silver">Silver</option>
+                                    <option value="Gold">Gold</option>
+                                    <option value="Platinum">Platinum</option>
+                                </select>
+                            </div>
+                            
+                            {% if session.is_global_superadmin %}
+                            <div class="mb-3">
+                                <label for="organization_id" class="form-label">
+                                    <i class="fas fa-building"></i> Organization *
+                                </label>
+                                <select class="form-control" id="organization_id" name="organization_id" required onchange="loadLocationsForOrg(this.value)">
+                                    <option value="">Select Organization</option>
+                                    {% for org in organizations %}
+                                        <option value="{{ org[0] }}">{{ org[1] if org[1] else 'Unnamed Organization' }} {% if org[2] %}({{ org[2] }}){% endif %}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle"></i>
+                                    Choose the organization for this member
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="location_id" class="form-label">
+                                    <i class="fas fa-map-marker-alt"></i> Location (Store) *
+                                </label>
+                                <select class="form-control" id="location_id" name="location_id" required disabled>
+                                    <option value="">Select organization first</option>
+                                </select>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle"></i>
+                                    Choose the specific store/location for this member
+                                </div>
+                            </div>
+                            {% elif session.is_superadmin %}
+                            <div class="mb-3">
+                                <label for="location_id" class="form-label">
+                                    <i class="fas fa-map-marker-alt"></i> Location (Store) *
+                                </label>
+                                <select class="form-control" id="location_id" name="location_id" required>
+                                    <option value="">Select Location</option>
+                                    {% for location in locations %}
+                                        <option value="{{ location[0] }}">{{ location[1] }}</option>
+                                    {% endfor %}
+                                </select>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle"></i>
+                                    Choose the specific store/location for this member
+                                </div>
+                            </div>
+                            {% else %}
+                            <!-- Location Admin - auto-assigned, non-editable -->
+                            <div class="mb-3">
+                                <label for="location_display" class="form-label">
+                                    <i class="fas fa-map-marker-alt"></i> Location (Store)
+                                </label>
+                                <input type="text" class="form-control" id="location_display" 
+                                       value="{{ session.location_name or 'Your Location' }}" readonly disabled>
+                                <div class="form-text">
+                                    <i class="fas fa-info-circle"></i>
+                                    Member will be automatically assigned to your location
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="photo" class="form-label">Member Photo</label>
+                                <div class="text-center mb-3">
+                                    <div id="photo-preview" class="photo-preview-container">
+                                        <div class="photo-placeholder">
+                                            <i class="fas fa-camera fa-3x text-muted"></i>
+                                            <p class="mt-2 text-muted">Upload Photo</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <input type="file" class="form-control" id="photo" name="photo" 
+                                       accept="image/*" onchange="previewPhoto(event)">
+                                <small class="form-text text-muted">
+                                    Accepted formats: JPG, PNG, GIF. Max size: 5MB
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-user-plus"></i> Register Member
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.photo-preview-container {
+    width: 200px;
+    height: 250px;
+    border: 2px dashed #ddd;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto;
+    overflow: hidden;
+    position: relative;
+    background: #f8f9fa;
+}
+
+.photo-placeholder {
+    text-align: center;
+    color: #6c757d;
+}
+
+.photo-preview {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+.photo-preview-container:hover {
+    border-color: #007bff;
+    background: #e3f2fd;
+}
+
+.photo-preview-container.has-image {
+    border-style: solid;
+    border-color: #28a745;
+}
+</style>
+
+<script>
+function previewPhoto(event) {
+    const file = event.target.files[0];
+    const previewContainer = document.getElementById('photo-preview');
+    
+    if (file) {
+        // Check file size (5MB limit)
+        if (file.size > 5 * 1024 * 1024) {
+            alert('File size must be less than 5MB');
+            event.target.value = '';
+            return;
+        }
+        
+        // Check file type
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        if (!allowedTypes.includes(file.type)) {
+            alert('Please select a valid image file (JPG, PNG, or GIF)');
+            event.target.value = '';
+            return;
+        }
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            previewContainer.innerHTML = `
+                <img src="${e.target.result}" alt="Photo Preview" class="photo-preview">
+            `;
+            previewContainer.classList.add('has-image');
+        };
+        reader.readAsDataURL(file);
+    } else {
+        // Reset to placeholder
+        previewContainer.innerHTML = `
+            <div class="photo-placeholder">
+                <i class="fas fa-camera fa-3x text-muted"></i>
+                <p class="mt-2 text-muted">Upload Photo</p>
+            </div>
+        `;
+        previewContainer.classList.remove('has-image');
+    }
+}
+
+// Load locations for selected organization (for Global Super Admin)
+function loadLocationsForOrg(orgId) {
+    const locationSelect = document.getElementById('location_id');
+    
+    if (!orgId) {
+        locationSelect.innerHTML = '<option value="">Select organization first</option>';
+        locationSelect.disabled = true;
+        return;
+    }
+    
+    // Fetch locations for the selected organization
+    fetch(`/api/locations/${orgId}`)
+        .then(response => response.json())
+        .then(data => {
+            locationSelect.innerHTML = '<option value="">Select Location</option>';
+            if (data.locations && data.locations.length > 0) {
+                data.locations.forEach(location => {
+                    const option = document.createElement('option');
+                    option.value = location.id;
+                    option.textContent = location.name;
+                    locationSelect.appendChild(option);
+                });
+                locationSelect.disabled = false;
+            } else {
+                locationSelect.innerHTML = '<option value="">No locations available</option>';
+                locationSelect.disabled = true;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading locations:', error);
+            locationSelect.innerHTML = '<option value="">Error loading locations</option>';
+            locationSelect.disabled = true;
+        });
+}
+
+// Real-time phone validation
+document.getElementById('phone').addEventListener('input', function(e) {
+    const phone = e.target.value.trim();
+    const feedbackDiv = document.getElementById('phone-validation-feedback');
+    
+    if (phone.length === 0) {
+        feedbackDiv.innerHTML = '';
+        e.target.classList.remove('is-valid', 'is-invalid');
+        return;
+    }
+    
+    // Basic client-side validation
+    const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
+    
+    // Check if it matches Cameroon phone pattern
+    const isValid = /^(\+?237)?[62]\d{8}$/.test(cleanPhone);
+    
+    if (isValid) {
+        e.target.classList.remove('is-invalid');
+        e.target.classList.add('is-valid');
+        feedbackDiv.innerHTML = '<small class="text-success"><i class="fas fa-check-circle"></i> Valid Cameroon phone number</small>';
+    } else {
+        e.target.classList.remove('is-valid');
+        e.target.classList.add('is-invalid');
+        feedbackDiv.innerHTML = '<small class="text-danger"><i class="fas fa-times-circle"></i> Invalid format. Use: 6XXXXXXXX or +237 6XXXXXXXX</small>';
+    }
+});
+
+// Drag and drop functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const photoContainer = document.getElementById('photo-preview');
+    const photoInput = document.getElementById('photo');
+    
+    // Prevent default drag behaviors
+    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+        photoContainer.addEventListener(eventName, preventDefaults, false);
+        document.body.addEventListener(eventName, preventDefaults, false);
+    });
+    
+    // Highlight drop area when item is dragged over it
+    ['dragenter', 'dragover'].forEach(eventName => {
+        photoContainer.addEventListener(eventName, highlight, false);
+    });
+    
+    ['dragleave', 'drop'].forEach(eventName => {
+        photoContainer.addEventListener(eventName, unhighlight, false);
+    });
+    
+    // Handle dropped files
+    photoContainer.addEventListener('drop', handleDrop, false);
+    
+    // Click to upload
+    photoContainer.addEventListener('click', function() {
+        photoInput.click();
+    });
+    
+    function preventDefaults(e) {
+        e.preventDefault();
+        e.stopPropagation();
+    }
+    
+    function highlight(e) {
+        photoContainer.style.borderColor = '#007bff';
+        photoContainer.style.background = '#e3f2fd';
+    }
+    
+    function unhighlight(e) {
+        photoContainer.style.borderColor = '#ddd';
+        photoContainer.style.background = '#f8f9fa';
+    }
+    
+    function handleDrop(e) {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        
+        if (files.length > 0) {
+            photoInput.files = files;
+            previewPhoto({ target: { files: files } });
+        }
+    }
+});
+</script>
+{% endblock %}

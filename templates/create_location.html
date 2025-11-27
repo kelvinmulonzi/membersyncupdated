@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+
+{% block title %}Create Location - MemberSync{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2><i class="fas fa-plus-circle"></i> Create New Location</h2>
+                <p class="text-muted">Add a new store or branch to your organization</p>
+            </div>
+            <div>
+                <a href="{{ url_for('manage_locations') }}" class="btn btn-outline-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Locations
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-store"></i> Location Details
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label for="name" class="form-label">
+                            <i class="fas fa-store"></i> Location Name <span class="text-danger">*</span>
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="name" 
+                               name="name" 
+                               placeholder="e.g., Downtown Store, Main Branch"
+                               required 
+                               autofocus>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i>
+                            A unique name for this location within your organization
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="address" class="form-label">
+                            <i class="fas fa-map-marker-alt"></i> Street Address
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="address" 
+                               name="address" 
+                               placeholder="e.g., 123 Main Street">
+                        <div class="form-text">
+                            Optional physical address of the location
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="city" class="form-label">
+                                    <i class="fas fa-city"></i> City
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="city" 
+                                       name="city" 
+                                       placeholder="e.g., New York">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="state" class="form-label">
+                                    <i class="fas fa-flag"></i> State/Province
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="state" 
+                                       name="state" 
+                                       placeholder="e.g., NY">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Note:</strong> After creating this location, you can assign admins to manage it from the "Manage Admins" section.
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                        <a href="{{ url_for('manage_locations') }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Create Location
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.querySelector('form');
+    const nameInput = document.getElementById('name');
+    
+    // Form validation
+    form.addEventListener('submit', function(e) {
+        if (!nameInput.value.trim()) {
+            e.preventDefault();
+            nameInput.classList.add('is-invalid');
+            
+            let errorDiv = nameInput.parentNode.querySelector('.invalid-feedback');
+            if (!errorDiv) {
+                errorDiv = document.createElement('div');
+                errorDiv.className = 'invalid-feedback';
+                errorDiv.textContent = 'Location name is required.';
+                nameInput.parentNode.appendChild(errorDiv);
+            }
+        }
+    });
+    
+    nameInput.addEventListener('input', function() {
+        this.classList.remove('is-invalid');
+        const errorDiv = this.parentNode.querySelector('.invalid-feedback');
+        if (errorDiv) {
+            errorDiv.remove();
+        }
+    });
+});
+</script>
+{% endblock %}
+

@@ -1,0 +1,2274 @@
+<!DOCTYPE html>
+<html lang="{{ CURRENT_LANGUAGE or 'en' }}">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="google" content="notranslate">
+    <meta name="google-translate-customization" content="auto_display=false">
+    <title>{% block title %}MemberSync{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    
+    <!-- Google Translate will be loaded dynamically -->
+    
+    <style>
+        .expiring-soon {
+            background: linear-gradient(45deg, #ff9a9e 0%, #fecfef 100%);
+            border-left: 5px solid #dc3545;
+        }
+        .expired {
+            background: linear-gradient(45deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+        .navbar-brand {
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-right: 0.75rem;
+        }
+        
+        /* Professional Navbar Styling */
+        .navbar {
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            padding: 0.4rem 0;
+            min-height: 60px;
+        }
+        
+        .navbar .container-fluid {
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
+        
+        .navbar-nav .nav-link {
+            padding: 0.35rem 0.6rem;
+            margin: 0 0.1rem;
+            border-radius: 0.375rem;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        .navbar-nav .nav-link:hover {
+            background-color: rgba(255,255,255,0.1);
+            transform: translateY(-1px);
+        }
+        
+        .navbar-nav .dropdown-toggle::after {
+            margin-left: 0.5rem;
+        }
+        
+        .dropdown-menu {
+            border: none;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border-radius: 0.5rem;
+            padding: 0.25rem 0;
+            margin-top: 0.25rem;
+        }
+        
+        .dropdown-item {
+            padding: 0.4rem 0.75rem;
+            transition: all 0.2s ease;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        .dropdown-item:hover {
+            background-color: #f8f9fa;
+            transform: translateX(4px);
+        }
+        
+        .dropdown-header {
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 0.3rem 0.75rem 0.15rem;
+        }
+        
+        .navbar-nav .nav-item.dropdown:hover .dropdown-menu {
+            display: block;
+        }
+        
+        /* Global Admin Special Styling */
+        .text-warning.fw-bold {
+            background: linear-gradient(45deg, #ffc107, #ff8c00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        /* Notification Badge */
+        .badge {
+            font-size: 0.6rem;
+            padding: 0.25rem 0.4rem;
+        }
+        
+        /* Compact Navbar Styling */
+        .navbar-toggler {
+            padding: 0.25rem 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .navbar-collapse {
+            margin-top: 0;
+        }
+        
+        /* Sticky Footer Layout - Simple and Reliable */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        
+        .main-content {
+            flex: 1 0 auto;
+            position: relative;
+            z-index: 1;
+            padding-bottom: 10px;
+        }
+        
+        footer {
+            flex-shrink: 0;
+            margin-top: 10px;
+            position: relative;
+            z-index: 2;
+        }
+        
+        /* Ensure no overlapping */
+        .main-content * {
+            position: relative;
+        }
+        
+        footer * {
+            position: relative;
+        }
+        
+        /* COMPLETE GOOGLE TRANSLATE HIDING & CUSTOM STYLING */
+        
+        /* Hide Google Translate elements AFTER they are created and functional */
+        .goog-te-banner-frame,
+        .goog-te-banner-frame.skiptranslate,
+        .goog-te-ftab-frame,
+        .goog-te-ftab,
+        .goog-te-menu-frame,
+        .goog-te-menu2,
+        .goog-te-menu2-item,
+        .goog-te-gadget-icon {
+            display: none !important;
+            visibility: hidden !important;
+            opacity: 0 !important;
+            height: 0 !important;
+            width: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            background: transparent !important;
+            color: transparent !important;
+            font-size: 0 !important;
+            line-height: 0 !important;
+            position: absolute !important;
+            left: -9999px !important;
+            top: -9999px !important;
+        }
+        
+        /* Hide the main gadget but keep the combo functional */
+        .goog-te-gadget,
+        .goog-te-gadget-simple {
+            position: absolute !important;
+            left: -9999px !important;
+            top: -9999px !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+        }
+        
+        /* Keep the combo element functional but hidden */
+        .goog-te-combo {
+            position: absolute !important;
+            left: -9999px !important;
+            top: -9999px !important;
+            opacity: 0 !important;
+            visibility: hidden !important;
+            /* Don't set display: none - keep it functional */
+        }
+        
+        /* Hide Google Translate iframes and other elements */
+        iframe[src*="translate.google.com"],
+        iframe[title*="translate"],
+        iframe[src*="translate"],
+        body > div[id^="google_translate_element"],
+        body > div[class*="goog-te"],
+        div[id^="google_translate_element"],
+        div[class*="goog-te"],
+        .skiptranslate,
+        .notranslate {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            width: 0 !important;
+            overflow: hidden !important;
+            position: absolute !important;
+            left: -9999px !important;
+            top: -9999px !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: none !important;
+            opacity: 0 !important;
+            z-index: -9999 !important;
+            transform: translateX(-9999px) !important;
+            max-height: 0 !important;
+            max-width: 0 !important;
+        }
+        
+        /* Force hide any iframes completely */
+        iframe {
+            max-height: 0 !important;
+        }
+        
+        iframe[src*="translate"] {
+            display: none !important;
+            visibility: hidden !important;
+            height: 0 !important;
+            width: 0 !important;
+            border: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            position: absolute !important;
+            left: -9999px !important;
+            top: -9999px !important;
+        }
+        
+        /* Remove Google Translate margin and padding */
+        body {
+            top: 0 !important;
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+        
+        /* Prevent Google Translate from adding unwanted styles */
+        body.goog-te-fading {
+            margin-top: 0 !important;
+            padding-top: 0 !important;
+        }
+        
+        /* Hide original Google Translate widget */
+        #google_translate_element {
+            display: none !important;
+        }
+        
+        /* Style for translated text */
+        .goog-te-translated {
+            font-family: inherit !important;
+        }
+        
+        /* ROBUST ICON AND SPACING FIXES */
+        /* Fix icon spacing and prevent overlap */
+        .fas, .far, .fab, .fa {
+            display: inline-block !important;
+            font-style: normal !important;
+            font-variant: normal !important;
+            text-rendering: auto !important;
+            line-height: 1 !important;
+            margin-right: 0.5rem !important;
+            width: auto !important;
+            height: auto !important;
+            vertical-align: middle !important;
+        }
+        
+        /* Fix navbar icon spacing */
+        .navbar-nav .nav-link {
+            display: flex !important;
+            align-items: center !important;
+            white-space: nowrap !important;
+        }
+        
+        .navbar-nav .nav-link i {
+            margin-right: 0.5rem !important;
+            min-width: 1rem !important;
+            text-align: center !important;
+        }
+        
+        /* Fix dropdown icon spacing */
+        .dropdown-toggle::after {
+            margin-left: 0.5rem !important;
+        }
+        
+        /* Fix button icon spacing */
+        .btn i {
+            margin-right: 0.25rem !important;
+        }
+        
+        .btn i:last-child {
+            margin-right: 0 !important;
+        }
+        
+        /* Fix card header icon spacing */
+        .card-header i {
+            margin-right: 0.5rem !important;
+        }
+        
+        /* Fix list item icon spacing */
+        .list-group-item i {
+            margin-right: 0.5rem !important;
+            min-width: 1.2rem !important;
+        }
+        
+        /* Fix table icon spacing */
+        .table td i, .table th i {
+            margin-right: 0.5rem !important;
+        }
+        
+        /* Fix badge icon spacing */
+        .badge i {
+            margin-right: 0.25rem !important;
+        }
+        
+        /* Fix alert icon spacing */
+        .alert i {
+            margin-right: 0.5rem !important;
+        }
+        
+        /* Fix breadcrumb icon spacing */
+        .breadcrumb i {
+            margin-right: 0.25rem !important;
+        }
+        
+        /* Fix pagination icon spacing */
+        .pagination i {
+            margin: 0 !important;
+        }
+        
+        /* Fix form icon spacing */
+        .input-group-text i {
+            margin: 0 !important;
+        }
+        
+        /* Prevent text wrapping around icons */
+        .nav-item, .dropdown-item, .btn, .card-header, .list-group-item {
+            overflow: visible !important;
+        }
+        
+        /* COMPACT NAVBAR FIXES FOR TRANSLATION */
+        /* Make navbar more spacious with balanced side padding */
+        .navbar {
+            padding: 0.5rem 1rem !important;
+        }
+        
+        .navbar .nav-item {
+            margin: 0 0.25rem !important;
+        }
+        
+        .navbar .nav-link {
+            padding: 0.5rem 0.75rem !important;
+            font-size: 0.9rem !important;
+            white-space: nowrap !important;
+        }
+        
+        /* Compact dropdown items */
+        .dropdown-menu {
+            min-width: 150px !important;
+            font-size: 0.875rem !important;
+        }
+        
+        .dropdown-item {
+            padding: 0.25rem 0.75rem !important;
+            font-size: 0.875rem !important;
+        }
+        
+        /* More spacious language selector */
+        .custom-language-selector {
+            font-size: 0.85rem !important;
+            padding: 0.4rem 0.6rem !important;
+            min-width: 130px !important;
+            max-width: 160px !important;
+        }
+        
+        /* More spacious navbar brand */
+        .navbar-brand {
+            font-size: 1.1rem !important;
+            padding: 0.4rem 0.6rem !important;
+        }
+        
+        /* Compact navbar toggler */
+        .navbar-toggler {
+            padding: 0.25rem 0.5rem !important;
+            font-size: 0.875rem !important;
+        }
+        
+        /* Responsive navbar adjustments */
+        @media (max-width: 768px) {
+            .navbar .nav-item {
+                margin: 0 !important;
+            }
+            
+            .navbar .nav-link {
+                padding: 0.5rem 0.75rem !important;
+                font-size: 0.875rem !important;
+            }
+            
+            .custom-language-selector {
+                font-size: 0.875rem !important;
+                padding: 0.5rem 0.75rem !important;
+                min-width: auto !important;
+                max-width: none !important;
+            }
+        }
+        
+        /* Fix navbar overflow issues - center items properly */
+        .navbar-nav {
+            flex-wrap: wrap !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 100% !important;
+            gap: 0.5rem !important;
+        }
+        
+        .navbar-collapse {
+            flex-basis: auto !important;
+            width: 100% !important;
+        }
+        
+        /* Two-line navbar layout */
+        .navbar-nav .nav-item {
+            flex-shrink: 0 !important;
+        }
+        
+        /* Center navbar content */
+        .navbar .container-fluid {
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
+        }
+        
+        /* More spacious currency dropdown */
+        .navbar .dropdown-toggle {
+            font-size: 0.9rem !important;
+            padding: 0.4rem 0.6rem !important;
+        }
+        
+        /* More spacious user info */
+        .navbar .nav-link span {
+            font-size: 0.9rem !important;
+        }
+        
+        /* Fix navbar height - increased even more */
+        .navbar {
+            min-height: 80px !important;
+            max-height: 90px !important;
+        }
+        
+        /* Fix custom language selector spacing */
+        .custom-language-selector {
+            padding-left: 2rem !important;
+        }
+        
+        .custom-language-selector::before {
+            left: 0.75rem !important;
+        }
+        
+        /* Fix flag emoji spacing */
+        .custom-language-selector option {
+            padding-left: 1.5rem !important;
+        }
+        
+        /* ADDITIONAL ROBUST FIXES FOR TRANSLATION ISSUES */
+        /* Prevent Google Translate from breaking icon layouts */
+        .goog-te-translated * {
+            font-family: inherit !important;
+            line-height: inherit !important;
+        }
+        
+        /* Fix specific spacing issues after translation */
+        .goog-te-translated .fas,
+        .goog-te-translated .far,
+        .goog-te-translated .fab,
+        .goog-te-translated .fa {
+            display: inline-block !important;
+            margin-right: 0.5rem !important;
+            vertical-align: middle !important;
+            font-size: inherit !important;
+        }
+        
+        /* Fix navbar after translation */
+        .goog-te-translated .navbar-nav .nav-link {
+            display: flex !important;
+            align-items: center !important;
+            white-space: nowrap !important;
+        }
+        
+        /* Fix button spacing after translation */
+        .goog-te-translated .btn {
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+        }
+        
+        /* Fix dropdown spacing after translation */
+        .goog-te-translated .dropdown-toggle {
+            display: flex !important;
+            align-items: center !important;
+        }
+        
+        /* Fix card spacing after translation */
+        .goog-te-translated .card-header {
+            display: flex !important;
+            align-items: center !important;
+        }
+        
+        /* Fix table spacing after translation */
+        .goog-te-translated .table td,
+        .goog-te-translated .table th {
+            display: flex !important;
+            align-items: center !important;
+        }
+        
+        /* Ensure icons maintain their size */
+        .goog-te-translated i[class*="fa-"] {
+            width: 1em !important;
+            height: 1em !important;
+            flex-shrink: 0 !important;
+        }
+        
+        /* Fix text alignment issues */
+        .goog-te-translated .text-center {
+            text-align: center !important;
+        }
+        
+        .goog-te-translated .text-right {
+            text-align: right !important;
+        }
+        
+        .goog-te-translated .text-left {
+            text-align: left !important;
+        }
+        
+        /* Fix flex layouts after translation */
+        .goog-te-translated .d-flex {
+            display: flex !important;
+        }
+        
+        .goog-te-translated .align-items-center {
+            align-items: center !important;
+        }
+        
+        .goog-te-translated .justify-content-between {
+            justify-content: space-between !important;
+        }
+        
+        /* Fix spacing in lists */
+        .goog-te-translated .list-group-item {
+            display: flex !important;
+            align-items: center !important;
+        }
+        
+        /* Fix badge spacing */
+        .goog-te-translated .badge {
+            display: inline-flex !important;
+            align-items: center !important;
+        }
+        
+        /* TRANSLATION-SPECIFIC NAVBAR COMPACT FIXES */
+        /* Handle longer translated text in navbar - with balanced padding */
+        .goog-te-translated .navbar {
+            padding: 0.5rem 1rem !important;
+        }
+        
+        .goog-te-translated .navbar .nav-link {
+            padding: 0.4rem 0.6rem !important;
+            font-size: 0.85rem !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            max-width: 130px !important;
+        }
+        
+        .goog-te-translated .navbar .nav-item {
+            margin: 0 0.25rem !important;
+        }
+        
+        /* Compact translated dropdowns */
+        .goog-te-translated .dropdown-menu {
+            min-width: 150px !important;
+            font-size: 0.875rem !important;
+            max-width: 200px !important;
+        }
+        
+        .goog-te-translated .dropdown-item {
+            padding: 0.25rem 0.75rem !important;
+            font-size: 0.875rem !important;
+            white-space: nowrap !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+        
+        /* More spacious translated language selector */
+        .goog-te-translated .custom-language-selector {
+            font-size: 0.8rem !important;
+            padding: 0.35rem 0.55rem !important;
+            min-width: 125px !important;
+            max-width: 155px !important;
+        }
+        
+        /* More spacious navbar brand in translations */
+        .goog-te-translated .navbar-brand {
+            font-size: 1.05rem !important;
+            padding: 0.35rem 0.55rem !important;
+            max-width: 160px !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+        
+        /* Responsive navbar for translations */
+        @media (max-width: 768px) {
+            .goog-te-translated .navbar .nav-link {
+                padding: 0.5rem 0.75rem !important;
+                font-size: 0.875rem !important;
+                max-width: none !important;
+            }
+            
+            .goog-te-translated .custom-language-selector {
+                font-size: 0.875rem !important;
+                padding: 0.5rem 0.75rem !important;
+                min-width: auto !important;
+                max-width: none !important;
+            }
+        }
+        
+        /* Fix navbar overflow in translations - center items properly */
+        .goog-te-translated .navbar-nav {
+            flex-wrap: wrap !important;
+            align-items: center !important;
+            justify-content: center !important;
+            width: 100% !important;
+            gap: 0.5rem !important;
+        }
+        
+        .goog-te-translated .navbar-collapse {
+            flex-basis: auto !important;
+            width: 100% !important;
+        }
+        
+        /* Two-line navbar layout for translations */
+        .goog-te-translated .navbar-nav .nav-item {
+            flex-shrink: 0 !important;
+            margin: 0 0.25rem !important;
+        }
+        
+        /* Center navbar content for translations */
+        .goog-te-translated .navbar .container-fluid {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+        }
+        
+        /* More spacious translated currency dropdown */
+        .goog-te-translated .navbar .dropdown-toggle {
+            font-size: 0.85rem !important;
+            padding: 0.35rem 0.55rem !important;
+            max-width: 110px !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+        
+        /* More spacious translated user info */
+        .goog-te-translated .navbar .nav-link span {
+            font-size: 0.85rem !important;
+            max-width: 90px !important;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+        }
+        
+        /* Fix navbar height in translations - increased even more */
+        .goog-te-translated .navbar {
+            min-height: 80px !important;
+            max-height: 90px !important;
+        }
+        
+        /* Handle very long translated text */
+        .goog-te-translated .navbar .nav-link,
+        .goog-te-translated .dropdown-item,
+        .goog-te-translated .navbar-brand {
+            word-break: break-word !important;
+            hyphens: auto !important;
+        }
+        
+        /* ENHANCED NAVBAR LAYOUT IMPROVEMENTS */
+        /* Better navbar spacing and alignment */
+        .navbar .container {
+            padding-left: 1rem !important;
+            padding-right: 1rem !important;
+            max-width: 100% !important;
+        }
+        
+        /* Improve navbar item spacing - centered with proper gap */
+        .navbar-nav .nav-item {
+            margin: 0 0.25rem !important;
+        }
+        
+        /* Better dropdown positioning */
+        .dropdown-menu-end {
+            right: 0 !important;
+            left: auto !important;
+        }
+        
+        /* Compact notification badge in dropdown */
+        .dropdown-item .badge {
+            font-size: 0.5rem !important;
+            padding: 0.15rem 0.3rem !important;
+            line-height: 1 !important;
+        }
+        
+        /* Responsive navbar adjustments for mobile */
+        @media (max-width: 991px) {
+            .navbar-nav {
+                flex-direction: column !important;
+                width: 100% !important;
+                margin-top: 1rem !important;
+            }
+            
+            .navbar-nav .nav-item {
+                margin: 0.25rem 0 !important;
+                width: 100% !important;
+            }
+            
+            .navbar-nav .nav-link {
+                text-align: center !important;
+                padding: 0.75rem 1rem !important;
+            }
+        }
+        
+        /* Two-line navbar for larger screens */
+        @media (min-width: 992px) {
+            .navbar-nav {
+                flex-wrap: wrap !important;
+                justify-content: center !important;
+                align-items: center !important;
+                gap: 0.5rem !important;
+            }
+            
+            .navbar-nav .nav-item {
+                flex: 0 0 auto !important;
+                margin: 0 0.25rem !important;
+            }
+        }
+        
+        /* Custom Professional Language Selector */
+        .custom-translate-widget {
+            position: relative;
+            display: inline-block;
+            margin: 0 0.5rem;
+        }
+        
+        /* Create our own custom language selector */
+        .custom-language-selector {
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.3);
+            color: rgba(255,255,255,0.9);
+            border-radius: 0.375rem;
+            padding: 0.375rem 2rem 0.375rem 0.75rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            min-width: 120px;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 16px 12px;
+            outline: none;
+        }
+        
+        .custom-language-selector:hover {
+            background: rgba(255,255,255,0.1);
+            border-color: rgba(255,255,255,0.5);
+            color: white;
+            transform: translateY(-1px);
+        }
+        
+        .custom-language-selector:focus {
+            border-color: rgba(255,255,255,0.7);
+            box-shadow: 0 0 0 0.25rem rgba(255,255,255,0.25);
+        }
+        
+        /* Auth form specific styling for language selector */
+        .card-footer .custom-language-selector,
+        .card .custom-language-selector {
+            background: #ffffff !important;
+            border: 2px solid #007bff !important;
+            color: #495057 !important;
+            font-size: 0.875rem !important;
+            padding: 0.5rem 2rem 0.5rem 0.75rem !important;
+            min-width: 150px !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+            transition: all 0.2s ease !important;
+            display: block !important;
+            margin: 0 auto !important;
+            width: 100% !important;
+            max-width: 200px !important;
+        }
+        
+        .card-footer .custom-language-selector:hover,
+        .card .custom-language-selector:hover {
+            border-color: #0056b3 !important;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.15) !important;
+            transform: translateY(-1px) !important;
+        }
+        
+        .card-footer .custom-language-selector:focus,
+        .card .custom-language-selector:focus {
+            border-color: #007bff !important;
+            outline: none !important;
+            box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25) !important;
+        }
+        
+        .card-footer .custom-language-selector option,
+        .card .custom-language-selector option {
+            background: #fff !important;
+            color: #495057 !important;
+            padding: 0.5rem !important;
+        }
+
+        .custom-language-selector option {
+            background: #fff;
+            color: #495057;
+            padding: 0.5rem;
+        }
+        
+        /* Hide the actual Google Translate element */
+        #google_translate_element {
+            position: absolute;
+            left: -9999px;
+            top: -9999px;
+            opacity: 0;
+            visibility: hidden;
+            height: 0;
+            width: 0;
+            overflow: hidden;
+        }
+        
+        /* Professional language flags */
+        .language-flag {
+            display: inline-block;
+            width: 16px;
+            height: 12px;
+            margin-right: 0.5rem;
+            border-radius: 2px;
+            vertical-align: middle;
+        }
+        
+        .flag-en { background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 30'%3e%3cpath fill='%23012' d='M0 0v30h60V0z'/%3e%3cpath fill='%23fff' d='M0 0v30h60V0z'/%3e%3cpath fill='%23ce1126' d='M0 0v30h60V0z'/%3e%3cpath fill='%23fff' d='M6 0v30h48V0z'/%3e%3cpath fill='%23ce1126' d='M6 0v30h48V0z'/%3e%3cpath fill='%23fff' d='M0 6h60v18H0z'/%3e%3cpath fill='%23ce1126' d='M0 6h60v18H0z'/%3e%3c/svg%3e") no-repeat center; background-size: cover; }
+        .flag-fr { background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 30'%3e%3cpath fill='%23fff' d='M0 0v30h60V0z'/%3e%3cpath fill='%23002395' d='M0 0v30h20V0z'/%3e%3cpath fill='%23ed2939' d='M40 0v30h20V0z'/%3e%3c/svg%3e") no-repeat center; background-size: cover; }
+        .flag-es { background: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 60 30'%3e%3cpath fill='%23aa151b' d='M0 0v30h60V0z'/%3e%3cpath fill='%23f1bf00' d='M0 6v18h60V6z'/%3e%3c/svg%3e") no-repeat center; background-size: cover; }
+        
+        /* Enhanced Custom Selector Styling */
+        .custom-language-selector {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .custom-language-selector:hover {
+            background: linear-gradient(135deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0.08) 100%);
+            border-color: rgba(255,255,255,0.4);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform: translateY(-2px);
+        }
+        
+        .custom-language-selector:active {
+            transform: translateY(0);
+        }
+        
+        .custom-language-selector:focus {
+            border-color: rgba(255,255,255,0.6);
+            box-shadow: 0 0 0 0.25rem rgba(255,255,255,0.15), 0 4px 12px rgba(0,0,0,0.15);
+            background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%);
+        }
+        
+        /* Professional dropdown arrow */
+        .custom-language-selector {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23ffffff' stroke-linecap='round' stroke-linejoin='round' stroke-width='2.5' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 14px 10px;
+        }
+        
+        /* Enhanced option styling */
+        .custom-language-selector option {
+            background: #ffffff;
+            color: #495057;
+            padding: 0.75rem 1rem;
+            font-weight: 500;
+            border: none;
+        }
+        
+        .custom-language-selector option:hover {
+            background: #f8f9fa;
+        }
+        
+        .custom-language-selector option:checked {
+            background: #007bff;
+            color: white;
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .navbar-nav {
+                text-align: center;
+            }
+            
+            .navbar-nav .nav-link {
+                margin: 0.15rem 0;
+                padding: 0.3rem 0.5rem;
+            }
+            
+            .navbar .container-fluid {
+                padding-left: 0.5rem;
+                padding-right: 0.5rem;
+            }
+            
+            .custom-translate-widget {
+                margin: 0.25rem 0;
+                width: 100%;
+            }
+            
+            .custom-language-selector {
+                width: 100%;
+                text-align: center;
+                font-size: 0.9rem;
+                padding: 0.5rem 2rem 0.5rem 1rem;
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .custom-language-selector {
+                font-size: 0.8rem;
+                padding: 0.4rem 1.8rem 0.4rem 0.8rem;
+                min-width: 100px;
+            }
+        }
+        
+        @media (min-width: 1200px) {
+            .navbar .container-fluid {
+                padding-left: 2rem;
+                padding-right: 2rem;
+            }
+        }
+        .card {
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border: none;
+        }
+        .btn-gradient {
+            background: linear-gradient(45deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+        }
+        .btn-gradient:hover {
+            background: linear-gradient(45deg, #764ba2 0%, #667eea 100%);
+            color: white;
+        }
+
+        
+        .flag-icon {
+            width: 16px;
+            height: 12px;
+            margin-right: 6px;
+            border-radius: 2px;
+        }
+
+        /* Organization info styles */
+        .org-info {
+            background: rgba(255,255,255,0.1);
+            border-radius: 4px;
+            padding: 4px 8px;
+            font-size: 0.875rem;
+            color: rgba(255,255,255,0.9);
+        }
+        
+        .org-separator {
+            color: rgba(255,255,255,0.5);
+            margin: 0 8px;
+        }
+
+        /* Check-in specific styles */
+        .checkin-indicator {
+            position: relative;
+        }
+        
+        .checkin-indicator .badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #28a745;
+            border: 2px solid white;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            padding: 0;
+            font-size: 10px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* QR Scanner styles */
+        .qr-scanner-container {
+            position: relative;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .scan-overlay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            border: 3px solid #007bff;
+            border-radius: 12px;
+            width: 200px;
+            height: 200px;
+            opacity: 0.8;
+            pointer-events: none;
+        }
+
+        /* Additional styles for organization management */
+        .table-responsive {
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .table th {
+            border-top: none;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.875rem;
+            letter-spacing: 0.5px;
+        }
+        
+        .btn-group .btn {
+            border-radius: 0;
+        }
+        
+        .btn-group .btn:first-child {
+            border-top-left-radius: 4px;
+            border-bottom-left-radius: 4px;
+        }
+        
+        .btn-group .btn:last-child {
+            border-top-right-radius: 4px;
+            border-bottom-right-radius: 4px;
+        }
+        
+        .modal-content {
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+        }
+        
+        .modal-header {
+            border-bottom: 1px solid #dee2e6;
+            background-color: #f8f9fa;
+        }
+        
+        .badge {
+            font-size: 0.75em;
+        }
+        
+        .card-header {
+            background-color: #f8f9fa;
+            border-bottom: 1px solid #dee2e6;
+            font-weight: 600;
+        }
+        
+        .list-group-item {
+            border: none;
+            padding: 0.75rem 0;
+        }
+        
+        .list-group-item:not(:last-child) {
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        /* Responsive improvements */
+        @media (max-width: 768px) {
+            .org-info {
+                display: none;
+            }
+            
+            .navbar-nav {
+                margin-top: 1rem;
+            }
+            
+            
+            .btn-group {
+                display: flex;
+                flex-direction: column;
+            }
+            
+            .btn-group .btn {
+                border-radius: 4px !important;
+                margin-bottom: 2px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Hidden Google Translate Element - Always Available -->
+    <div id="google_translate_element" style="position: absolute; left: -9999px; opacity: 0;"></div>
+    <div id="google_translate_element_temp" style="position: absolute; left: -9999px; opacity: 0;"></div>
+    
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/"><i class="fas fa-users"></i> MemberSync</a>
+            
+            <!-- Mobile toggle button -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <!-- Organization Info Display -->
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+
+                    <!-- Navigation items -->
+                    {% if session.admin %}
+                        <!-- Main Navigation Group -->
+                        <div class="navbar-nav me-auto">
+                            <!-- Dashboard -->
+                            <a class="nav-link" href="{{ url_for('dashboard') }}">
+                                <i class="fas fa-tachometer-alt"></i> Dashboard
+                            </a>
+                            
+                            <!-- Members Management -->
+                            <div class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="membersDropdown" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-users"></i> Members
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="membersDropdown">
+                                    <li><a class="dropdown-item" href="{{ url_for('members') }}">
+                                        <i class="fas fa-list text-primary"></i> All Members
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('register') }}">
+                                        <i class="fas fa-user-plus text-success"></i> Add Member
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('manage_discounts') }}">
+                                        <i class="fas fa-tags text-warning"></i> Discounts
+                                    </a></li>
+				    <li class="nav-item">
+                                        <a class="nav-link" href="{{ url_for('map_visualization') }}">
+                                            <i class="fas fa-map-marked-alt"></i> Map
+                                        </a>
+                                    </li>
+                                </ul>
+                            </div>
+                            
+                            <!-- Check-in System -->
+                            <div class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="checkinDropdown" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-qrcode"></i> Check-in
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="checkinDropdown">
+                                    <li><a class="dropdown-item" href="{{ url_for('checkin_dashboard') }}">
+                                        <i class="fas fa-tachometer-alt text-primary"></i> Dashboard
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('checkin_scan') }}">
+                                        <i class="fas fa-camera text-success"></i> Scan QR
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('checkin_reports') }}">
+                                        <i class="fas fa-chart-bar text-info"></i> Reports
+                                    </a></li>
+                                    {% if session.is_superadmin %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('checkin_settings') }}">
+                                        <i class="fas fa-cog text-secondary"></i> Settings
+                                    </a></li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                            
+                            <!-- Reports & Analytics -->
+                            <div class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="reportsDropdown" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-chart-line"></i> Reports
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="reportsDropdown">
+                                    <li><a class="dropdown-item" href="{{ url_for('reports') }}">
+                                        <i class="fas fa-file-alt text-primary"></i> General
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('prepaid_reports') }}">
+                                        <i class="fas fa-credit-card text-success"></i> Prepaid
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('checkin_reports') }}">
+                                        <i class="fas fa-qrcode text-info"></i> Check-in
+                                    </a></li>
+                                </ul>
+                            </div>
+                            
+                        </div>
+                        
+                        <!-- Right Side Navigation -->
+                        <div class="navbar-nav">
+        <!-- Organization Superadmin Section (Only for Organization Superadmin) -->
+        {% if session.is_superadmin and not session.is_global_superadmin %}
+        <div class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle text-warning fw-bold" href="#" id="orgSuperadminDropdown" role="button" data-bs-toggle="dropdown" style="background-color: #0d6efd; color: #ffc107 !important;">
+                <i class="fas fa-crown"></i> Organization Admin
+            </a>
+            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="orgSuperadminDropdown">
+                <li><h6 class="dropdown-header text-muted" style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #6c757d !important;">ORGANIZATION MANAGEMENT</h6></li>
+                <li><a class="dropdown-item" href="{{ url_for('manage_organizations') }}">
+                    <i class="fas fa-building" style="color: #0d6efd;"></i> My Organization
+                </a></li>
+                <li><a class="dropdown-item" href="{{ url_for('manage_org_admins') }}">
+                    <i class="fas fa-users-cog" style="color: #198754;"></i> Manage Admins
+                </a></li>
+                <li><a class="dropdown-item" href="{{ url_for('manage_locations') }}">
+                    <i class="fas fa-map-marked-alt" style="color: #fd7e14;"></i> Manage Locations
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><h6 class="dropdown-header text-muted" style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #6c757d !important;">ANALYTICS & REPORTS</h6></li>
+                <li><a class="dropdown-item" href="{{ url_for('reports') }}">
+                    <i class="fas fa-chart-line" style="color: #0dcaf0;"></i> Organization Reports
+                </a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li><h6 class="dropdown-header text-muted" style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #6c757d !important;">CONFIGURATION</h6></li>
+                <li><a class="dropdown-item" href="{{ url_for('admin_settings') }}">
+                    <i class="fas fa-cog" style="color: #fd7e14;"></i> Organization Settings
+                </a></li>
+            </ul>
+        </div>
+        {% endif %}
+                            
+                            <!-- Global Admin Section (Only for Global Superadmin) -->
+                            {% if session.is_global_superadmin %}
+                            <div class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle text-warning fw-bold" href="#" id="globalAdminDropdown" role="button" data-bs-toggle="dropdown" style="background-color: #0d6efd; color: #ffc107 !important;">
+                                    <i class="fas fa-crown"></i> System Admin
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="globalAdminDropdown">
+                                    <li><h6 class="dropdown-header text-muted" style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #6c757d !important;">SYSTEM MANAGEMENT</h6></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('manage_organizations') }}">
+                                        <i class="fas fa-building" style="color: #0d6efd;"></i> Organizations
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('manage_subscription_packages') }}">
+                                        <i class="fas fa-box-open" style="color: #198754;"></i> Packages
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('manage_users') }}">
+                                        <i class="fas fa-users" style="color: #0dcaf0;"></i> Users
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><h6 class="dropdown-header text-muted" style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #6c757d !important;">ORGANIZATION RESOURCES</h6></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('manage_org_admins') }}">
+                                        <i class="fas fa-users-cog" style="color: #198754;"></i> All Admins
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('manage_locations') }}">
+                                        <i class="fas fa-map-marked-alt" style="color: #fd7e14;"></i> All Locations
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><h6 class="dropdown-header text-muted" style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #6c757d !important;">ANALYTICS & LOGS</h6></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('view_audit_logs') }}">
+                                        <i class="fas fa-history" style="color: #0dcaf0;"></i> Audit Logs
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><h6 class="dropdown-header text-muted" style="font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: #6c757d !important;">CONFIGURATION</h6></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('fee_settings') }}">
+                                        <i class="fas fa-percentage" style="color: #fd7e14;"></i> Fee Settings
+                                    </a></li>
+                                </ul>
+                            </div>
+                            {% endif %}
+                            
+                            
+                            <!-- Custom Professional Language Selector -->
+                            <div class="nav-item">
+                                <div class="custom-translate-widget">
+                                    <select id="custom-language-selector" class="custom-language-selector" onchange="changeLanguageCustom(this.value)">
+                                        <option value="en" selected>🇺🇸 English</option>
+                                        <option value="fr">🇫🇷 Français</option>
+                                        <option value="es">🇪🇸 Español</option>
+                                    </select>
+                <!-- Google Translate Element moved to body section -->
+                                </div>
+                            </div>
+                            
+                            <!-- Currency Dropdown -->
+                            <div class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="currencyDropdown" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-dollar-sign"></i> <span id="current-currency">{{ user_preferred_currency or 'USD' }}</span>
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="currencyDropdown">
+                                    <li><h6 class="dropdown-header">
+                                        <i class="fas fa-dollar-sign text-success"></i> Currency
+                                    </h6></li>
+                                    <li><a class="dropdown-item currency-option {% if user_preferred_currency == 'USD' %}active{% endif %}" 
+                                           href="#" data-currency="USD" onclick="changeCurrencyPreference('USD')">
+                                        💵 USD ($)
+                                        {% if user_preferred_currency == 'USD' %}
+                                            <i class="fas fa-check text-success float-end"></i>
+                                        {% endif %}
+                                    </a></li>
+                                    <li><a class="dropdown-item currency-option {% if user_preferred_currency == 'EUR' %}active{% endif %}" 
+                                           href="#" data-currency="EUR" onclick="changeCurrencyPreference('EUR')">
+                                        💶 EUR (€)
+                                        {% if user_preferred_currency == 'EUR' %}
+                                            <i class="fas fa-check text-success float-end"></i>
+                                        {% endif %}
+                                    </a></li>
+                                    <li><a class="dropdown-item currency-option {% if user_preferred_currency == 'GBP' %}active{% endif %}" 
+                                           href="#" data-currency="GBP" onclick="changeCurrencyPreference('GBP')">
+                                        💷 GBP (£)
+                                        {% if user_preferred_currency == 'GBP' %}
+                                            <i class="fas fa-check text-success float-end"></i>
+                                        {% endif %}
+                                    </a></li>
+                                    <li><a class="dropdown-item currency-option {% if user_preferred_currency == 'XAF' %}active{% endif %}" 
+                                           href="#" data-currency="XAF" onclick="changeCurrencyPreference('XAF')">
+                                        💴 XAF (XAF)
+                                        {% if user_preferred_currency == 'XAF' %}
+                                            <i class="fas fa-check text-success float-end"></i>
+                                        {% endif %}
+                                    </a></li>
+                                </ul>
+                            </div>
+                            
+                            <!-- User Profile Dropdown -->
+                            <div class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown">
+                                    <i class="fas fa-user-circle"></i> {{ session.username }}
+                                </a>
+                                <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                    <li><h6 class="dropdown-header">
+                                        <i class="fas fa-building text-muted"></i> <span class="notranslate" translate="no">{{ session.organization_name }}</span>
+                                    </h6></li>
+                                    {% if session.location_name %}
+                                    <li><h6 class="dropdown-header">
+                                        <i class="fas fa-map-marker-alt text-success"></i> <span class="notranslate" translate="no">{{ session.location_name }}</span>
+                                    </h6></li>
+                                    {% endif %}
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('user_profile') }}">
+                                        <i class="fas fa-user text-primary"></i> My Profile
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('admin_settings') }}">
+                                        <i class="fas fa-cog text-secondary"></i> Settings
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><h6 class="dropdown-header text-muted">Communication</h6></li>
+                                    <li><a class="dropdown-item position-relative" href="{{ url_for('notifications') }}">
+                                        <i class="fas fa-bell text-info"></i> Notifications
+                                        <span class="position-absolute top-50 end-0 translate-middle-y badge rounded-pill bg-danger" style="font-size: 0.5rem; right: 0.5rem;">
+                                            <!-- Notification count can be added here -->
+                                        </span>
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('communication_center') }}">
+                                        <i class="fas fa-envelope text-success"></i> Messages
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item text-danger" href="{{ url_for('logout') }}">
+                                        <i class="fas fa-sign-out-alt"></i> Logout
+                                    </a></li>
+                                </ul>
+                            </div>
+                        </div>
+                    {% else %}
+                        <a class="nav-link" href="{{ url_for('login') }}"><i class="fas fa-sign-in-alt"></i> Login</a>
+                        <a class="nav-link" href="{{ url_for('signup') }}"><i class="fas fa-user-plus"></i> Sign Up</a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Organization info banner -->
+    {% if session.organization_name %}
+    <div class="bg-light border-bottom py-2">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col">
+                    <small class="text-muted">
+                        <i class="fas fa-building"></i> <span class="notranslate" translate="no">{{ session.organization_name }}</span>
+                        {% if session.location_name %}
+                        <span class="mx-2">|</span>
+                        <i class="fas fa-map-marker-alt text-success"></i> <strong><span class="notranslate" translate="no">{{ session.location_name }}</span></strong>
+                        {% endif %}
+                        {% if session.organization_description %}
+                        - {{ session.organization_description }}
+                        {% endif %}
+                    </small>
+                </div>
+                {% if session.organization_id %}
+                <div class="col-auto">
+                    <small class="text-muted">ID: {{ session.organization_id }}</small>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="main-content">
+        <div class="container mt-4">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'danger' if category == 'danger' else 'success' if category == 'success' else 'warning' if category == 'warning' else 'info' }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="bg-light border-top py-4">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-users text-primary me-2"></i>
+                        <span class="fw-bold">MemberSync</span>
+                        <span class="text-muted ms-2">Professional Membership Management</span>
+                    </div>
+                    <small class="text-muted mt-2 d-block">
+                        Streamline your membership operations with advanced check-in, analytics, and communication tools.
+                    </small>
+                </div>
+                <div class="col-md-6 text-md-end mt-3 mt-md-0">
+                    {% if session.admin %}
+                        <div class="d-flex justify-content-md-end align-items-center">
+                            <small class="text-muted me-3">
+                                <i class="fas fa-clock"></i> 
+                                Last updated: <span id="current-time"></span>
+                            </small>
+                            <small class="badge bg-success rounded-pill" id="footer-checkin-status" style="display: none;">
+                                <i class="fas fa-users"></i> <span id="footer-checkin-count">0</span> checked in
+                            </small>
+                        </div>
+                    {% endif %}
+                    <div class="mt-2">
+                        <small class="text-muted">
+                            © 2024 MemberSync. All rights reserved.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+    // Professional Google Translate Implementation - Adapted from Next.js approach
+    let googleTranslateInstance = null;
+    
+    // Language options
+    const languages = [
+        { code: 'en', name: 'English', flag: '🇺🇸' },
+        { code: 'fr', name: 'Français', flag: '🇫🇷' },
+        { code: 'es', name: 'Español', flag: '🇪🇸' }
+    ];
+    
+       // Initialize Google Translate
+       function googleTranslateElementInit() {
+           console.log('Starting Google Translate initialization...');
+           
+           try {
+               // Check if Google Translate API is available
+               if (typeof google === 'undefined' || !google.translate) {
+                   console.error('Google Translate API not available');
+                   return;
+               }
+               
+               console.log('Google Translate API is available, creating element...');
+               
+               // Ensure the Google Translate element exists
+               let googleTranslateDiv = document.getElementById('google_translate_element');
+               if (!googleTranslateDiv) {
+                   console.log('Creating Google Translate element...');
+                   googleTranslateDiv = document.createElement('div');
+                   googleTranslateDiv.id = 'google_translate_element';
+                   googleTranslateDiv.style.position = 'absolute';
+                   googleTranslateDiv.style.left = '-9999px';
+                   googleTranslateDiv.style.opacity = '0';
+                   document.body.appendChild(googleTranslateDiv);
+               }
+               
+               // Create Google Translate element with VERTICAL layout to get select element
+               googleTranslateInstance = new google.translate.TranslateElement({
+                   pageLanguage: 'en',
+                   includedLanguages: 'en,fr,es',
+                   autoDisplay: false,
+                   multilanguagePage: true,
+                   layout: google.translate.TranslateElement.InlineLayout.VERTICAL
+               }, 'google_translate_element');
+               
+               console.log('Google Translate element created successfully');
+               
+               // Initialize custom language selector
+               initializeCustomLanguageSelector();
+               
+               // Wait for Google Translate to fully initialize and create its elements
+               let attempts = 0;
+               const maxAttempts = 30;
+               
+               const checkForSelectElement = () => {
+                   attempts++;
+                   console.log(`Checking for Google Translate select element (attempt ${attempts}/${maxAttempts})...`);
+                   
+                   // Check for various possible selectors
+                   const selectElement = document.querySelector('.goog-te-combo') || 
+                                       document.querySelector('select[id*="goog-te"]') ||
+                                       document.querySelector('select[class*="goog-te"]') ||
+                                       document.querySelector('#google_translate_element select');
+                   
+                   // Also check for dropdown format (anchor tag)
+                   const dropdownElement = document.querySelector('.goog-te-gadget-simple a') ||
+                                         document.querySelector('#google_translate_element a');
+                   
+                   if (selectElement) {
+                       console.log('Google Translate select element found!', selectElement);
+                       
+                       // Hide the Google Translate elements after they're functional
+                       hideGoogleTranslateElements();
+                       
+                       // Apply saved language if not English
+                       const savedLanguage = localStorage.getItem('google-translate-language') || 'en';
+                       if (savedLanguage !== 'en') {
+                           console.log('Auto-applying saved language:', savedLanguage);
+                           selectElement.value = savedLanguage;
+                           selectElement.dispatchEvent(new Event('change'));
+                       }
+                       
+                       return; // Success, stop checking
+                   } else if (dropdownElement) {
+                       console.log('Google Translate dropdown element found!', dropdownElement);
+                       
+                       // Hide the Google Translate elements after they're functional
+                       hideGoogleTranslateElements();
+                       
+                       // For dropdown format, we'll handle language changes differently
+                       // Store the dropdown element for later use
+                       window.googleTranslateDropdown = dropdownElement;
+                       
+                       return; // Success, stop checking
+                   }
+                   
+                   // Also check if the Google Translate element exists at all
+                   const googleTranslateDiv = document.getElementById('google_translate_element');
+                   if (googleTranslateDiv) {
+                       console.log('Google Translate div exists, content:', googleTranslateDiv.innerHTML);
+                   }
+                   
+                   if (attempts < maxAttempts) {
+                       setTimeout(checkForSelectElement, 500);
+                   } else {
+                       console.log('Google Translate select element not found after all attempts');
+                       console.log('Available elements in google_translate_element:', 
+                                   document.getElementById('google_translate_element')?.innerHTML);
+                   }
+               };
+               
+               // Start checking after a longer delay to allow full initialization
+               setTimeout(checkForSelectElement, 1000);
+               
+               console.log('Google Translate initialized');
+           } catch (error) {
+               console.error('Error initializing Google Translate:', error);
+           }
+       }
+       
+       // Function to hide Google Translate elements after they're functional
+       function hideGoogleTranslateElements() {
+           console.log('Hiding Google Translate elements...');
+           
+           // Hide banner and other UI elements
+           const elementsToHide = [
+               '.goog-te-banner-frame',
+               '.goog-te-banner-frame.skiptranslate',
+               '.goog-te-ftab-frame',
+               '.goog-te-ftab',
+               '.goog-te-menu-frame',
+               '.goog-te-menu2',
+               '.goog-te-menu2-item',
+               '.goog-te-gadget-icon'
+           ];
+           
+           elementsToHide.forEach(selector => {
+               const elements = document.querySelectorAll(selector);
+               elements.forEach(element => {
+                   element.style.display = 'none';
+                   element.style.visibility = 'hidden';
+                   element.style.opacity = '0';
+                   element.style.position = 'absolute';
+                   element.style.left = '-9999px';
+                   element.style.top = '-9999px';
+               });
+           });
+           
+           // Hide the main gadget containers
+           const gadgets = document.querySelectorAll('.goog-te-gadget, .goog-te-gadget-simple');
+           gadgets.forEach(gadget => {
+               gadget.style.position = 'absolute';
+               gadget.style.left = '-9999px';
+               gadget.style.top = '-9999px';
+               gadget.style.opacity = '0';
+               gadget.style.visibility = 'hidden';
+           });
+           
+           // Hide the combo element but keep it functional
+           const combo = document.querySelector('.goog-te-combo') || 
+                        document.querySelector('select[id*="goog-te"]') ||
+                        document.querySelector('select[class*="goog-te"]') ||
+                        document.querySelector('#google_translate_element select');
+           if (combo) {
+               combo.style.position = 'absolute';
+               combo.style.left = '-9999px';
+               combo.style.top = '-9999px';
+               combo.style.opacity = '0';
+               combo.style.visibility = 'hidden';
+               // Don't set display: none to keep it functional
+           }
+           
+           console.log('Google Translate elements hidden successfully');
+       }
+    
+    function hideGoogleTranslateBanner() {
+        // Comprehensive list of Google Translate selectors
+        const selectors = [
+            '.goog-te-banner-frame',
+            '.goog-te-banner-frame.skiptranslate',
+            '.goog-te-ftab-frame',
+            '.goog-te-combo',
+            '.goog-te-gadget',
+            '.goog-te-gadget-simple',
+            '.goog-te-menu-frame',
+            '.goog-te-ftab',
+            '.goog-te-menu-value',
+            '.goog-te-menu2',
+            '.goog-te-menu2-item',
+            '.goog-te-gadget .goog-te-combo',
+            '.goog-te-gadget-simple .goog-te-menu-value',
+            'iframe[src*="translate.google.com"]',
+            'iframe[title*="translate"]',
+            'iframe[src*="translate"]',
+            'body > div[id^="google_translate_element"]',
+            'body > div[class*="goog-te"]',
+            'div[id^="google_translate_element"]',
+            'div[class*="goog-te"]',
+            '.skiptranslate',
+            '.notranslate'
+        ];
+        
+        selectors.forEach(function(selector) {
+            const elements = document.querySelectorAll(selector);
+            elements.forEach(function(element) {
+                // Aggressive hiding
+                element.style.display = 'none';
+                element.style.visibility = 'hidden';
+                element.style.height = '0';
+                element.style.width = '0';
+                element.style.maxHeight = '0';
+                element.style.maxWidth = '0';
+                element.style.position = 'absolute';
+                element.style.top = '-9999px';
+                element.style.left = '-9999px';
+                element.style.zIndex = '-9999';
+                element.style.opacity = '0';
+                element.style.overflow = 'hidden';
+                element.style.border = 'none';
+                element.style.margin = '0';
+                element.style.padding = '0';
+                element.style.transform = 'translateX(-9999px)';
+                
+                // Remove from DOM if possible
+                if (element.parentNode && element.id !== 'google_translate_element') {
+                    try {
+                        element.parentNode.removeChild(element);
+                    } catch (e) {
+                        // Element might be protected, continue with hiding
+                    }
+                }
+            });
+        });
+        
+        // Special handling for body margin/padding
+        document.body.style.marginTop = '0';
+        document.body.style.paddingTop = '0';
+        document.body.style.top = '0';
+        
+        // Remove any Google Translate classes from body
+        document.body.classList.remove('goog-te-fading');
+        
+        console.log('Google Translate banner hidden aggressively');
+    }
+    
+    function initializeCustomLanguageSelector() {
+        const customSelector = document.getElementById('custom-language-selector');
+        if (!customSelector) return;
+        
+        // Use saved language preference only (no URL parameters)
+        const savedLanguage = localStorage.getItem('google-translate-language') || 'en';
+        
+        // Set the selector value
+        customSelector.value = savedLanguage;
+        
+        // Update HTML attributes
+        document.documentElement.lang = savedLanguage;
+        
+        console.log('Language selector initialized with:', savedLanguage, 'from localStorage');
+    }
+    
+       function changeLanguageCustom(language) {
+           // Save language preference
+           localStorage.setItem('google-translate-language', language);
+           
+           // Update display
+           const customSelector = document.getElementById('custom-language-selector');
+           if (customSelector) {
+               customSelector.value = language;
+           }
+           
+           // Update HTML attributes
+           document.documentElement.lang = language;
+           
+           // Show loading message
+           showTranslateToast('Translating page...', 'info');
+           
+           // Use the Google Translate select element with multiple selector attempts
+           const selectElement = document.querySelector('.goog-te-combo') || 
+                               document.querySelector('select[id*="goog-te"]') ||
+                               document.querySelector('select[class*="goog-te"]') ||
+                               document.querySelector('#google_translate_element select');
+                               
+           // Also check for dropdown format
+           const dropdownElement = document.querySelector('.goog-te-gadget-simple a') ||
+                                 document.querySelector('#google_translate_element a') ||
+                                 window.googleTranslateDropdown;
+                               
+           if (selectElement) {
+               console.log('Using Google Translate select for:', language, selectElement);
+               selectElement.value = language;
+               selectElement.dispatchEvent(new Event('change'));
+               
+               // Show success message
+               setTimeout(() => {
+                   const languageNames = {
+                       'en': 'English',
+                       'fr': 'Français', 
+                       'es': 'Español'
+                   };
+                   showTranslateToast(`Language changed to ${languageNames[language]}`, 'success');
+               }, 1500);
+           } else if (dropdownElement) {
+               console.log('Using Google Translate dropdown for:', language, dropdownElement);
+               
+               // For dropdown format, we need to click the dropdown and then select the language
+               // This is more complex, so we'll use a simpler approach
+               const languageNames = {
+                   'en': 'English',
+                   'fr': 'Français', 
+                   'es': 'Español'
+               };
+               
+               // Click the dropdown to open it
+               dropdownElement.click();
+               
+               // Try to find and click the language option
+               setTimeout(() => {
+                   const languageOption = document.querySelector(`[data-value="${language}"]`) ||
+                                       document.querySelector(`a[href*="hl=${language}"]`) ||
+                                       Array.from(document.querySelectorAll('a')).find(a => 
+                                           a.textContent.toLowerCase().includes(languageNames[language].toLowerCase())
+                                       );
+                   
+                   if (languageOption) {
+                       languageOption.click();
+                       showTranslateToast(`Language changed to ${languageNames[language]}`, 'success');
+                   } else {
+                       showTranslateToast(`Language preference set to ${languageNames[language]}`, 'success');
+                   }
+               }, 500);
+           } else {
+               console.log('Google Translate select element not available');
+               console.log('Available elements in google_translate_element:', 
+                           document.getElementById('google_translate_element')?.innerHTML);
+               const languageNames = {
+                   'en': 'English',
+                   'fr': 'Français', 
+                   'es': 'Español'
+               };
+               showTranslateToast(`Language preference set to ${languageNames[language]}`, 'success');
+           }
+       }
+    
+    // Toast notification function for translations
+    function showTranslateToast(message, type = 'info') {
+        const toastHtml = `
+            <div class="toast align-items-center text-white bg-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="fas fa-language me-2"></i>${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        `;
+        
+        let toastContainer = document.getElementById('toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toast-container';
+            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+            toastContainer.style.zIndex = '9999';
+            document.body.appendChild(toastContainer);
+        }
+        
+        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+        
+        const toastElement = toastContainer.lastElementChild;
+        const toast = new bootstrap.Toast(toastElement);
+        toast.show();
+        
+        toastElement.addEventListener('hidden.bs.toast', () => {
+            toastElement.remove();
+        });
+    }
+
+    // IMMEDIATE SCRIPT - Run before DOM is ready to prevent banner
+    (function() {
+        let lastHideTime = 0;
+        
+        // Hide Google Translate banner immediately
+        function hideBannerImmediately() {
+            // Throttle to prevent excessive calls
+            const now = Date.now();
+            if (now - lastHideTime < 1000) {
+                return;
+            }
+            lastHideTime = now;
+            
+            const selectors = [
+                '.goog-te-banner-frame',
+                '.goog-te-banner-frame.skiptranslate',
+                '.goog-te-ftab-frame',
+                'iframe[src*="translate"]',
+                'iframe[title*="translate"]'
+            ];
+            
+            selectors.forEach(function(selector) {
+                const elements = document.querySelectorAll(selector);
+                elements.forEach(function(element) {
+                    element.style.display = 'none';
+                    element.style.visibility = 'hidden';
+                    element.style.height = '0';
+                    element.style.position = 'absolute';
+                    element.style.top = '-9999px';
+                    element.style.left = '-9999px';
+                });
+            });
+            
+            // Reset body styles
+            document.body.style.marginTop = '0';
+            document.body.style.paddingTop = '0';
+        }
+        
+        // Run immediately
+        hideBannerImmediately();
+        
+        // Run on DOM ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', hideBannerImmediately);
+        } else {
+            hideBannerImmediately();
+        }
+        
+        // Watch for new elements and hide them (throttled)
+        const observer = new MutationObserver(function(mutations) {
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'childList') {
+                    mutation.addedNodes.forEach(function(node) {
+                        if (node.nodeType === 1) {
+                            setTimeout(hideBannerImmediately, 100);
+                        }
+                    });
+                }
+            });
+        });
+        
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+    })();
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Remove URL parameters to prevent reloading loop
+        if (window.location.search) {
+            const url = new URL(window.location);
+            const urlLanguage = url.searchParams.get('hl') || url.searchParams.get('tl');
+            
+            if (urlLanguage && urlLanguage !== 'en') {
+                console.log('URL language detected:', urlLanguage);
+                // Save language preference but don't reload
+                localStorage.setItem('google-translate-language', urlLanguage);
+                document.documentElement.lang = urlLanguage;
+            }
+            
+            // Remove URL parameters to prevent reloading
+            url.search = '';
+            window.history.replaceState({}, '', url.toString());
+        }
+        
+           // Load Google Translate script dynamically
+           if (!document.getElementById('google-translate-script')) {
+               console.log('Loading Google Translate script...');
+               const script = document.createElement('script');
+               script.id = 'google-translate-script';
+               script.src = 'https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit';
+               script.async = true;
+               script.onload = function() {
+                   console.log('Google Translate script loaded successfully');
+               };
+               script.onerror = function() {
+                   console.error('Failed to load Google Translate script');
+               };
+               document.head.appendChild(script);
+           } else {
+               console.log('Google Translate script already loaded');
+           }
+        
+           // Initialize custom language selector
+           setTimeout(function() {
+               initializeCustomLanguageSelector();
+           }, 1000);
+
+        // Update current time in footer
+        function updateTime() {
+            const now = new Date();
+            const timeElement = document.getElementById('current-time');
+            if (timeElement) {
+                timeElement.textContent = now.toLocaleTimeString();
+            }
+        }
+        
+        updateTime();
+        setInterval(updateTime, 1000);
+
+        // Check-in status updater
+        function updateCheckinStatus() {
+            {% if session.admin %}
+            fetch('/checkin/status', {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update navbar indicator
+                    const indicator = document.getElementById('checkin-count-badge');
+                    if (indicator) {
+                        if (data.active_count > 0) {
+                            indicator.textContent = data.active_count;
+                            indicator.style.display = 'flex';
+                        } else {
+                            indicator.style.display = 'none';
+                        }
+                    }
+                    
+                    // Update footer status
+                    const footerStatus = document.getElementById('footer-checkin-status');
+                    const footerCount = document.getElementById('footer-checkin-count');
+                    if (footerStatus && footerCount) {
+                        if (data.active_count > 0) {
+                            footerCount.textContent = data.active_count;
+                            footerStatus.style.display = 'inline-block';
+                        } else {
+                            footerStatus.style.display = 'none';
+                        }
+                    }
+                }
+            })
+            .catch(error => console.log('Check-in status update failed:', error));
+            {% endif %}
+        }
+
+        // Update check-in status every 30 seconds
+        updateCheckinStatus();
+        setInterval(updateCheckinStatus, 30000);
+
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl);
+        });
+
+        // Auto-hide alerts after 5 seconds
+        const alerts = document.querySelectorAll('.alert:not(.alert-permanent)');
+        alerts.forEach(alert => {
+            if (!alert.classList.contains('alert-permanent')) {
+                setTimeout(() => {
+                    try {
+                        const bsAlert = new bootstrap.Alert(alert);
+                        bsAlert.close();
+                    } catch (e) {
+                        alert.remove();
+                    }
+                }, 5000);
+            }
+        });
+
+        // Keyboard shortcuts for power users
+        document.addEventListener('keydown', function(e) {
+            // Only trigger if not typing in an input field
+            if (e.target.tagName.toLowerCase() === 'input' || e.target.tagName.toLowerCase() === 'textarea') {
+                return;
+            }
+
+            // Ctrl + Shift + S = Quick scan
+            if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+                e.preventDefault();
+                window.location.href = '/checkin/scan';
+            }
+            
+            // Ctrl + Shift + D = Dashboard
+            if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+                e.preventDefault();
+                window.location.href = '/dashboard';
+            }
+            
+            // Ctrl + Shift + C = Check-in dashboard
+            if (e.ctrlKey && e.shiftKey && e.key === 'C') {
+                e.preventDefault();
+                window.location.href = '/checkin';
+            }
+        });
+
+        // Add smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const href = this.getAttribute('href');
+                // Only proceed if href is not just '#'
+                if (href && href !== '#') {
+                    const target = document.querySelector(href);
+                    if (target) {
+                        target.scrollIntoView({
+                            behavior: 'smooth',
+                            block: 'start'
+                        });
+                    }
+                }
+            });
+        });
+    });
+
+    // Simplified currency symbols (no conversion, no API calls)
+    const currencySymbols = {
+        'USD': '$',
+        'EUR': '€',
+        'GBP': '£',
+        'XAF': 'FCFA'
+    };
+    
+    function getCurrencySymbol(currencyCode) {
+        return currencySymbols[currencyCode] || '$';
+    }
+
+    // Global utility functions
+    window.MemberSync = {
+        // Show notification
+        showNotification: function(type, message, duration = 5000) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, duration);
+        },
+
+        // Format currency
+        formatCurrency: function(amount) {
+            const symbol = '{{ currency_symbol|default("$") }}';
+            return `${symbol}${parseFloat(amount).toFixed(2)}`;
+        },
+
+        // Format date
+        formatDate: function(dateString) {
+            return new Date(dateString).toLocaleDateString();
+        },
+
+        // Format time
+        formatTime: function(dateString) {
+            return new Date(dateString).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        },
+
+        // Validate phone number
+        validatePhone: function(phone) {
+            return /^[\+]?[\d\s\-\(\)]+$/.test(phone);
+        },
+
+        // Validate email
+        validateEmail: function(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+    };
+
+    // Legacy language switching function - now handled by Google Translate
+    function changeLanguage(lang) {
+        // Redirect to Google Translate functionality
+        const translateSelect = document.querySelector('.goog-te-combo');
+        if (translateSelect) {
+            translateSelect.value = lang;
+            translateSelect.dispatchEvent(new Event('change'));
+        }
+    }
+
+    // Currency preference function
+    function changeCurrencyPreference(currency) {
+        // Show loading state
+        const clickedElement = event.target.closest('.currency-option');
+        const originalContent = clickedElement.innerHTML;
+        clickedElement.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+        clickedElement.style.pointerEvents = 'none';
+        
+        // Make API request to update currency preference
+        fetch('/api/update_currency_preference', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                currency: currency
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showToast(`Currency preference updated to ${currency}`, 'success');
+                // Reload page to apply currency changes
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                showToast(data.error || 'Failed to update currency preference', 'error');
+                // Restore original content
+                clickedElement.innerHTML = originalContent;
+                clickedElement.style.pointerEvents = 'auto';
+            }
+        })
+        .catch(error => {
+            showToast('Network error: ' + error.message, 'error');
+            // Restore original content
+            clickedElement.innerHTML = originalContent;
+            clickedElement.style.pointerEvents = 'auto';
+        });
+    }
+
+    // Legacy currency switching function (kept for compatibility)
+    function changeCurrency(currency, symbol) {
+        // Store currency preference in localStorage
+        localStorage.setItem('selectedCurrency', currency);
+        localStorage.setItem('currencySymbol', symbol);
+        
+        // Show success message
+        showToast('Currency changed to ' + currency + ' (' + symbol + ')', 'success');
+        
+        // Close dropdown
+        const dropdown = bootstrap.Dropdown.getInstance(document.getElementById('settingsDropdown'));
+        if (dropdown) {
+            dropdown.hide();
+        }
+        
+        // Reload page to apply currency changes
+        setTimeout(() => {
+            window.location.reload();
+        }, 1000);
+    }
+
+    // Toast notification function
+    function showToast(message, type = 'info') {
+        // Create toast element
+        const toastHtml = `
+            <div class="toast align-items-center text-white bg-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        `;
+        
+        // Add toast to page
+        let toastContainer = document.getElementById('toast-container');
+        if (!toastContainer) {
+            toastContainer = document.createElement('div');
+            toastContainer.id = 'toast-container';
+            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+            toastContainer.style.zIndex = '9999';
+            document.body.appendChild(toastContainer);
+        }
+        
+        toastContainer.insertAdjacentHTML('beforeend', toastHtml);
+        
+        // Show toast
+        const toastElement = toastContainer.lastElementChild;
+        const toast = new bootstrap.Toast(toastElement);
+        toast.show();
+        
+        // Remove toast after it's hidden
+        toastElement.addEventListener('hidden.bs.toast', () => {
+            toastElement.remove();
+        });
+    }
+
+
+    // Load saved preferences on page load
+    document.addEventListener('DOMContentLoaded', function() {
+        const savedLanguage = localStorage.getItem('selectedLanguage');
+        const savedCurrency = localStorage.getItem('selectedCurrency');
+        const savedSymbol = localStorage.getItem('currencySymbol');
+        
+        if (savedLanguage) {
+            changeLanguage(savedLanguage);
+        }
+        
+        if (savedCurrency && savedSymbol) {
+            // Update any currency displays on the page
+            const currencyElements = document.querySelectorAll('.currency-symbol');
+            currencyElements.forEach(el => {
+                el.textContent = savedSymbol;
+            });
+        }
+    });
+    </script>
+
+    <!-- Additional page-specific scripts -->
+    {% block scripts %}{% endblock %}
+</body>
+</html>

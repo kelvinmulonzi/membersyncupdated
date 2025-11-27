@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block title %}Reports - MemberSync{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-chart-bar text-primary"></i> Reports</h2>
+            
+            <!-- Location Filter for Org Super Admins -->
+            {% if is_org_superadmin and accessible_locations %}
+            <div class="d-flex align-items-center">
+                <form method="GET" action="{{ url_for('reports') }}" class="d-flex gap-2">
+                    <select name="location_id" class="form-select" onchange="this.form.submit()">
+                        <option value="">All Locations</option>
+                        {% for location in accessible_locations %}
+                        <option value="{{ location[0] }}" {% if selected_location_id == location[0] %}selected{% endif %}>
+                            {{ location[1] }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </form>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Summary Cards -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="fas fa-users"></i> Member Statistics</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if member_stats %}
+                        <div class="row text-center">
+                            <div class="col-6 mb-3">
+                                <h3 class="text-primary">{{ member_stats[0] or 0 }}</h3>
+                                <small class="text-muted">Total Members</small>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <h3 class="text-success">{{ member_stats[1] or 0 }}</h3>
+                                <small class="text-muted">Active</small>
+                            </div>
+                            <div class="col-6">
+                                <h3 class="text-danger">{{ member_stats[2] or 0 }}</h3>
+                                <small class="text-muted">Expired</small>
+                            </div>
+                            <div class="col-6">
+                                <h3 class="text-warning">{{ member_stats[3] or 0 }}</h3>
+                                <small class="text-muted">Inactive</small>
+                            </div>
+                        </div>
+                        {% else %}
+                        <p class="text-muted">No member data available.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="col-md-6">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0"><i class="fas fa-money-bill-wave"></i> Payment Statistics</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if payment_stats %}
+                        <div class="row text-center">
+                            <div class="col-12 mb-3">
+                                <h3 class="text-success">{{ payment_stats[0] or 0 }}</h3>
+                                <small class="text-muted">Total Payments</small>
+                            </div>
+                            <div class="col-6">
+                                {% if payment_stats[1] is defined and payment_stats[1] is number %}
+                                    {% set converted_total_amount, total_amount_symbol = convert_price_to_user_currency(payment_stats[1]|float) %}
+                                    <h4 class="text-primary">{{ total_amount_symbol }}{{ "%.2f"|format(converted_total_amount) }}</h4>
+                                {% else %}
+                                    <h4 class="text-primary">$0.00</h4>
+                                {% endif %}
+                                <small class="text-muted">Total Amount</small>
+                            </div>
+                            <div class="col-6">
+                                {% if payment_stats[2] is defined and payment_stats[2] is number %}
+                                    {% set converted_avg_amount, avg_amount_symbol = convert_price_to_user_currency(payment_stats[2]|float) %}
+                                    <h4 class="text-info">{{ avg_amount_symbol }}{{ "%.2f"|format(converted_avg_amount) }}</h4>
+                                {% else %}
+                                    <h4 class="text-info">$0.00</h4>
+                                {% endif %}
+                                <small class="text-muted">Average Payment</small>
+                            </div>
+                        </div>
+                        {% else %}
+                        <p class="text-muted">No payment data available.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Location Breakdown for Org Super Admins -->
+        {% if is_org_superadmin and location_breakdown %}
+        <div class="row">
+            <div class="col-12">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0"><i class="fas fa-store"></i> Reports by Location/Store</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Location/Store</th>
+                                        <th class="text-center">Total Members</th>
+                                        <th class="text-center">Active Members</th>
+                                        <th class="text-end">Total Payments</th>
+                                        <th class="text-center">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for location in location_breakdown %}
+                                    <tr>
+                                        <td>
+                                            <i class="fas fa-map-marker-alt text-info"></i>
+                                            <strong>{{ location[1] }}</strong>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-primary">{{ location[2] or 0 }}</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge bg-success">{{ location[3] or 0 }}</span>
+                                        </td>
+                                        <td class="text-end">
+                                            {% if location[4] is defined and location[4] is number %}
+                                                {% set converted_location_payment, location_payment_symbol = convert_price_to_user_currency(location[4]|float) %}
+                                                <strong class="text-success">{{ location_payment_symbol }}{{ "%.2f"|format(converted_location_payment) }}</strong>
+                                            {% else %}
+                                                <strong class="text-success">$0.00</strong>
+                                            {% endif %}
+                                        </td>
+                                        <td class="text-center">
+                                            <a href="{{ url_for('reports', location_id=location[0]) }}" 
+                                               class="btn btn-sm btn-outline-primary">
+                                                <i class="fas fa-filter"></i> Filter
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                                <tfoot class="table-light">
+                                    <tr>
+                                        <th>Total</th>
+                                        <th class="text-center">
+                                            <span class="badge bg-primary">{{ location_breakdown|sum(attribute=2) }}</span>
+                                        </th>
+                                        <th class="text-center">
+                                            <span class="badge bg-success">{{ location_breakdown|sum(attribute=3) }}</span>
+                                        </th>
+                                        <th class="text-end">
+                                            {% set total_location_payments = location_breakdown|sum(attribute=4) %}
+                                            {% if total_location_payments is number %}
+                                                {% set converted_total_loc_payment, total_loc_payment_symbol = convert_price_to_user_currency(total_location_payments|float) %}
+                                                <strong class="text-success">{{ total_loc_payment_symbol }}{{ "%.2f"|format(converted_total_loc_payment) }}</strong>
+                                            {% else %}
+                                                <strong class="text-success">$0.00</strong>
+                                            {% endif %}
+                                        </th>
+                                        <th></th>
+                                    </tr>
+                                </tfoot>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

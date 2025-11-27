@@ -1,0 +1,467 @@
+{% extends "base.html" %}
+{% block title %}Check-in History - {{ member[0] }} - MemberSync{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="mb-1">
+            <i class="fas fa-history text-primary"></i> Check-in History
+        </h1>
+        <p class="text-muted mb-0">{{ member[0] }} ({{ membership_id }})</p>
+    </div>
+    <div>
+        <a href="{{ url_for('member_profile', membership_id=membership_id) }}" class="btn btn-outline-primary">
+            <i class="fas fa-user"></i> Member Profile
+        </a>
+        <a href="{{ url_for('checkin_dashboard') }}" class="btn btn-outline-secondary">
+            <i class="fas fa-qrcode"></i> Check-in Dashboard
+        </a>
+    </div>
+</div>
+
+<!-- Member Info Card -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-2 text-center">
+                <img src="{{ url_for('member_photo', membership_id=membership_id) }}" 
+                     alt="{{ member[0] }}" 
+                     class="rounded-circle" 
+                     style="width: 80px; height: 80px; object-fit: cover;">
+            </div>
+            <div class="col-md-6">
+                <h4 class="mb-1">{{ member[0] }}</h4>
+                <p class="text-muted mb-0">
+                    <i class="fas fa-id-card"></i> {{ membership_id }} | 
+                    <i class="fas fa-star"></i> {{ member[1] }} | 
+                    <span class="badge bg-{{ 'success' if member[2] == 'active' else 'secondary' }}">{{ member[2] }}</span>
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                {% if stats %}
+                <div class="d-flex justify-content-md-end gap-2">
+                    <div class="text-center">
+                        <div class="fw-bold text-primary">{{ stats[0] }}</div>
+                        <small class="text-muted">Total Visits</small>
+                    </div>
+                    <div class="text-center">
+                        <div class="fw-bold text-success">{{ stats[1] }}</div>
+                        <small class="text-muted">Today</small>
+                    </div>
+                    <div class="text-center">
+                        <div class="fw-bold text-info">{{ stats[2] }}</div>
+                        <small class="text-muted">This Week</small>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body text-center">
+                <h2 class="mb-1">{{ stats[0] if stats else 0 }}</h2>
+                <p class="mb-0">Total Visits</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body text-center">
+                <h2 class="mb-1">{{ stats[1] if stats else 0 }}</h2>
+                <p class="mb-0">Today's Visits</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card bg-info text-white h-100">
+            <div class="card-body text-center">
+                <h2 class="mb-1">{{ stats[2] if stats else 0 }}</h2>
+                <p class="mb-0">This Week</p>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card bg-warning text-white h-100">
+            <div class="card-body text-center">
+                <h2 class="mb-1">
+                    {% if stats and stats[3] %}
+                        {{ "%.1f"|format(stats[3]) }}h
+                    {% else %}
+                        0h
+                    {% endif %}
+                </h2>
+                <p class="mb-0">Avg Duration</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-bolt text-warning"></i> Quick Actions
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-4 mb-2">
+                <a href="{{ url_for('checkin_scan') }}?member_id={{ membership_id }}" class="btn btn-success w-100">
+                    <i class="fas fa-sign-in-alt"></i> Check In Now
+                </a>
+            </div>
+            <div class="col-md-4 mb-2">
+                {% if current_checkin %}
+                <button class="btn btn-warning w-100" onclick="quickCheckout()">
+                    <i class="fas fa-sign-out-alt"></i> Quick Check Out
+                </button>
+                {% else %}
+                <button class="btn btn-secondary w-100" disabled>
+                    <i class="fas fa-sign-out-alt"></i> Not Checked In
+                </button>
+                {% endif %}
+            </div>
+            <div class="col-md-4 mb-2">
+                <a href="{{ url_for('member_profile', membership_id=membership_id) }}" class="btn btn-outline-primary w-100">
+                    <i class="fas fa-user"></i> Full Profile
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Current Status -->
+{% if current_checkin %}
+<div class="alert alert-info">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h6 class="alert-heading mb-1">
+                <i class="fas fa-user-clock"></i> Currently Checked In
+            </h6>
+            <p class="mb-0">
+                <strong>Since:</strong> {{ current_checkin[1] }} | 
+                <strong>Service:</strong> {{ current_checkin[2] or 'Not specified' }} |
+                <strong>Duration:</strong> <span id="current-duration">Calculating...</span>
+            </p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <button class="btn btn-warning" onclick="quickCheckout()">
+                <i class="fas fa-sign-out-alt"></i> Check Out
+            </button>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Check-in History -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-list"></i> Visit History
+        </h5>
+        <div>
+            <button class="btn btn-sm btn-outline-primary" onclick="refreshHistory()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+            <button class="btn btn-sm btn-outline-secondary" onclick="exportHistory()">
+                <i class="fas fa-download"></i> Export
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        {% if checkin_history %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Check-in</th>
+                            <th>Check-out</th>
+                            <th>Duration</th>
+                            <th>Service</th>
+                            <th>Status</th>
+                            <th>Notes</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for visit in checkin_history %}
+                        <tr>
+                            <td>
+                                <strong>{{ visit[1][:10] if visit[1] else '' }}</strong>
+                            </td>
+                            <td>
+                                <i class="fas fa-sign-in-alt text-success"></i>
+                                {{ visit[1][11:16] if visit[1] else '' }}
+                            </td>
+                            <td>
+                                {% if visit[2] %}
+                                    <i class="fas fa-sign-out-alt text-warning"></i>
+                                    {{ visit[2][11:16] }}
+                                {% else %}
+                                    <span class="text-muted">Still in</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if visit[6] %}
+                                    <span class="badge bg-info">{{ visit[6] }}</span>
+                                {% elif visit[3] == 'checked_in' %}
+                                    <span class="badge bg-success">Active</span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if visit[4] %}
+                                    <span class="badge bg-primary">{{ visit[4] }}</span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if visit[3] == 'checked_in' %}
+                                    <span class="badge bg-success">
+                                        <i class="fas fa-circle"></i> Active
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">Completed</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if visit[5] %}
+                                    <span data-bs-toggle="tooltip" title="{{ visit[5] }}">
+                                        <small class="text-muted">{{ visit[5][:30] }}{% if visit[5]|length > 30 %}...{% endif %}</small>
+                                    </span>
+                                {% else %}
+                                    <span class="text-muted">-</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if visit[3] == 'checked_in' %}
+                                    <button class="btn btn-sm btn-warning" 
+                                            onclick="checkoutVisit({{ visit[0] }})">
+                                        <i class="fas fa-sign-out-alt"></i>
+                                    </button>
+                                {% endif %}
+                                <button class="btn btn-sm btn-outline-info" 
+                                        onclick="viewVisitDetails({{ visit[0] }})">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination would go here if needed -->
+            {% if checkin_history|length >= 50 %}
+            <div class="text-center mt-3">
+                <p class="text-muted">Showing last 50 visits</p>
+                <button class="btn btn-outline-primary" onclick="loadMoreHistory()">
+                    <i class="fas fa-plus"></i> Load More
+                </button>
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-history fa-3x text-muted mb-3"></i>
+                <h5>No Check-in History</h5>
+                <p class="text-muted">This member hasn't checked in yet</p>
+                <a href="{{ url_for('checkin_scan') }}" class="btn btn-primary">
+                    <i class="fas fa-qrcode"></i> Check In Now
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Visit Details Modal -->
+<div class="modal fade" id="visitDetailsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-info-circle text-info"></i> Visit Details
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="visitDetailsContent">
+                <!-- Content will be loaded dynamically -->
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Calculate current visit duration if checked in
+{% if current_checkin %}
+function updateCurrentDuration() {
+    const checkinTime = new Date('{{ current_checkin[1] }}');
+    const now = new Date();
+    const diffMs = now - checkinTime;
+    
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    
+    let durationText = '';
+    if (hours > 0) {
+        durationText = `${hours}h ${minutes}m`;
+    } else {
+        durationText = `${minutes}m`;
+    }
+    
+    const element = document.getElementById('current-duration');
+    if (element) {
+        element.textContent = durationText;
+    }
+}
+
+// Update duration every minute
+updateCurrentDuration();
+setInterval(updateCurrentDuration, 60000);
+{% endif %}
+
+function quickCheckout() {
+    if (confirm('Check out {{ member[0] }}?')) {
+        fetch('/checkin/quick_checkout/{{ membership_id }}', {
+            method: 'POST',
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(() => {
+            window.location.reload();
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error processing checkout');
+        });
+    }
+}
+
+function checkoutVisit(visitId) {
+    if (confirm('Check out this visit?')) {
+        // Implementation for checking out specific visit
+        fetch('/checkin/checkout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                membership_id: '{{ membership_id }}',
+                checkin_id: visitId
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                window.location.reload();
+            } else {
+                alert('Error: ' + data.error);
+            }
+        });
+    }
+}
+
+function viewVisitDetails(visitId) {
+    // Load visit details into modal
+    fetch(`/api/visit_details/${visitId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const content = `
+                    <div class="row">
+                        <div class="col-6"><strong>Visit ID:</strong></div>
+                        <div class="col-6">${data.visit.id}</div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-6"><strong>Check-in Time:</strong></div>
+                        <div class="col-6">${data.visit.checkin_time}</div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-6"><strong>Check-out Time:</strong></div>
+                        <div class="col-6">${data.visit.checkout_time || 'Still checked in'}</div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-6"><strong>Duration:</strong></div>
+                        <div class="col-6">${data.visit.duration || 'In progress'}</div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-6"><strong>Service:</strong></div>
+                        <div class="col-6">${data.visit.service_type || 'Not specified'}</div>
+                    </div>
+                    <div class="row mt-2">
+                        <div class="col-6"><strong>Status:</strong></div>
+                        <div class="col-6">
+                            <span class="badge bg-${data.visit.status === 'checked_in' ? 'success' : 'secondary'}">
+                                ${data.visit.status}
+                            </span>
+                        </div>
+                    </div>
+                    ${data.visit.notes ? `
+                    <div class="row mt-2">
+                        <div class="col-12"><strong>Notes:</strong></div>
+                        <div class="col-12 mt-1">
+                            <div class="bg-light p-2 rounded">${data.visit.notes}</div>
+                        </div>
+                    </div>
+                    ` : ''}
+                `;
+                
+                document.getElementById('visitDetailsContent').innerHTML = content;
+                new bootstrap.Modal(document.getElementById('visitDetailsModal')).show();
+            } else {
+                alert('Error loading visit details');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error loading visit details');
+        });
+}
+
+function refreshHistory() {
+    window.location.reload();
+}
+
+function exportHistory() {
+    const url = new URL('/checkin/export', window.location.origin);
+    url.searchParams.append('member_id', '{{ membership_id }}');
+    url.searchParams.append('format', 'csv');
+    
+    window.open(url.toString(), '_blank');
+}
+
+function loadMoreHistory() {
+    // Implementation for loading more history records
+    // This would involve AJAX request to get more records
+    console.log('Load more history - to be implemented');
+}
+
+// Initialize tooltips
+document.addEventListener('DOMContentLoaded', function() {
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+
+// Auto-refresh page every 5 minutes if member is currently checked in
+{% if current_checkin %}
+setTimeout(() => {
+    window.location.reload();
+}, 300000);
+{% endif %}
+</script>
+{% endblock %}

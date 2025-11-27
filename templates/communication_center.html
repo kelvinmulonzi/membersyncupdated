@@ -1,0 +1,356 @@
+{% extends "base.html" %}
+
+{% block title %}Communication Center - MemberSync{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2><i class="fas fa-broadcast-tower text-primary"></i> Communication Center</h2>
+            <div>
+                <a href="{{ url_for('schedule_message') }}" class="btn btn-outline-info">
+                    <i class="fas fa-clock"></i> Scheduled Messages
+                </a>
+                <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card bg-primary text-white">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-users fa-2x me-3"></i>
+                            <div>
+                                <h5 class="card-title mb-0">{{ members|length }}</h5>
+                                <small>Total Members</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-envelope fa-2x me-3"></i>
+                            <div>
+                                <h5 class="card-title mb-0">
+                                    {% set email_count = members|selectattr('2')|list|length %}
+                                    {{ email_count }}
+                                </h5>
+                                <small>Email Contacts</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card bg-info text-white">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <i class="fas fa-sms fa-2x me-3"></i>
+                            <div>
+                                <h5 class="card-title mb-0">
+                                    {% set phone_count = members|selectattr('3')|list|length %}
+                                    {{ phone_count }}
+                                </h5>
+                                <small>Phone Contacts</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Send Message Form -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5><i class="fas fa-paper-plane"></i> Send Message</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('send_message') }}" enctype="multipart/form-data">
+                    <!-- Member Selection -->
+                    <div class="row mb-3">
+                        <div class="col-12">
+                            <label class="form-label"><strong>Select Recipients:</strong></label>
+                            <div class="row">
+                                <div class="col-md-3">
+                                    <div class="card">
+                                        <div class="card-header bg-light">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="select-all">
+                                                <label class="form-check-label" for="select-all">
+                                                    <strong>Select All</strong>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                                            {% for member in members %}
+                                            <div class="form-check mb-2">
+                                                <input class="form-check-input member-checkbox"
+                                                       type="checkbox"
+                                                       name="selected_members"
+                                                       value="{{ member[0] }}"
+                                                       id="member-{{ member[0] }}">
+                                                <label class="form-check-label" for="member-{{ member[0] }}">
+                                                    <div>
+                                                        <strong>{{ member[1] }}</strong>
+                                                        <br>
+                                                        <small class="text-muted">{{ member[0] }} - {{ member[4] }}</small>
+                                                        <br>
+                                                        {% if member[2] %}<small class="text-success"><i class="fas fa-envelope"></i></small>{% endif %}
+                                                        {% if member[3] %}<small class="text-info"><i class="fas fa-sms"></i></small>{% endif %}
+                                                        <small class="badge bg-{{ 'success' if member[5] == 'active' else 'danger' }}">
+                                                            {{ member[5] }}
+                                                        </small>
+                                                    </div>
+                                                </label>
+                                            </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-9">
+                                    <!-- Message Type -->
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Message Type:</strong></label>
+                                        <div class="btn-group" role="group">
+                                            <input type="radio" class="btn-check" name="message_type" id="email" value="email" checked>
+                                            <label class="btn btn-outline-primary" for="email">
+                                                <i class="fas fa-envelope"></i> Email Only
+                                            </label>
+
+                                            <input type="radio" class="btn-check" name="message_type" id="sms" value="sms">
+                                            <label class="btn btn-outline-info" for="sms">
+                                                <i class="fas fa-sms"></i> SMS Only
+                                            </label>
+
+                                            <input type="radio" class="btn-check" name="message_type" id="both" value="both">
+                                            <label class="btn btn-outline-success" for="both">
+                                                <i class="fas fa-broadcast-tower"></i> Both
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <!-- Subject (for email) -->
+                                    <div class="mb-3" id="subject-field">
+                                        <label for="subject" class="form-label"><strong>Subject:</strong></label>
+                                        <input type="text" class="form-control" name="subject" id="subject"
+                                               placeholder="Enter email subject..." maxlength="100">
+                                    </div>
+
+                                    <!-- Message Content -->
+                                    <div class="mb-3">
+                                        <label for="message_content" class="form-label"><strong>Message:</strong></label>
+                                        <textarea class="form-control" name="message_content" id="message_content" rows="6"
+                                                  placeholder="Type your message here...&#10;&#10;You can use placeholders:&#10;[NAME] - Member's name&#10;[MEMBER_ID] - Member ID" required></textarea>
+                                        <small class="form-text text-muted">
+                                            SMS messages will be truncated to 160 characters. Use [NAME] and [MEMBER_ID] for personalization.
+                                        </small>
+                                    </div>
+
+                                    <!-- File Attachment Section -->
+                                    <div class="mb-3">
+                                        <label for="attachment" class="form-label"><strong>📎 Attachment (Optional):</strong></label>
+                                        <input type="file" class="form-control" name="attachment" id="attachment" 
+                                               accept=".pdf,.png,.jpg,.jpeg,.gif,.doc,.docx,.txt">
+                                        <small class="form-text text-muted">
+                                            <i class="fas fa-info-circle"></i> Max 5MB. Supported: PDF, Images (PNG, JPG), Documents (DOC, DOCX), TXT
+                                            <br>
+                                            <span class="text-warning">⚠️ Note: Attachments only work with email messages</span>
+                                        </small>
+                                        <div id="file-preview" class="mt-2"></div>
+                                    </div>
+
+                                    <!-- Quick Templates -->
+                                    <div class="mb-3">
+                                        <label class="form-label"><strong>Quick Templates:</strong></label>
+                                        <div class="btn-group-vertical d-grid gap-2 d-md-block">
+                                            <button type="button" class="btn btn-sm btn-outline-secondary template-btn"
+                                                    data-template="Hello [NAME]! Thank you for being a valued member of MemberSync. Your membership ID is [MEMBER_ID].">   
+                                                Welcome Message
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary template-btn"
+                                                    data-template="Hi [NAME], we wanted to check in and see how you're doing. We appreciate your continued membership ([MEMBER_ID])!">
+                                                Check-in Message
+                                            </button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary template-btn"
+                                                    data-template="Dear [NAME], we have exciting updates to share with our members! Stay tuned for more information.">     
+                                                Announcement
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Send Button -->
+                                    <div class="d-grid">
+                                        <button type="submit" class="btn btn-primary btn-lg">
+                                            <i class="fas fa-paper-plane"></i> Send Message
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Recent Communications -->
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-history"></i> Recent Communications</h5>
+            </div>
+            <div class="card-body">
+                {% if recent_communications %}
+                <div class="table-responsive">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th>Member</th>
+                                <th>Type</th>
+                                <th>Message</th>
+                                <th>Sent At</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for comm in recent_communications %}
+                            <tr>
+                                <td>
+                                    <strong>{{ comm[1] }}</strong><br>
+                                    <small class="text-muted">{{ comm[0] }}</small>
+                                </td>
+                                <td>
+                                    <span class="badge bg-{{ 'primary' if 'email' in comm[2] else 'info' if 'sms' in comm[2] else 'success' }}">
+                                        {{ comm[2].replace('bulk_', '').upper() }}
+                                    </span>
+                                </td>
+                                <td>{{ comm[3][:50] }}{% if comm[3]|length > 50 %}...{% endif %}</td>
+                                <td>{{ comm[4] }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    <i class="fas fa-inbox fa-3x mb-3"></i>
+                    <p>No communications sent yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="position-fixed top-0 end-0 p-3" style="z-index: 1050;">
+            {% for category, message in messages %}
+                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
+<script>
+// Select all functionality
+document.getElementById('select-all').addEventListener('change', function() {
+    const checkboxes = document.querySelectorAll('.member-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.checked = this.checked;
+    });
+});
+
+// Show/hide subject field based on message type
+document.querySelectorAll('input[name="message_type"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        const subjectField = document.getElementById('subject-field');
+        const attachment = document.getElementById('attachment').files[0];
+        
+        if (this.value === 'sms') {
+            subjectField.style.display = 'none';
+            if (attachment) {
+                alert('⚠️ Note: Attachments cannot be sent via SMS. Switch to Email or Both to include the attachment.');
+            }
+        } else {
+            subjectField.style.display = 'block';
+        }
+    });
+});
+
+// Template buttons
+document.querySelectorAll('.template-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const template = this.getAttribute('data-template');
+        document.getElementById('message_content').value = template;
+    });
+});
+
+// Character counter for message
+document.getElementById('message_content').addEventListener('input', function() {
+    const length = this.value.length;
+    const messageType = document.querySelector('input[name="message_type"]:checked');
+    
+    if (messageType && (messageType.value === 'sms' || messageType.value === 'both')) {
+        if (length > 160) {
+            this.style.borderColor = '#ffc107';
+        } else {
+            this.style.borderColor = '';
+        }
+    }
+});
+
+// File upload preview and validation
+document.getElementById('attachment').addEventListener('change', function(e) {
+    const filePreview = document.getElementById('file-preview');
+    const file = e.target.files[0];
+    
+    if (file) {
+        const fileSize = (file.size / 1024 / 1024).toFixed(2); // Convert to MB
+        const fileName = file.name;
+        const fileType = file.type;
+        
+        // Check file size
+        if (file.size > 5 * 1024 * 1024) {
+            filePreview.innerHTML = `
+                <div class="alert alert-danger" role="alert">
+                    <i class="fas fa-exclamation-triangle"></i> File too large! Maximum size is 5MB.
+                </div>
+            `;
+            this.value = ''; // Clear the input
+            return;
+        }
+        
+        // Show file info
+        let icon = 'fa-file';
+        if (fileType.includes('image')) icon = 'fa-file-image';
+        else if (fileType.includes('pdf')) icon = 'fa-file-pdf';
+        else if (fileType.includes('word')) icon = 'fa-file-word';
+        
+        filePreview.innerHTML = `
+            <div class="alert alert-success" role="alert">
+                <i class="fas ${icon}"></i> <strong>${fileName}</strong> (${fileSize} MB)
+                <button type="button" class="btn-close float-end" onclick="clearAttachment()"></button>
+            </div>
+        `;
+    } else {
+        filePreview.innerHTML = '';
+    }
+});
+
+// Clear attachment function
+function clearAttachment() {
+    document.getElementById('attachment').value = '';
+    document.getElementById('file-preview').innerHTML = '';
+}
+</script>
+{% endblock %}

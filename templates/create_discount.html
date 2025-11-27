@@ -1,0 +1,215 @@
+{% extends "base.html" %}
+{% block title %}Create Discount - MemberSync{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2><i class="fas fa-plus-circle"></i> Create Discount Code</h2>
+                <p class="text-muted mb-0">Set up a new discount for members</p>
+            </div>
+            <a href="{{ url_for('manage_discounts') }}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left"></i> Back to Discounts
+            </a>
+        </div>
+
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="code" class="form-label">
+                                    <i class="fas fa-tag"></i> Discount Code <span class="text-danger">*</span>
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="code" 
+                                       name="code" 
+                                       placeholder="SAVE10, WELCOME, etc."
+                                       required
+                                       style="text-transform: uppercase;">
+                                <div class="form-text">
+                                    Enter a unique code that members will use
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="description" class="form-label">
+                                    <i class="fas fa-info-circle"></i> Description
+                                </label>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="description" 
+                                       name="description" 
+                                       placeholder="e.g., Welcome discount for new members">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="discount_type" class="form-label">
+                                    <i class="fas fa-percent"></i> Discount Type <span class="text-danger">*</span>
+                                </label>
+                                <select class="form-select" id="discount_type" name="discount_type" required>
+                                    <option value="">Select discount type</option>
+                                    <option value="percentage">Percentage (%)</option>
+                                    <option value="fixed">Fixed Amount ({{ currency_symbol }})</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="discount_value" class="form-label">
+                                    <i class="fas fa-calculator"></i> Discount Value <span class="text-danger">*</span>
+                                </label>
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="discount_value" 
+                                       name="discount_value" 
+                                       step="0.01" 
+                                       min="0"
+                                       placeholder="10 or 25.00"
+                                       required>
+                                <div class="form-text" id="valueHelp">
+                                    Enter the discount amount
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="min_amount" class="form-label">
+                                    <i class="fas fa-dollar-sign"></i> Minimum Amount
+                                </label>
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="min_amount" 
+                                       name="min_amount" 
+                                       step="0.01" 
+                                       min="0"
+                                       placeholder="0.00">
+                                <div class="form-text">
+                                    Minimum purchase amount to use this discount
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="max_uses" class="form-label">
+                                    <i class="fas fa-hashtag"></i> Maximum Uses
+                                </label>
+                                <input type="number" 
+                                       class="form-control" 
+                                       id="max_uses" 
+                                       name="max_uses" 
+                                       min="1"
+                                       placeholder="Leave empty for unlimited">
+                                <div class="form-text">
+                                    How many times this discount can be used
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="start_date" class="form-label">
+                                    <i class="fas fa-calendar-alt"></i> Start Date
+                                </label>
+                                <input type="date" 
+                                       class="form-control" 
+                                       id="start_date" 
+                                       name="start_date">
+                                <div class="form-text">
+                                    When the discount becomes active
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="end_date" class="form-label">
+                                    <i class="fas fa-calendar-times"></i> End Date
+                                </label>
+                                <input type="date" 
+                                       class="form-control" 
+                                       id="end_date" 
+                                       name="end_date">
+                                <div class="form-text">
+                                    When the discount expires
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('manage_discounts') }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Create Discount
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const discountType = document.getElementById('discount_type');
+    const discountValue = document.getElementById('discount_value');
+    const valueHelp = document.getElementById('valueHelp');
+    const codeInput = document.getElementById('code');
+    
+    // Auto-uppercase discount codes
+    codeInput.addEventListener('input', function() {
+        this.value = this.value.toUpperCase();
+    });
+    
+    // Update help text based on discount type
+    discountType.addEventListener('change', function() {
+        if (this.value === 'percentage') {
+            valueHelp.textContent = 'Enter percentage (e.g., 10 for 10%)';
+            discountValue.setAttribute('max', '100');
+            discountValue.setAttribute('placeholder', '10');
+        } else if (this.value === 'fixed') {
+            valueHelp.textContent = 'Enter fixed amount in {{ currency_symbol }}';
+            discountValue.removeAttribute('max');
+            discountValue.setAttribute('placeholder', '25.00');
+        } else {
+            valueHelp.textContent = 'Enter the discount amount';
+            discountValue.removeAttribute('max');
+            discountValue.setAttribute('placeholder', '10 or 25.00');
+        }
+    });
+    
+    // Date validation
+    const startDate = document.getElementById('start_date');
+    const endDate = document.getElementById('end_date');
+    
+    startDate.addEventListener('change', function() {
+        if (endDate.value && this.value > endDate.value) {
+            endDate.value = this.value;
+        }
+        endDate.setAttribute('min', this.value);
+    });
+    
+    endDate.addEventListener('change', function() {
+        if (startDate.value && this.value < startDate.value) {
+            this.setCustomValidity('End date must be after start date');
+        } else {
+            this.setCustomValidity('');
+        }
+    });
+});
+</script>
+{% endblock %}

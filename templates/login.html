@@ -1,0 +1,249 @@
+{% extends "base.html" %}
+{% block title %}Login - MemberSync{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5 col-lg-4">
+        <div class="card shadow">
+            <div class="card-header text-center bg-primary text-white">
+                <h3 class="mb-0">
+                    <i class="fas fa-sign-in-alt"></i>
+                    Login to MemberSync
+                </h3>
+            </div>
+            <div class="card-body p-4">
+                <form method="POST" id="loginForm">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">
+                            <i class="fas fa-user"></i> Username
+                        </label>
+                        <input type="text" 
+                               class="form-control" 
+                               id="username" 
+                               name="username" 
+                               placeholder="Enter your username"
+                               required 
+                               autocomplete="username"
+                               autofocus>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="password" class="form-label">
+                            <i class="fas fa-lock"></i> Password
+                        </label>
+                        <div class="input-group">
+                            <input type="password" 
+                                   class="form-control" 
+                                   id="password" 
+                                   name="password" 
+                                   placeholder="Enter your password"
+                                   required 
+                                   autocomplete="current-password">
+                            <button type="button" 
+                                    class="btn btn-outline-secondary" 
+                                    id="togglePassword">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Forgot Password Link -->
+                    <div class="mb-3 text-end">
+                        <a href="{{ url_for('forgot_password') }}" class="text-decoration-none small">
+                            <i class="fas fa-key"></i> Forgot your password?
+                        </a>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-center">
+                <!-- Language Selector -->
+                <div class="row mb-3">
+                    <div class="col-12">
+                        <div class="custom-translate-widget">
+                            <select id="custom-language-selector" class="custom-language-selector" onchange="changeLanguageCustom(this.value)">
+                                <option value="en" selected>🇺🇸 English</option>
+                                <option value="fr">🇫🇷 Français</option>
+                                <option value="es">🇪🇸 Español</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-12 mb-2">
+                        <small class="text-muted">Don't have an account?</small>
+                    </div>
+                    <div class="col-12">
+                        <a href="{{ url_for('signup') }}" class="btn btn-gradient btn-sm w-100" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+                            <i class="fas fa-crown"></i> Create Super Admin Account
+                        </a>
+                    </div>
+                    <div class="col-12 mt-2">
+                        <small class="text-muted d-block text-center">
+                            <i class="fas fa-info-circle"></i> Get full administrative control for your organization
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Debug section for development -->
+        {% if config.DEBUG %}
+        <div class="card mt-3 border-warning">
+            <div class="card-header bg-warning text-dark">
+                <h6 class="mb-0">
+                    <i class="fas fa-tools"></i> Debug Mode - Quick Access
+                </h6>
+            </div>
+            <div class="card-body">
+                <p class="mb-2"><small>Default Global Admin Credentials:</small></p>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <button type="button" class="btn btn-sm btn-outline-secondary w-100" onclick="fillCredentials('globaladmin', 'ChangeMe123!')">
+                            Use Global Admin
+                        </button>
+                    </div>
+                    <div class="col-6">
+                        <a href="/debug/check-db" class="btn btn-sm btn-outline-info w-100">
+                            Check DB
+                        </a>
+                    </div>
+                </div>
+                <div class="mt-2">
+                    <a href="/debug/init-db" class="btn btn-sm btn-outline-success w-100">
+                        Initialize Database
+                    </a>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Loading Modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-sm modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center p-4">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mb-0">Logging you in...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const loginForm = document.getElementById('loginForm');
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordInput = document.getElementById('password');
+    const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+    
+    // Toggle password visibility - FIXED VERSION
+    togglePassword.addEventListener('click', function(e) {
+        e.preventDefault();
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            this.querySelector('i').className = 'fas fa-eye-slash';
+        } else {
+            passwordInput.type = 'password';
+            this.querySelector('i').className = 'fas fa-eye';
+        }
+    });
+    
+    // Show loading modal on form submission
+    loginForm.addEventListener('submit', function(e) {
+        const username = document.getElementById('username').value.trim();
+        const password = document.getElementById('password').value;
+        
+        if (username && password) {
+            loadingModal.show();
+            
+            // Hide modal after 5 seconds if still visible (in case of error)
+            setTimeout(function() {
+                loadingModal.hide();
+            }, 5000);
+        }
+    });
+    
+    // Enhanced form validation
+    loginForm.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        // Clear previous validation states
+        document.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
+        document.querySelectorAll('.invalid-feedback').forEach(el => el.remove());
+        
+        // Validate username
+        const username = document.getElementById('username');
+        if (!username.value.trim()) {
+            showValidationError(username, 'Username is required');
+            isValid = false;
+        } else if (username.value.trim().length < 3) {
+            showValidationError(username, 'Username must be at least 3 characters');
+            isValid = false;
+        }
+        
+        // Validate password
+        const password = document.getElementById('password');
+        if (!password.value) {
+            showValidationError(password, 'Password is required');
+            isValid = false;
+        } else if (password.value.length < 6) {
+            showValidationError(password, 'Password must be at least 6 characters');
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+            loadingModal.hide();
+        }
+    });
+    
+    function showValidationError(input, message) {
+        input.classList.add('is-invalid');
+        const feedback = document.createElement('div');
+        feedback.className = 'invalid-feedback';
+        feedback.textContent = message;
+        input.parentNode.appendChild(feedback);
+    }
+    
+    // Auto-focus on first empty field
+    const usernameInput = document.getElementById('username');
+    
+    if (!usernameInput.value) {
+        usernameInput.focus();
+    } else if (!passwordInput.value) {
+        passwordInput.focus();
+    }
+});
+
+// Debug function to fill credentials (only in debug mode)
+function fillCredentials(username, password) {
+    document.getElementById('username').value = username;
+    document.getElementById('password').value = password;
+}
+
+// Handle browser back button to hide loading modal
+window.addEventListener('pageshow', function(event) {
+    if (event.persisted) {
+        const loadingModal = bootstrap.Modal.getInstance(document.getElementById('loadingModal'));
+        if (loadingModal) {
+            loadingModal.hide();
+        }
+    }
+});
+
+</script>
+{% endblock %}

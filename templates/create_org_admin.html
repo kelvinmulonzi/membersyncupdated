@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block title %}Create Organization Admin - MemberSync{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0"><i class="fas fa-user-plus"></i> Create Organization Admin</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="username" class="form-label">Username *</label>
+                                <input type="text" class="form-control" id="username" name="username" required>
+                                <div class="form-text">Unique username for this admin</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email Address *</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
+                                <div class="form-text">Admin's email address</div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password *</label>
+                                <input type="password" class="form-control" id="password" name="password" required minlength="6">
+                                <div class="form-text">Minimum 6 characters</div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="confirm_password" class="form-label">Confirm Password *</label>
+                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required minlength="6">
+                                <div class="form-text">Re-enter the password</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_superadmin" name="is_superadmin" onchange="toggleLocationSelector()">
+                            <label class="form-check-label" for="is_superadmin">
+                                <strong>Organization Superadmin</strong>
+                            </label>
+                            <div class="form-text">
+                                <i class="fas fa-info-circle text-info"></i>
+                                Check this to give the admin full organization management capabilities (org-wide access)
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3" id="locationSelectorDiv">
+                        <label for="location_id" class="form-label">
+                            <i class="fas fa-map-marker-alt"></i> Assign to Location (Store)
+                        </label>
+                        <select class="form-select" id="location_id" name="location_id">
+                            <option value="">No Location (Organization-wide access)</option>
+                            {% for location in locations %}
+                            <option value="{{ location[0] }}">{{ location[1] }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">
+                            <i class="fas fa-info-circle"></i>
+                            <span id="locationHelp">Select a specific store/location for this admin to manage. Leave blank for organization-wide access.</span>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{{ url_for('manage_org_admins') }}" class="btn btn-secondary me-md-2">
+                            <i class="fas fa-arrow-left"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-user-plus"></i> Create Admin
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Password confirmation validation
+document.getElementById('confirm_password').addEventListener('input', function() {
+    const password = document.getElementById('password').value;
+    const confirmPassword = this.value;
+    
+    if (password !== confirmPassword) {
+        this.setCustomValidity('Passwords do not match');
+    } else {
+        this.setCustomValidity('');
+    }
+});
+
+document.getElementById('password').addEventListener('input', function() {
+    const confirmPassword = document.getElementById('confirm_password');
+    if (confirmPassword.value) {
+        confirmPassword.dispatchEvent(new Event('input'));
+    }
+});
+
+// Location selector toggle based on superadmin checkbox
+function toggleLocationSelector() {
+    const isSuperadmin = document.getElementById('is_superadmin').checked;
+    const locationSelector = document.getElementById('location_id');
+    const locationDiv = document.getElementById('locationSelectorDiv');
+    const locationHelp = document.getElementById('locationHelp');
+    
+    if (isSuperadmin) {
+        // Superadmin gets org-wide access, no location needed
+        locationSelector.value = '';
+        locationSelector.disabled = true;
+        locationDiv.style.opacity = '0.5';
+        locationHelp.innerHTML = '<i class="fas fa-info-circle"></i> <strong>Organization Superadmins have access to all locations.</strong> Location assignment is disabled.';
+    } else {
+        // Regular admin can be assigned to specific location
+        locationSelector.disabled = false;
+        locationDiv.style.opacity = '1';
+        locationHelp.innerHTML = '<i class="fas fa-info-circle"></i> Select a specific store/location for this admin to manage. Leave blank for organization-wide access.';
+    }
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    toggleLocationSelector();
+});
+</script>
+{% endblock %}

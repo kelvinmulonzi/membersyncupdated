@@ -1,0 +1,267 @@
+{% extends "base.html" %}
+{% block title %}Check-in Settings - MemberSync{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h1 class="mb-1">
+                    <i class="fas fa-cog text-primary"></i> Check-in Settings
+                </h1>
+                <p class="text-muted mb-0">Configure check-in system behavior and requirements</p>
+            </div>
+            <a href="{{ url_for('checkin_dashboard') }}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-sliders-h"></i> Configuration Options
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <h6 class="text-primary">
+                                    <i class="fas fa-sign-out-alt"></i> Check-out Requirements
+                                </h6>
+                                
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="require_checkout" 
+                                           name="require_checkout" {% if settings.require_checkout %}checked{% endif %}>
+                                    <label class="form-check-label" for="require_checkout">
+                                        <strong>Require Check-out</strong>
+                                        <small class="d-block text-muted">Members must check out before leaving</small>
+                                    </label>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label for="auto_checkout_hours" class="form-label">
+                                        Auto Check-out After (Hours)
+                                    </label>
+                                    <input type="number" class="form-control" id="auto_checkout_hours" 
+                                           name="auto_checkout_hours" value="{{ settings.auto_checkout_hours }}" 
+                                           min="1" max="168">
+                                    <small class="text-muted">Automatically check out members after this many hours</small>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <h6 class="text-primary">
+                                    <i class="fas fa-users"></i> Member Access
+                                </h6>
+                                
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="allow_multiple_checkins" 
+                                           name="allow_multiple_checkins" {% if settings.allow_multiple_checkins %}checked{% endif %}>
+                                    <label class="form-check-label" for="allow_multiple_checkins">
+                                        <strong>Allow Multiple Check-ins</strong>
+                                        <small class="d-block text-muted">Members can check in multiple times without checking out</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6">
+                            <div class="mb-4">
+                                <h6 class="text-primary">
+                                    <i class="fas fa-clipboard-list"></i> Service Information
+                                </h6>
+                                
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="require_service_type" 
+                                           name="require_service_type" {% if settings.require_service_type %}checked{% endif %}>
+                                    <label class="form-check-label" for="require_service_type">
+                                        <strong>Require Service Type</strong>
+                                        <small class="d-block text-muted">Members must specify what service they're using</small>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <h6 class="text-primary">
+                                    <i class="fas fa-bell"></i> Notifications
+                                </h6>
+                                
+                                <div class="form-check mb-3">
+                                    <input class="form-check-input" type="checkbox" id="send_checkin_notifications" 
+                                           name="send_checkin_notifications" {% if settings.send_checkin_notifications %}checked{% endif %}>
+                                    <label class="form-check-label" for="send_checkin_notifications">
+                                        <strong>Send Check-in Notifications</strong>
+                                        <small class="d-block text-muted">Send SMS/Email notifications for check-ins and check-outs</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="text-center">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save"></i> Save Settings
+                        </button>
+                        <a href="{{ url_for('checkin_dashboard') }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Settings Help -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-question-circle text-info"></i> Settings Help
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Require Check-out</h6>
+                        <p class="small text-muted">
+                            When enabled, members must check out before they can check in again. 
+                            This helps track visit duration and facility capacity.
+                        </p>
+
+                        <h6>Auto Check-out</h6>
+                        <p class="small text-muted">
+                            Automatically checks out members who haven't manually checked out 
+                            after the specified time period. Prevents overnight check-ins.
+                        </p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Multiple Check-ins</h6>
+                        <p class="small text-muted">
+                            Allows members to check in multiple times for different services 
+                            without checking out first. Useful for facilities with multiple areas.
+                        </p>
+
+                        <h6>Service Type Requirement</h6>
+                        <p class="small text-muted">
+                            Forces staff to specify what service the member is using. 
+                            Helpful for usage analytics and capacity management.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview of Current Settings -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-eye text-success"></i> Current Configuration Preview
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Check-out Required</span>
+                                <span class="badge bg-{{ 'success' if settings.require_checkout else 'secondary' }} rounded-pill">
+                                    {{ 'Yes' if settings.require_checkout else 'No' }}
+                                </span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Auto Check-out</span>
+                                <span class="badge bg-info rounded-pill">{{ settings.auto_checkout_hours }} hours</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="list-group list-group-flush">
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Multiple Check-ins</span>
+                                <span class="badge bg-{{ 'success' if settings.allow_multiple_checkins else 'secondary' }} rounded-pill">
+                                    {{ 'Allowed' if settings.allow_multiple_checkins else 'Not Allowed' }}
+                                </span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Service Type Required</span>
+                                <span class="badge bg-{{ 'success' if settings.require_service_type else 'secondary' }} rounded-pill">
+                                    {{ 'Yes' if settings.require_service_type else 'No' }}
+                                </span>
+                            </div>
+                            <div class="list-group-item d-flex justify-content-between align-items-center">
+                                <span>Notifications</span>
+                                <span class="badge bg-{{ 'success' if settings.send_checkin_notifications else 'secondary' }} rounded-pill">
+                                    {{ 'Enabled' if settings.send_checkin_notifications else 'Disabled' }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Test Settings -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-flask text-warning"></i> Test Configuration
+                </h6>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Test your check-in settings with a sample member scan:</p>
+                <div class="d-grid gap-2 d-md-flex justify-content-md-start">
+                    <a href="{{ url_for('checkin_scan') }}" class="btn btn-outline-primary">
+                        <i class="fas fa-qrcode"></i> Test Scanner
+                    </a>
+                    <a href="{{ url_for('checkin_dashboard') }}" class="btn btn-outline-info">
+                        <i class="fas fa-tachometer-alt"></i> View Dashboard
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add visual feedback for settings changes
+    const checkboxes = document.querySelectorAll('input[type="checkbox"]');
+    const numberInput = document.getElementById('auto_checkout_hours');
+    
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            updatePreview();
+        });
+    });
+    
+    numberInput.addEventListener('input', function() {
+        updatePreview();
+    });
+    
+    function updatePreview() {
+        // This could update a live preview of settings
+        // For now, just add visual feedback that changes are pending
+        const saveButton = document.querySelector('button[type="submit"]');
+        saveButton.classList.add('btn-warning');
+        saveButton.innerHTML = '<i class="fas fa-save"></i> Save Changes (Unsaved)';
+    }
+    
+    // Form validation
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const autoCheckoutHours = parseInt(numberInput.value);
+        
+        if (autoCheckoutHours < 1 || autoCheckoutHours > 168) {
+            e.preventDefault();
+            alert('Auto check-out hours must be between 1 and 168 (1 week)');
+            numberInput.focus();
+            return false;
+        }
+    });
+});
+</script>
+{% endblock %}

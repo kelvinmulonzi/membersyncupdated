@@ -1,0 +1,683 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - MemberSync{% endblock %}
+
+{% block extra_css %}
+<!-- Leaflet CSS for Map -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+    #dashboard-map {
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Welcome Header -->
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <div>
+        <h1 class="mb-1">
+            <i class="fas fa-tachometer-alt text-primary"></i> 
+            Dashboard
+        </h1>
+        <p class="text-muted mb-0">
+            Welcome back, {{ session.username }}! 
+            {% if organization_name %}
+                | <span class="notranslate" translate="no">{{ organization_name }}</span>
+            {% endif %}
+            {% if is_global_superadmin and selected_org_id %}
+                {% for org in accessible_orgs %}
+                    {% if org.id == selected_org_id %}
+                        | Viewing: <span class="badge bg-info">{{ org.name if org.name else 'Unnamed Organization' }}</span>
+                        {% if selected_location_id %}
+                            {% for location in accessible_locations %}
+                                {% if location.id == selected_location_id %}
+                                    <span class="badge bg-secondary ms-1">{{ location.name if location.name else 'Unnamed Location' }}</span>
+                                {% endif %}
+                            {% endfor %}
+                        {% endif %}
+                    {% endif %}
+                {% endfor %}
+            {% elif is_org_superadmin and selected_location_id %}
+                {% for location in accessible_locations %}
+                    {% if location.id == selected_location_id %}
+                        | Viewing: <span class="badge bg-warning">{{ location.name if location.name else 'Unnamed Store' }}</span>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </p>
+    </div>
+    
+    {% if is_global_superadmin %}
+    <div class="d-flex gap-2">
+        <!-- Organization View Dropdown -->
+        <div class="dropdown">
+            <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-building"></i> Organization View
+            </button>
+            <ul class="dropdown-menu" style="background-color: white; color: #333;">
+                <li><a class="dropdown-item {% if not selected_org_id %}active{% endif %}" href="?" style="color: #333;">All Organizations</a></li>
+                <li><hr class="dropdown-divider"></li>
+                {% for org in accessible_orgs %}
+                    <li>
+                        <a class="dropdown-item {% if selected_org_id == org.id %}active{% endif %}" 
+                           href="?org_id={{ org.id }}"
+                           style="color: #333;">
+                            <span translate="no">{{ org.name if org.name else 'Unnamed Organization (ID: ' ~ org.id ~ ')' }}</span>
+                        </a>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+        
+        <!-- Store View Dropdown -->
+        <div class="dropdown">
+            <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="fas fa-store"></i> Store View
+            </button>
+            <ul class="dropdown-menu" style="background-color: white; color: #333;">
+                <li><a class="dropdown-item {% if not selected_location_id %}active{% endif %}" href="?" style="color: #333;">All Stores</a></li>
+                <li><hr class="dropdown-divider"></li>
+                {% if accessible_locations %}
+                    {% for location in accessible_locations %}
+                        <li>
+                            <a class="dropdown-item {% if selected_location_id == location.id %}active{% endif %}" 
+                               href="?org_id={{ location.organization_id }}&location_id={{ location.id }}"
+                               style="color: #333;">
+                                <span translate="no">{{ location.name if location.name else 'Unnamed Store' }} ({{ location.organization_name }})</span>
+                            </a>
+                        </li>
+                    {% endfor %}
+                {% else %}
+                    <li><a class="dropdown-item" style="color: #999;">No stores found</a></li>
+                {% endif %}
+            </ul>
+        </div>
+    </div>
+    {% elif is_org_superadmin and accessible_locations %}
+    <div class="dropdown">
+        <button class="btn btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            <i class="fas fa-store"></i> Store View
+        </button>
+        <ul class="dropdown-menu" style="background-color: white; color: #333;">
+            <li><a class="dropdown-item {% if not selected_location_id %}active{% endif %}" href="?" style="color: #333;">All Stores</a></li>
+            <li><hr class="dropdown-divider"></li>
+            {% for location in accessible_locations %}
+                <li>
+                    <a class="dropdown-item {% if selected_location_id == location.id %}active{% endif %}" 
+                       href="?location_id={{ location.id }}"
+                       style="color: #333;">
+                        <span translate="no">{{ location.name if location.name else 'Unnamed Store (ID: ' ~ location.id ~ ')' }}</span>
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card bg-primary text-white h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h2 class="mb-0">{{ total_members or 0 }}</h2>
+                    <p class="mb-0">Total Members</p>
+                </div>
+                <div class="ms-3">
+                    <i class="fas fa-users fa-2x opacity-75"></i>
+                </div>
+            </div>
+            <div class="card-footer d-flex align-items-center justify-content-between">
+                <a class="small text-white stretched-link" href="{{ url_for('members') }}">
+                    View Details
+                </a>
+                <div class="small text-white">
+                    <i class="fas fa-angle-right"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card bg-success text-white h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h2 class="mb-0">{{ active_members or 0 }}</h2>
+                    <p class="mb-0">Active Members</p>
+                </div>
+                <div class="ms-3">
+                    <i class="fas fa-user-check fa-2x opacity-75"></i>
+                </div>
+            </div>
+            <div class="card-footer d-flex align-items-center justify-content-between">
+                <a class="small text-white stretched-link" href="{{ url_for('members') }}?status=active">
+                    View Active
+                </a>
+                <div class="small text-white">
+                    <i class="fas fa-angle-right"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card bg-info text-white h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="flex-grow-1">
+                    {% set converted_total_payments, total_payments_symbol = convert_price_to_user_currency(total_payments|float) %}
+                    <h2 class="mb-0">{{ total_payments_symbol }}{{ "%.2f"|format(converted_total_payments) }}</h2>
+                    <p class="mb-0">Total Revenue</p>
+                </div>
+                <div class="ms-3">
+                    <i class="fas fa-dollar-sign fa-2x opacity-75"></i>
+                </div>
+            </div>
+            <div class="card-footer d-flex align-items-center justify-content-between">
+                <a class="small text-white stretched-link" href="{{ url_for('reports') }}">
+                    View Reports
+                </a>
+                <div class="small text-white">
+                    <i class="fas fa-angle-right"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card bg-warning text-white h-100">
+            <div class="card-body d-flex align-items-center">
+                <div class="flex-grow-1">
+                    <h2 class="mb-0">{{ expiring_soon or 0 }}</h2>
+                    <p class="mb-0">Expiring Soon</p>
+                </div>
+                <div class="ms-3">
+                    <i class="fas fa-exclamation-triangle fa-2x opacity-75"></i>
+                </div>
+            </div>
+            <div class="card-footer d-flex align-items-center justify-content-between">
+                <a class="small text-white stretched-link" href="#expiringModal" data-bs-toggle="modal">
+                    View Expiring
+                </a>
+                <div class="small text-white">
+                    <i class="fas fa-angle-right"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-bolt text-warning"></i> Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('register') }}" class="btn btn-primary w-100">
+                            <i class="fas fa-user-plus"></i> Register Member
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('members') }}" class="btn btn-success w-100">
+                            <i class="fas fa-users"></i> View Members
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('communication_center') }}" class="btn btn-info w-100">
+                            <i class="fas fa-envelope"></i> Send Messages
+                        </a>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <a href="{{ url_for('export_members') }}" class="btn btn-secondary w-100">
+                            <i class="fas fa-download"></i> Export Data
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activity -->
+<div class="row">
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-user-plus text-primary"></i> Recent Members
+                </h5>
+                <a href="{{ url_for('members') }}" class="btn btn-sm btn-outline-primary">
+                    View All
+                </a>
+            </div>
+            <div class="card-body">
+                {% if recent_members %}
+                    <div class="list-group list-group-flush">
+                        {% for member in recent_members %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <div>
+                                <strong>{{ member.name }}</strong>
+                                <br>
+                                <small class="text-muted">
+                                    <i class="fas fa-id-card"></i> {{ member.membership_id }}
+                                    {% if member.org_name and is_global_superadmin %}
+                                        | <span class="notranslate" translate="no">{{ member.org_name }}</span>
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-primary rounded-pill">{{ member.membership_type }}</span>
+                                <br>
+                                <small class="text-muted">{{ member.created_at[:10] if member.created_at else '' }}</small>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-users fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No members registered yet.</p>
+                        <a href="{{ url_for('register') }}" class="btn btn-primary">
+                            <i class="fas fa-user-plus"></i> Register First Member
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-credit-card text-success"></i> Recent Payments
+                </h5>
+                <a href="{{ url_for('reports') }}" class="btn btn-sm btn-outline-success">
+                    View Reports
+                </a>
+            </div>
+            <div class="card-body">
+                {% if recent_payments %}
+                    <div class="list-group list-group-flush">
+                        {% for payment in recent_payments %}
+                        <div class="list-group-item d-flex justify-content-between align-items-center px-0">
+                            <div>
+                                <strong>{{ payment.name or payment.membership_id }}</strong>
+                                <br>
+                                <small class="text-muted">
+                                    {{ payment.date }}
+                                    {% if payment.org_name and is_global_superadmin %}
+                                        | <span class="notranslate" translate="no">{{ payment.org_name }}</span>
+                                    {% endif %}
+                                </small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-success rounded-pill">
+                                    {% set converted_payment_amount, payment_amount_symbol = convert_price_to_user_currency(payment.amount|float) %}
+                                    {{ payment_amount_symbol }}{{ "%.2f"|format(converted_payment_amount) }}
+                                </span>
+                                {% if payment.discount_amount and payment.discount_amount > 0 %}
+                                <br>
+                                <small class="text-muted">
+                                    <i class="fas fa-tag"></i> Discount Applied
+                                </small>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-credit-card fa-3x text-muted mb-3"></i>
+                        <p class="text-muted">No payments recorded yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row -->
+{% if member_chart_labels and payment_chart_labels %}
+<div class="row mb-4">
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-line text-info"></i> Member Growth
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="memberChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-chart-bar text-success"></i> Revenue Trend
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="revenueChart" width="400" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Member Distribution Map -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-map-marked-alt text-info"></i> Member Distribution Map
+                </h5>
+                <a href="{{ url_for('map_visualization') }}" class="btn btn-sm btn-outline-info">
+                    <i class="fas fa-expand"></i> Full Map View
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div id="dashboard-map" style="height: 400px; width: 100%;"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Expiring Memberships Modal -->
+<div class="modal fade" id="expiringModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle text-warning"></i> 
+                    Expiring Memberships
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                {% if expiring_memberships %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Member</th>
+                                    <th>ID</th>
+                                    <th>Type</th>
+                                    <th>Expires</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for member in expiring_memberships %}
+                                <tr>
+                                    <td>{{ member.name }}</td>
+                                    <td>{{ member.membership_id }}</td>
+                                    <td><span class="badge bg-secondary">{{ member.membership_type }}</span></td>
+                                    <td>
+                                        <span class="text-warning">
+                                            <i class="fas fa-clock"></i> {{ member.expiration_date }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('renew_membership', membership_id=member.membership_id) }}" 
+                                           class="btn btn-sm btn-primary">
+                                            <i class="fas fa-sync"></i> Renew
+                                        </a>
+                                        <a href="{{ url_for('send_manual_reminder', membership_id=member.membership_id) }}" 
+                                           class="btn btn-sm btn-warning">
+                                            <i class="fas fa-bell"></i> Remind
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+                        <h5>No Expiring Memberships</h5>
+                        <p class="text-muted">All memberships are current!</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Member Growth Chart
+    {% if member_chart_labels and member_chart_values %}
+    const memberCtx = document.getElementById('memberChart');
+    if (memberCtx) {
+        new Chart(memberCtx, {
+            type: 'line',
+            data: {
+                labels: {{ member_chart_labels|tojson }},
+                datasets: [{
+                    label: 'New Members',
+                    data: {{ member_chart_values|tojson }},
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
+        });
+    }
+    {% endif %}
+
+    // Revenue Chart
+    {% if payment_chart_labels and payment_chart_values %}
+    const revenueCtx = document.getElementById('revenueChart');
+    if (revenueCtx) {
+        new Chart(revenueCtx, {
+            type: 'bar',
+            data: {
+                labels: {{ payment_chart_labels|tojson }},
+                datasets: [{
+                    label: 'Revenue',
+                    data: {{ payment_chart_values|tojson }},
+                    backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                // Values are already converted, just format with symbol
+                                const userCurrency = '{{ user_preferred_currency }}';
+                                const currencySymbols = {
+                                    'USD': '$',
+                                    'EUR': '€',
+                                    'GBP': '£',
+                                    'XAF': 'FCFA'
+                                };
+                                const symbol = currencySymbols[userCurrency] || '$';
+                                return symbol + value.toFixed(2);
+                            }
+                        }
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                // Values are already converted, just format with symbol
+                                const userCurrency = '{{ user_preferred_currency }}';
+                                const currencySymbols = {
+                                    'USD': '$',
+                                    'EUR': '€',
+                                    'GBP': '£',
+                                    'XAF': 'FCFA'
+                                };
+                                const symbol = currencySymbols[userCurrency] || '$';
+                                return symbol + context.raw.toFixed(2);
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+    {% endif %}
+
+    // Dashboard Map Visualization
+    {% if locations %}
+    const dashboardMapElement = document.getElementById('dashboard-map');
+    if (dashboardMapElement) {
+        const dashboardMap = L.map('dashboard-map').setView([7.3697, 12.3547], 6);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 18
+        }).addTo(dashboardMap);
+        
+        // Add markers for locations
+        const locations = {{ locations | tojson }};
+        
+        // Cameroon major cities coordinates
+        const cameroonCities = {
+            'Yaoundé': [3.8480, 11.5021],
+            'Douala': [4.0511, 9.7679],
+            'Garoua': [9.3017, 13.3960],
+            'Bamenda': [5.9597, 10.1453],
+            'Maroua': [10.5908, 14.3170],
+            'Bafoussam': [5.4781, 10.4177],
+            'Ngaoundéré': [7.3167, 13.5833],
+            'Bertoua': [4.5769, 13.6843],
+            'Kumba': [4.6363, 9.4469],
+            'Nkongsamba': [4.9547, 9.9394],
+            'Edéa': [3.8000, 10.1333],
+            'Loum': [4.7167, 9.7333],
+            'Mbalmayo': [3.5167, 11.5000],
+            'Ebolowa': [2.9000, 11.1500],
+            'Kribi': [2.9500, 9.9167],
+            'Limbe': [4.0167, 9.2167],
+            'Buea': [4.1667, 9.2333]
+        };
+        
+        const allLatLngs = [];
+        
+        locations.forEach((location) => {
+            // Try to match city or state name with known coordinates
+            let coords = cameroonCities[location.city] || 
+                         cameroonCities[location.state];
+            
+            // If no match, use default Cameroon center with slight randomization
+            if (!coords) {
+                coords = [7.3697 + (Math.random() - 0.5) * 4, 12.3547 + (Math.random() - 0.5) * 6];
+            }
+            
+            allLatLngs.push(coords);
+            
+            const marker = L.circleMarker(coords, {
+                radius: 8,
+                fillColor: '#007bff',
+                color: '#fff',
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.7
+            });
+            
+            marker.bindPopup(`
+                <div style="min-width: 150px;">
+                    <strong>${location.name || 'Location'}</strong><br>
+                    ${location.city ? location.city + ', ' : ''}${location.state || ''}<br>
+                    <span class="badge bg-primary">Members: ${location.member_count || 0}</span>
+                </div>
+            `);
+            
+            marker.addTo(dashboardMap);
+        });
+        
+        // Adjust map to show all markers
+        if (allLatLngs.length > 0) {
+            const bounds = L.latLngBounds(allLatLngs);
+            dashboardMap.fitBounds(bounds, { padding: [50, 50] });
+        }
+    }
+    {% endif %}
+
+    // Auto-refresh dashboard every 5 minutes
+    setTimeout(function() {
+        location.reload();
+    }, 300000);
+
+    // Initialize tooltips
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+
+// Function to refresh statistics
+function refreshStats() {
+    fetch(window.location.href, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.text())
+    .then(html => {
+        // Parse and update specific elements
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(html, 'text/html');
+        
+        // Update stat cards
+        const statCards = document.querySelectorAll('.card h2');
+        const newStatCards = doc.querySelectorAll('.card h2');
+        
+        statCards.forEach((card, index) => {
+            if (newStatCards[index]) {
+                card.textContent = newStatCards[index].textContent;
+            }
+        });
+    })
+    .catch(error => console.log('Refresh failed:', error));
+}
+
+</script>
+{% endblock %}

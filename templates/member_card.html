@@ -1,0 +1,699 @@
+{% extends "base.html" %}
+{% block title %}Member Card - {{ member.name }} - {{ org.card_company_name }}{% endblock %}
+
+{% block content %}
+<style>
+    .membership-card {
+        max-width: 400px;
+        margin: 0 auto;
+        background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+        border-radius: 20px;
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        position: relative;
+        transform: perspective(1000px) rotateX(10deg);
+        transition: all 0.3s ease;
+    }
+
+    .membership-card:hover {
+        transform: perspective(1000px) rotateX(0deg) translateY(-10px);
+        box-shadow: 0 30px 60px rgba(0, 0, 0, 0.15);
+    }
+
+    .card-header {
+        color: white;
+        padding: 20px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+        background: linear-gradient(135deg, var(--primary-color, #667eea) 0%, var(--secondary-color, #764ba2) 100%);
+    }
+
+    .card-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: shimmer 3s infinite;
+    }
+
+    @keyframes shimmer {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+
+    .card-logo {
+        font-size: 2.5rem;
+        margin-bottom: 10px;
+    }
+
+    .card-title {
+        font-size: 1.5rem;
+        font-weight: bold;
+        margin: 0;
+        text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .card-body {
+        padding: 30px 25px;
+    }
+
+    .member-photo {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        font-size: 2rem;
+        color: white;
+        box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    }
+
+    .member-name {
+        font-size: 1.4rem;
+        font-weight: bold;
+        color: #2c3e50;
+        text-align: center;
+        margin-bottom: 5px;
+    }
+
+    .member-id {
+        text-align: center;
+        color: #7f8c8d;
+        font-size: 0.9rem;
+        margin-bottom: 20px;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 0;
+        border-bottom: 1px solid #ecf0f1;
+    }
+
+    .info-row:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        font-weight: 600;
+        color: #34495e;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .info-value {
+        color: #2c3e50;
+        font-weight: 500;
+    }
+
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-active {
+        background: linear-gradient(135deg, #2ecc71, #27ae60);
+        color: white;
+    }
+
+    .status-warning {
+        background: linear-gradient(135deg, #f39c12, #e67e22);
+        color: white;
+        animation: pulse 2s infinite;
+    }
+
+    .status-expired {
+        background: linear-gradient(135deg, #e74c3c, #c0392b);
+        color: white;
+    }
+
+    @keyframes pulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    .qr-section {
+        background: #f8f9fa;
+        padding: 20px;
+        text-align: center;
+        border-top: 1px solid #dee2e6;
+    }
+
+    .qr-code {
+        width: 100px;
+        height: 100px;
+        margin: 0 auto 10px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+
+    .btn-modern {
+        flex: 1;
+        padding: 10px;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        text-decoration: none;
+        text-align: center;
+        transition: all 0.3s ease;
+        min-width: 120px;
+    }
+
+    .btn-primary-modern {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .btn-primary-modern:hover {
+        background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        color: white;
+    }
+
+    .btn-secondary-modern {
+        background: linear-gradient(135deg, #95a5a6 0%, #7f8c8d 100%);
+        color: white;
+    }
+
+    .btn-secondary-modern:hover {
+        background: linear-gradient(135deg, #7f8c8d 0%, #95a5a6 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        color: white;
+    }
+
+    .btn-success-modern {
+        background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+        color: white;
+    }
+
+    .btn-success-modern:hover {
+        background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        color: white;
+    }
+
+    .btn-info-modern {
+        background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+        color: white;
+    }
+
+    .btn-info-modern:hover {
+        background: linear-gradient(135deg, #2980b9 0%, #3498db 100%);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        color: white;
+    }
+
+    .watermark {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-45deg);
+        font-size: 6rem;
+        color: rgba(0,0,0,0.03);
+        font-weight: bold;
+        pointer-events: none;
+        z-index: 1;
+    }
+
+    .card-content {
+        position: relative;
+        z-index: 2;
+    }
+
+    .card-actions {
+        text-align: center;
+        margin-top: 20px;
+    }
+
+    .back-section {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .back-btn {
+        background: rgba(255, 255, 255, 0.2);
+        color: white;
+        padding: 10px 20px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 25px;
+        font-weight: 600;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+    }
+
+    .back-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+        border-color: rgba(255, 255, 255, 0.5);
+        transform: translateY(-2px);
+        color: white;
+    }
+
+    /* Print styles for physical card */
+    @media print {
+        body * {
+            visibility: hidden;
+        }
+        
+        .membership-card, .membership-card * {
+            visibility: visible;
+        }
+        
+        .membership-card {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            max-width: none;
+            transform: none !important;
+            box-shadow: none;
+            margin: 0;
+        }
+        
+        .back-section, .card-actions, .action-buttons {
+            display: none !important;
+        }
+        
+        /* Hide email and phone for physical card */
+        .info-row.private-info {
+            display: none !important;
+        }
+        
+        .card-header::before {
+            display: none;
+        }
+        
+        .member-photo, .qr-code {
+            box-shadow: none;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .membership-card {
+            margin: 0 15px;
+            transform: none;
+        }
+        
+        .membership-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .action-buttons {
+            flex-direction: column;
+        }
+        
+        .btn-modern {
+            margin-bottom: 10px;
+        }
+    }
+
+    /* Modal styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0,0,0,0.5);
+    }
+
+    .modal-content {
+        background-color: #fefefe;
+        margin: 15% auto;
+        padding: 20px;
+        border-radius: 10px;
+        width: 90%;
+        max-width: 500px;
+    }
+
+    .close {
+        color: #aaa;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+        cursor: pointer;
+    }
+
+    .close:hover {
+        color: black;
+    }
+
+    .form-group {
+        margin-bottom: 15px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 600;
+    }
+
+    .form-group input, .form-group textarea {
+        width: 100%;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 14px;
+    }
+
+    .form-group textarea {
+        height: 100px;
+        resize: vertical;
+    }
+
+    .loading {
+        opacity: 0.6;
+        pointer-events: none;
+    }
+</style>
+
+<div class="back-section">
+    <a href="{{ url_for('members') }}" class="back-btn">
+        <i class="fas fa-arrow-left"></i>
+        <span>Back to Members</span>
+    </a>
+</div>
+
+<div class="membership-card" id="membershipCard">
+    <div class="watermark">MEMBER</div>
+    
+    <div class="card-content">
+        {% set primary_color = org.card_primary_color if org and org.card_primary_color else '#667eea' %}
+        {% set secondary_color = org.card_secondary_color if org and org.card_secondary_color else '#764ba2' %}
+        {% set company_name = org.card_company_name %}
+        
+        <div class="card-header" style="background: linear-gradient(135deg, {{ primary_color }} 0%, {{ secondary_color }} 100%);">
+            <div class="card-logo">
+                <i class="fas fa-id-card"></i>
+            </div>
+            <h2 class="card-title">{{ company_name }}</h2>
+            <p class="card-subtitle">Membership Card</p>
+        </div>
+
+                <div class="card-body">
+            <!-- Member Photo -->
+            <div class="member-photo">
+                {% if member.photo_filename %}
+                    <img src="{{ url_for('member_photo', membership_id=member.membership_id if member.membership_id else member[0]) }}" 
+                         alt="{{ member.name if member.name else member[1] }}"
+                         style="width: 100%; height: 100%; border-radius: 50%; object-fit: cover;">
+                {% else %}
+                    <i class="fas fa-user"></i>
+                {% endif %}
+            </div>
+            
+            <!-- Member Name and ID -->
+            <div class="member-name">{{ member.name if member.name else member[1] }}</div>
+            <div class="member-id">ID: {{ member.membership_id if member.membership_id else member[0] }}</div>
+        </div>
+
+        <div class="qr-section" style="margin: 20px 0;">
+            <div style="background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); max-width: 280px; margin: 0 auto;">
+                {% set membership_id = member.membership_id if member.membership_id else member[0] %}
+                {% if membership_id %}
+                    <img src="{{ url_for('static', filename='qr_codes/' + membership_id + '.png') }}" 
+                         alt="QR Code" 
+                         style="display: block; width: 250px; height: 250px; margin: 0 auto;"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div style="display: none; width: 250px; height: 250px; align-items: center; justify-content: center; margin: 0 auto;">
+                        <i class="fas fa-qrcode fa-5x text-muted"></i>
+                    </div>
+                {% else %}
+                    <div style="width: 250px; height: 250px; display: flex; align-items: center; justify-content: center; margin: 0 auto;">
+                        <i class="fas fa-qrcode fa-5x text-muted"></i>
+                    </div>
+                {% endif %}
+            </div>
+            <div style="text-align: center; margin-top: 12px;">
+                <small class="text-muted" style="font-size: 0.9em; font-weight: 500; display: block;">Scan for verification</small>
+            </div>
+        </div>
+
+        <div class="action-buttons">
+            {% set membership_id = member.membership_id if member.membership_id else member[0] %}
+            <a href="{{ url_for('edit_member', membership_id=membership_id) }}" class="btn-modern btn-primary-modern">
+                <i class="fas fa-edit"></i> Edit
+            </a>
+            <a href="{{ url_for('renew_membership', membership_id=membership_id) }}" class="btn-modern btn-secondary-modern">
+                <i class="fas fa-sync"></i> Renew
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="card-actions">
+    <button onclick="downloadCard()" class="btn-modern btn-success-modern">
+        <i class="fas fa-download"></i>
+        <span>Download Digital Card</span>
+    </button>
+    
+    {% if session.get('is_global_superadmin') %}
+    <a href="{{ url_for('physical_card', membership_id=membership_id) }}" class="btn-modern btn-info-modern" target="_blank">
+        <i class="fas fa-credit-card"></i>
+        <span>Physical Card (Wallet Size)</span>
+    </a>
+    {% endif %}
+    
+    {% if email %}
+    <button onclick="showEmailModal()" class="btn-modern btn-primary-modern">
+        <i class="fas fa-envelope"></i>
+        <span>Email Digital Card</span>
+    </button>
+    {% endif %}
+</div>
+
+<!-- Email Modal -->
+<div id="emailModal" class="modal">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h3>Email Digital Card</h3>
+        <form id="emailForm">
+            <div class="form-group">
+                <label for="recipientEmail">Recipient Email:</label>
+                <input type="email" id="recipientEmail" name="recipientEmail" value="{{ email }}" required>
+            </div>
+            <div class="form-group">
+                <label for="emailSubject">Subject:</label>
+                <input type="text" id="emailSubject" name="emailSubject" value="Your Digital Membership Card - {{ membership_id }}" required>
+            </div>
+            <div class="form-group">
+                <label for="emailMessage">Message:</label>
+                <textarea id="emailMessage" name="emailMessage" placeholder="Enter your message here...">Hello {{ member.name if member.name else member[1] }},
+
+Please find your digital membership card attached. Keep this safe for your records.
+
+Best regards,
+{{ org.card_company_name }} Team</textarea>
+            </div>
+            <div style="text-align: right; margin-top: 20px;">
+                <button type="button" onclick="closeEmailModal()" class="btn-modern btn-secondary-modern" style="margin-right: 10px;">Cancel</button>
+                <button type="submit" class="btn-modern btn-success-modern">
+                    <span id="emailBtnText">Send Email</span>
+                    <i id="emailSpinner" class="fas fa-spinner fa-spin" style="display: none;"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+    // Add interactivity
+    document.addEventListener('DOMContentLoaded', function() {
+        const card = document.querySelector('.membership-card');
+        
+        // Add tilt effect on mouse move
+        card.addEventListener('mousemove', function(e) {
+            const rect = card.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            const centerX = rect.width / 2;
+            const centerY = rect.height / 2;
+            
+            const rotateX = (y - centerY) / centerY * -10;
+            const rotateY = (x - centerX) / centerX * 10;
+            
+            card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-10px)`;
+        });
+        
+        // Reset tilt when mouse leaves
+        card.addEventListener('mouseleave', function() {
+            card.style.transform = 'perspective(1000px) rotateX(10deg) rotateY(0deg) translateY(0px)';
+        });
+    });
+
+    // Download digital card as image
+    function downloadCard() {
+        const card = document.getElementById('membershipCard');
+        const button = event.target.closest('.btn-modern');
+        const originalText = button.innerHTML;
+        
+        // Show loading state
+        button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating...';
+        button.classList.add('loading');
+        
+        // Temporarily remove transform for clean capture
+        const originalTransform = card.style.transform;
+        card.style.transform = 'none';
+        
+        html2canvas(card, {
+            backgroundColor: null,
+            scale: 2,
+            logging: false,
+            useCORS: true,
+            allowTaint: true
+        }).then(function(canvas) {
+            // Restore transform
+            card.style.transform = originalTransform;
+            
+            // Create download link
+            const link = document.createElement('a');
+            link.download = 'digital-membership-card-{{ membership_id }}.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+            
+            // Restore button
+            button.innerHTML = originalText;
+            button.classList.remove('loading');
+        }).catch(function(error) {
+            console.error('Error generating image:', error);
+            card.style.transform = originalTransform;
+            button.innerHTML = originalText;
+            button.classList.remove('loading');
+            alert('Error generating card image. Please try again.');
+        });
+    }
+
+    // Print physical card (without email/phone)
+    function printPhysicalCard() {
+        window.print();
+    }
+
+    // Email modal functions
+    function showEmailModal() {
+        document.getElementById('emailModal').style.display = 'block';
+    }
+
+    function closeEmailModal() {
+        document.getElementById('emailModal').style.display = 'none';
+    }
+
+    // Handle email form submission
+    document.getElementById('emailForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const button = this.querySelector('button[type="submit"]');
+        const btnText = document.getElementById('emailBtnText');
+        const spinner = document.getElementById('emailSpinner');
+        
+        // Show loading state
+        btnText.style.display = 'none';
+        spinner.style.display = 'inline-block';
+        button.disabled = true;
+        
+        // First generate the card image
+        const card = document.getElementById('membershipCard');
+        const originalTransform = card.style.transform;
+        card.style.transform = 'none';
+        
+        html2canvas(card, {
+            backgroundColor: null,
+            scale: 2,
+            logging: false,
+            useCORS: true,
+            allowTaint: true
+        }).then(function(canvas) {
+            // Restore transform
+            card.style.transform = originalTransform;
+            
+            // Convert canvas to blob
+            canvas.toBlob(function(blob) {
+                // Create form data with image
+                const emailData = new FormData();
+                emailData.append('recipientEmail', formData.get('recipientEmail'));
+                emailData.append('emailSubject', formData.get('emailSubject'));
+                emailData.append('emailMessage', formData.get('emailMessage'));
+                emailData.append('cardImage', blob, 'membership-card.png');
+                emailData.append('membership_id', '{{ membership_id }}');
+                
+                // Send to server
+                fetch('{{ url_for("send_digital_card_email", membership_id=membership_id) }}', {
+                    method: 'POST',
+                    body: emailData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Digital card sent successfully!');
+                        closeEmailModal();
+                    } else {
+                        alert('Error sending email: ' + (data.error || 'Unknown error'));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error sending email. Please try again.');
+                })
+                .finally(() => {
+                    // Restore button
+                    btnText.style.display = 'inline-block';
+                    spinner.style.display = 'none';
+                    button.disabled = false;
+                });
+            }, 'image/png');
+        }).catch(function(error) {
+            console.error('Error generating card image:', error);
+            card.style.transform = originalTransform;
+            alert('Error generating card image. Please try again.');
+            
+            // Restore button
+            btnText.style.display = 'inline-block';
+            spinner.style.display = 'none';
+            button.disabled = false;
+        });
+    });
+
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('emailModal');
+        if (event.target == modal) {
+            closeEmailModal();
+        }
+    }
+
+    // Close modal with X button
+    document.querySelector('.close').onclick = closeEmailModal;
+</script>
+{% endblock %}

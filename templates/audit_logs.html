@@ -1,0 +1,224 @@
+{% extends "base.html" %}
+{% block title %}Audit Logs - MemberSync{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <div>
+                <h2><i class="fas fa-history text-primary"></i> Audit Logs</h2>
+                <p class="text-muted mb-0">System activity tracking and transparency</p>
+            </div>
+            <a href="{{ url_for('dashboard') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Dashboard
+            </a>
+        </div>
+
+        <!-- Filters -->
+        <div class="card mb-4">
+            <div class="card-header bg-light">
+                <h5 class="mb-0"><i class="fas fa-filter"></i> Filters</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-3">
+                        <label for="start_date" class="form-label">Start Date</label>
+                        <input type="date" class="form-control" id="start_date" name="start_date" value="{{ start_date }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="end_date" class="form-label">End Date</label>
+                        <input type="date" class="form-control" id="end_date" name="end_date" value="{{ end_date }}">
+                    </div>
+                    <div class="col-md-2">
+                        <label for="action" class="form-label">Action</label>
+                        <select class="form-select" id="action" name="action">
+                            <option value="">All Actions</option>
+                            {% for act in actions %}
+                            <option value="{{ act }}" {% if selected_action == act %}selected{% endif %}>{{ act }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="table_name" class="form-label">Table</label>
+                        <select class="form-select" id="table_name" name="table_name">
+                            <option value="">All Tables</option>
+                            {% for table in tables %}
+                            <option value="{{ table }}" {% if selected_table == table %}selected{% endif %}>{{ table }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <label for="limit" class="form-label">Limit</label>
+                        <select class="form-select" id="limit" name="limit">
+                            <option value="50" {% if limit == 50 %}selected{% endif %}>50</option>
+                            <option value="100" {% if limit == 100 %}selected{% endif %}>100</option>
+                            <option value="200" {% if limit == 200 %}selected{% endif %}>200</option>
+                            <option value="500" {% if limit == 500 %}selected{% endif %}>500</option>
+                        </select>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Apply Filters
+                        </button>
+                        <a href="{{ url_for('view_audit_logs') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-redo"></i> Reset
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Audit Logs Table -->
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0"><i class="fas fa-list"></i> Activity Log (Showing {{ logs|length }} entries)</h5>
+            </div>
+            <div class="card-body">
+                {% if logs %}
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm">
+                        <thead>
+                            <tr>
+                                <th>Timestamp</th>
+                                <th>User</th>
+                                <th>Action</th>
+                                <th>Table</th>
+                                <th>Record ID</th>
+                                <th>Changes</th>
+                                <th>IP Address</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in logs %}
+                            <tr>
+                                <td><small>{{ log[9][:19] if log[9] else 'N/A' }}</small></td>
+                                <td>
+                                    <strong>{{ log[2] or 'System' }}</strong>
+                                    <br><small class="text-muted">ID: {{ log[1] or 'N/A' }}</small>
+                                </td>
+                                <td>
+                                    {% if 'CREATE' in log[3] %}
+                                        <span class="badge bg-success">{{ log[3] }}</span>
+                                    {% elif 'UPDATE' in log[3] %}
+                                        <span class="badge bg-warning">{{ log[3] }}</span>
+                                    {% elif 'DELETE' in log[3] %}
+                                        <span class="badge bg-danger">{{ log[3] }}</span>
+                                    {% elif 'LOGIN' in log[3] %}
+                                        <span class="badge bg-info">{{ log[3] }}</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary">{{ log[3] }}</span>
+                                    {% endif %}
+                                </td>
+                                <td><code>{{ log[4] or 'N/A' }}</code></td>
+                                <td>
+                                    {% if log[5] %}
+                                        <a href="#" onclick="showRecordDetails('{{ log[5] }}'); return false;">
+                                            <strong>{{ log[5] }}</strong>
+                                        </a>
+                                    {% else %}
+                                        <span class="text-muted">N/A</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if log[6] or log[7] %}
+                                        <button class="btn btn-sm btn-outline-info" 
+                                                onclick="showChanges('{{ log[6]|tojson|safe }}', '{{ log[7]|tojson|safe }}')"
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#changesModal">
+                                            <i class="fas fa-eye"></i> View
+                                        </button>
+                                    {% else %}
+                                        <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                                <td><small>{{ log[8] or 'N/A' }}</small></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="alert alert-info text-center">
+                    <i class="fas fa-info-circle"></i>
+                    No audit logs found for the selected filters.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Information Card -->
+        <div class="card mt-4">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0"><i class="fas fa-info-circle"></i> Audit Log Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-shield-alt text-success"></i> What is Logged:</h6>
+                        <ul>
+                            <li>Member creation, updates, and deletions</li>
+                            <li>Payment transactions and refunds</li>
+                            <li>User login and logout activities</li>
+                            <li>Settings changes and configurations</li>
+                            <li>Prepaid transactions and fee applications</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-database text-primary"></i> Audit Details:</h6>
+                        <ul>
+                            <li>User ID and username performing the action</li>
+                            <li>Before and after values for changes</li>
+                            <li>IP address and user agent</li>
+                            <li>Timestamp of the activity</li>
+                            <li>Organization context</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Changes Modal -->
+<div class="modal fade" id="changesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-exchange-alt"></i> Change Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="text-danger"><i class="fas fa-arrow-left"></i> Old Values:</h6>
+                        <pre id="oldValues" class="bg-light p-3 rounded"></pre>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="text-success"><i class="fas fa-arrow-right"></i> New Values:</h6>
+                        <pre id="newValues" class="bg-light p-3 rounded"></pre>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function showChanges(oldVals, newVals) {
+    try {
+        const oldValues = JSON.parse(oldVals);
+        const newValues = JSON.parse(newVals);
+        
+        document.getElementById('oldValues').textContent = JSON.stringify(oldValues, null, 2);
+        document.getElementById('newValues').textContent = JSON.stringify(newValues, null, 2);
+    } catch (e) {
+        console.error('Error parsing change data:', e);
+        document.getElementById('oldValues').textContent = oldVals || 'No data';
+        document.getElementById('newValues').textContent = newVals || 'No data';
+    }
+}
+</script>
+{% endblock %}
+
+
+

@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}Test Phone Validation{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header bg-primary text-white">
+                <h4>🇨🇲 Test Cameroon Phone Validation</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="mb-3">
+                        <label>Phone Number</label>
+                        <input type="text" class="form-control" name="phone" 
+                               placeholder="+237 6 89 68 62 24" value="{{ phone or '' }}">
+                        <small class="text-muted">Try: 689686224, +237689686224, 6 89 68 62 24</small>
+                    </div>
+                    <button type="submit" class="btn btn-primary">Validate</button>
+                </form>
+                
+                {% if phone %}
+                <div class="mt-4">
+                    <h5>Results:</h5>
+                    {% if is_valid %}
+                    <div class="alert alert-success">
+                        <h6>✅ Valid Phone Number</h6>
+                        <ul>
+                            <li><strong>International:</strong> {{ info.formatted }}</li>
+                            <li><strong>E.164:</strong> {{ info.e164 }}</li>
+                            <li><strong>National:</strong> {{ info.national }}</li>
+                            <li><strong>Carrier:</strong> {{ info.carrier }}</li>
+                            <li><strong>Location:</strong> {{ info.location }}</li>
+                        </ul>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-danger">
+                        <h6>❌ Invalid Phone Number</h6>
+                        <p>{{ error }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

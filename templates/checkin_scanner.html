@@ -1,0 +1,974 @@
+{% extends "base.html" %}
+{% block title %}QR Code Scanner - MemberSync{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header text-center">
+                <h3 class="mb-0">
+                    <i class="fas fa-qrcode text-primary"></i> Member Check-in Scanner
+                </h3>
+                <p class="text-muted mb-0 mt-2">Scan member QR code to check in or check out</p>
+            </div>
+            <div class="card-body">
+                <!-- Camera Preview -->
+                <div class="text-center mb-4">
+                    <div id="camera-container" class="position-relative" style="display: none;">
+                        <video id="camera-preview" class="rounded" style="width: 100%; max-width: 400px;"></video>
+                        <div id="scan-overlay" class="position-absolute top-50 start-50 translate-middle">
+                            <div class="border border-primary border-3 rounded" style="width: 200px; height: 200px; opacity: 0.7;"></div>
+                        </div>
+                    </div>
+                    
+                    <div id="camera-error" class="alert alert-warning" style="display: none;">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Camera Access Required</strong>
+                        <p class="mb-0">Please allow camera access to scan QR codes</p>
+                    </div>
+                    
+                    <button id="start-camera" class="btn btn-primary btn-lg">
+                        <i class="fas fa-camera"></i> Start Camera
+                    </button>
+                    
+                    <button id="stop-camera" class="btn btn-danger" style="display: none;">
+                        <i class="fas fa-stop"></i> Stop Camera
+                    </button>
+                </div>
+
+                <!-- Manual Entry Option -->
+                <div class="text-center mb-4">
+                    <hr>
+                    <p class="text-muted">Or enter membership ID manually:</p>
+                    <div class="row justify-content-center">
+                        <div class="col-md-6">
+                            <div class="input-group">
+                                <input type="text" id="manual-member-id" class="form-control form-control-lg text-center" 
+                                       placeholder="Enter Member ID" maxlength="20">
+                                <button class="btn btn-outline-primary" type="button" onclick="checkMemberStatus()">
+                                    <i class="fas fa-search"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Scan Results -->
+                <div id="scan-result" style="display: none;">
+                    <hr>
+                    <div class="row">
+                        <!-- Member Photo -->
+                        <div class="col-md-4 text-center">
+                            <img id="member-photo" src="" alt="Member Photo" 
+                                 class="rounded-circle mb-3" style="width: 120px; height: 120px; object-fit: cover;">
+                            
+                            <!-- Prepaid Balance Card -->
+                            <div class="card border-success" id="prepaid-card">
+                                <div class="card-header bg-success text-white py-2">
+                                    <h6 class="mb-0">
+                                        <i class="fas fa-credit-card"></i> Prepaid Balance
+                                    </h6>
+                                </div>
+                                <div class="card-body p-3">
+                                    <h4 class="text-success mb-2" id="prepaid-balance">$0.00</h4>
+                                    <div class="row text-center">
+                                        <div class="col-6">
+                                            <small class="text-muted d-block">Total Recharged</small>
+                                            <strong id="total-recharged">$0.00</strong>
+                                        </div>
+                                        <div class="col-6">
+                                            <small class="text-muted d-block">Total Spent</small>
+                                            <strong id="total-spent">$0.00</strong>
+                                        </div>
+                                    </div>
+                                    <hr class="my-2">
+                                    <div class="text-center">
+                                        <small class="text-muted d-block">Bonus Earned</small>
+                                        <span class="badge bg-warning text-dark" id="total-bonus">$0.00</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Member Information -->
+                        <div class="col-md-8">
+                            <div class="d-flex justify-content-between align-items-start mb-3">
+                                <div>
+                                    <h4 id="member-name" class="mb-1"></h4>
+                                    <p class="text-muted mb-0">
+                                        <strong>ID:</strong> <span id="member-id"></span>
+                                    </p>
+                                </div>
+                                <span id="member-status-badge" class="badge bg-success"></span>
+                            </div>
+                            
+                            <!-- Member Details Grid -->
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <small class="text-muted d-block">Membership Type</small>
+                                    <strong id="member-type"></strong>
+                                </div>
+                                <div class="col-md-6">
+                                    <small class="text-muted d-block">Payment Status</small>
+                                    <span id="payment-status" class="badge bg-info"></span>
+                                </div>
+                                <div class="col-md-6 mt-2">
+                                    <small class="text-muted d-block">Email</small>
+                                    <span id="member-email" class="text-truncate d-block"></span>
+                                </div>
+                                <div class="col-md-6 mt-2">
+                                    <small class="text-muted d-block">Phone</small>
+                                    <span id="member-phone"></span>
+                                </div>
+                                <div class="col-12 mt-2">
+                                    <small class="text-muted d-block">Membership Expires</small>
+                                    <span id="expiration-info"></span>
+                                </div>
+                            </div>
+                            
+                            <div id="checkin-status"></div>
+                            
+                            <!-- Quick Action Buttons -->
+                            <div id="quick-actions" class="mb-3" style="display: none;">
+                                <div class="d-grid gap-2 d-md-flex">
+                                    <button id="view-profile-btn" class="btn btn-outline-primary me-md-2" onclick="viewMemberProfile()">
+                                        <i class="fas fa-user"></i> View Profile
+                                    </button>
+                                    <button id="prepaid-manage-btn" class="btn btn-outline-success" onclick="managePrepaid()">
+                                        <i class="fas fa-credit-card"></i> Manage Prepaid
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Check-in Form -->
+                            <div id="checkin-form" style="display: none;">
+                                <div class="card border-primary">
+                                    <div class="card-header bg-primary text-white">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-sign-in-alt"></i> Check-in Details
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        {% if settings.require_service_type %}
+                                        <div class="mb-3">
+                                            <label for="service-type" class="form-label">Service Type <span class="text-danger">*</span></label>
+                                            <select class="form-select" id="service-type">
+                                                <option value="">Select Service</option>
+                                                {% for service in service_types %}
+                                                <option value="{{ service[1] }}">
+                                                    {{ service[1] }}{% if service[4] %} ({{ service[4] }}){% endif %}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        {% else %}
+                                        <div class="mb-3">
+                                            <label for="service-type" class="form-label">Service Type (Optional)</label>
+                                            <select class="form-select" id="service-type">
+                                                <option value="">Select Service</option>
+                                                {% for service in service_types %}
+                                                <option value="{{ service[1] }}">
+                                                    {{ service[1] }}{% if service[4] %} ({{ service[4] }}){% endif %}
+                                                </option>
+                                                {% endfor %}
+                                            </select>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        <div class="mb-3">
+                                            <label for="checkin-notes" class="form-label">Notes (Optional)</label>
+                                            <textarea class="form-control" id="checkin-notes" rows="2" 
+                                                     placeholder="Any additional notes..."></textarea>
+                                        </div>
+                                        
+                                        <div class="d-grid gap-2">
+                                            <button class="btn btn-success btn-lg" onclick="processCheckin()">
+                                                <i class="fas fa-sign-in-alt"></i> Check In
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Check-out Form -->
+                            <div id="checkout-form" style="display: none;">
+                                <div class="card border-warning">
+                                    <div class="card-header bg-warning text-dark">
+                                        <h6 class="mb-0">
+                                            <i class="fas fa-sign-out-alt"></i> Check-out Details
+                                        </h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div class="alert alert-info">
+                                            <i class="fas fa-info-circle"></i>
+                                            <strong>Currently Checked In</strong>
+                                            <p class="mb-1">Check-in time: <span id="current-checkin-time"></span></p>
+                                            <p class="mb-0">Service: <span id="current-service"></span></p>
+                                        </div>
+                                        
+                                        <div class="mb-3">
+                                            <label for="checkout-notes" class="form-label">Notes (Optional)</label>
+                                            <textarea class="form-control" id="checkout-notes" rows="2" 
+                                                     placeholder="Any additional notes..."></textarea>
+                                        </div>
+                                        
+                                        <div class="d-grid gap-2">
+                                            <button class="btn btn-warning btn-lg" onclick="processCheckout()">
+                                                <i class="fas fa-sign-out-alt"></i> Check Out
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Quick Actions -->
+                            <div class="mt-3" id="quick-actions" style="display: none;">
+                                <div class="d-flex gap-2">
+                                    <a class="btn btn-outline-primary btn-sm" id="view-profile-btn" href="#">
+                                        <i class="fas fa-user"></i> View Profile
+                                    </a>
+                                    <a class="btn btn-outline-success btn-sm" id="prepaid-manage-btn" href="#">
+                                        <i class="fas fa-credit-card"></i> Manage Prepaid
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success/Error Messages -->
+<div class="row justify-content-center mt-3">
+    <div class="col-lg-8">
+        <div id="message-container"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<script>
+let stream = null;
+let scanning = false;
+let currentMemberData = null;
+
+// Camera controls
+document.getElementById('start-camera').addEventListener('click', startCamera);
+document.getElementById('stop-camera').addEventListener('click', stopCamera);
+
+// Manual entry
+document.getElementById('manual-member-id').addEventListener('keypress', function(e) {
+    if (e.key === 'Enter') {
+        checkMemberStatus();
+    }
+});
+
+async function startCamera() {
+    try {
+        stream = await navigator.mediaDevices.getUserMedia({ 
+            video: { 
+                facingMode: 'environment',
+                width: { ideal: 640 },
+                height: { ideal: 480 }
+            } 
+        });
+        
+        const video = document.getElementById('camera-preview');
+        video.srcObject = stream;
+        video.play();
+        
+        document.getElementById('camera-container').style.display = 'block';
+        document.getElementById('start-camera').style.display = 'none';
+        document.getElementById('stop-camera').style.display = 'inline-block';
+        document.getElementById('camera-error').style.display = 'none';
+        
+        scanning = true;
+        scanQRCode();
+        
+    } catch (error) {
+        console.error('Error accessing camera:', error);
+        document.getElementById('camera-error').style.display = 'block';
+    }
+}
+
+function stopCamera() {
+    scanning = false;
+    
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+    }
+    
+    document.getElementById('camera-container').style.display = 'none';
+    document.getElementById('start-camera').style.display = 'inline-block';
+    document.getElementById('stop-camera').style.display = 'none';
+}
+
+function scanQRCode() {
+    if (!scanning) return;
+    
+    const video = document.getElementById('camera-preview');
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d');
+    
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.height = video.videoHeight;
+        canvas.width = video.videoWidth;
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        const code = jsQR(imageData.data, imageData.width, imageData.height);
+        
+        if (code) {
+            let membershipId = code.data.trim();
+            
+            // Normalize QR code format: convert MBR/0001 to MBR-0001
+            membershipId = membershipId.replace('/', '-');
+            
+            document.getElementById('manual-member-id').value = membershipId;
+            checkMemberStatus();
+            stopCamera(); // Stop camera after successful scan
+            return;
+        }
+    }
+    
+    requestAnimationFrame(scanQRCode);
+}
+
+function checkMemberStatus() {
+    let membershipId = document.getElementById('manual-member-id').value.trim();
+    
+    if (!membershipId) {
+        showMessage('warning', 'Please enter a membership ID');
+        return;
+    }
+    
+    // Normalize membership ID format
+    membershipId = membershipId.replace('/', '-');
+    document.getElementById('manual-member-id').value = membershipId;
+    
+    // Initialize currentMemberData with the searched ID
+    currentMemberData = {
+        membership_id: membershipId,
+        checkin_status: null
+    };
+    
+    showMessage('info', 'Checking member status...');
+    
+    fetch(`/checkin/member_status/${membershipId}`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            clearMessages();
+            if (data.success) {
+                displayMemberInfo(data);
+            } else {
+                showMessage('danger', data.error);
+                if (data.member) {
+                    // Show basic member info even if validation failed
+                    displayMemberInfo(data, true);
+                }
+            }
+        })
+        .catch(error => {
+            clearMessages();
+            showMessage('danger', `Error checking member status: ${error.message}`);
+            console.error('Error:', error);
+        });
+}
+
+function displayMemberInfo(data, hasError = false) {
+    const member = data.member;
+    const checkinStatus = data.checkin_status;
+    const prepaidBalance = data.prepaid_balance;
+    
+    if (!member) {
+        console.error('No member data provided');
+        return;
+    }
+    
+    // Update currentMemberData with the latest info from the server
+    currentMemberData = {
+        membership_id: member.membership_id,
+        checkin_status: checkinStatus
+    };
+    
+    // Store the membership ID in a hidden input for form submission
+    let hiddenInput = document.getElementById('hidden-member-id');
+    if (!hiddenInput) {
+        hiddenInput = document.createElement('input');
+        hiddenInput.type = 'hidden';
+        hiddenInput.id = 'hidden-member-id';
+        // Add to body to ensure it's always available
+        document.body.appendChild(hiddenInput);
+    }
+    hiddenInput.value = member.membership_id;
+    console.log('Set hidden member ID to:', member.membership_id);
+    
+    // Update member info with null checks
+    const photoElement = document.getElementById('member-photo');
+    if (photoElement && member.photo_url) {
+        photoElement.src = member.photo_url;
+    }
+    
+    const nameElement = document.getElementById('member-name');
+    if (nameElement) {
+        nameElement.textContent = member.name || 'Unknown';
+    }
+    
+    const idElement = document.getElementById('member-id');
+    if (idElement) {
+        idElement.textContent = member.membership_id || '';
+    }
+    
+    const typeElement = document.getElementById('member-type');
+    if (typeElement) {
+        typeElement.textContent = member.membership_type || 'Not specified';
+    }
+    
+    const emailElement = document.getElementById('member-email');
+    if (emailElement) {
+        emailElement.textContent = member.email || 'Not provided';
+    }
+    
+    const phoneElement = document.getElementById('member-phone');
+    if (phoneElement) {
+        phoneElement.textContent = member.phone || 'Not provided';
+    }
+    
+    // Status badge
+    const statusElement = document.getElementById('member-status-badge');
+    if (statusElement) {
+        if (hasError) {
+            statusElement.className = 'badge bg-danger';
+            statusElement.textContent = member.status || 'Unknown';
+        } else {
+            statusElement.className = 'badge bg-success';
+            statusElement.textContent = member.status || 'Active';
+        }
+    }
+
+    // Payment status
+    const paymentStatusElement = document.getElementById('payment-status');
+    if (paymentStatusElement && member.payment_status) {
+        paymentStatusElement.className = member.payment_status === 'Paid' ? 'badge bg-success' : 'badge bg-warning';
+        paymentStatusElement.textContent = member.payment_status;
+    }
+
+    // Expiration information
+    const expirationElement = document.getElementById('expiration-info');
+    if (expirationElement) {
+        if (member.expiration_display) {
+            const expirationText = member.expiration_display;
+            let badgeClass = 'badge bg-success';
+            let icon = 'fas fa-check-circle';
+            
+            if (member.days_until_expiry !== null) {
+                if (member.days_until_expiry < 0) {
+                    badgeClass = 'badge bg-danger';
+                    icon = 'fas fa-times-circle';
+                } else if (member.days_until_expiry <= 7) {
+                    badgeClass = 'badge bg-warning';
+                    icon = 'fas fa-exclamation-triangle';
+                }
+            }
+            
+            expirationElement.innerHTML = `
+                <i class="${icon}"></i> ${expirationText}
+                ${member.days_until_expiry !== null ? 
+                    `<span class="${badgeClass} ms-2">
+                        ${member.days_until_expiry < 0 ? 
+                            `Expired ${Math.abs(member.days_until_expiry)} days ago` : 
+                            member.days_until_expiry === 0 ? 
+                                'Expires today' : 
+                                `${member.days_until_expiry} days remaining`
+                        }
+                    </span>` : ''
+                }
+            `;
+        } else {
+            expirationElement.innerHTML = '<span class="text-muted">Not specified</span>';
+        }
+    }
+
+    // Update prepaid balance information
+    updatePrepaidDisplay(prepaidBalance);
+    
+    // Store member ID for quick actions
+    window.currentMemberId = member.membership_id;
+    const quickActionsElement = document.getElementById('quick-actions');
+    if (quickActionsElement) {
+        quickActionsElement.style.display = 'block';
+    }
+    
+    // Check-in status
+    const checkinStatusElement = document.getElementById('checkin-status');
+    const checkinForm = document.getElementById('checkin-form');
+    const checkoutForm = document.getElementById('checkout-form');
+    
+    if (checkinStatusElement) {
+        if (hasError) {
+            checkinStatusElement.innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="fas fa-exclamation-triangle"></i> 
+                    <strong>Cannot process check-in</strong>
+                    <p class="mb-0">Please resolve the issues above before proceeding.</p>
+                </div>
+            `;
+            if (checkinForm) checkinForm.style.display = 'none';
+            if (checkoutForm) checkoutForm.style.display = 'none';
+        } else if (checkinStatus && checkinStatus.is_checked_in) {
+            // Show check-out form
+            checkinStatusElement.innerHTML = `
+                <div class="alert alert-warning">
+                    <i class="fas fa-user-clock"></i> 
+                    <strong>Currently checked in</strong>
+                    <p class="mb-0">Member is currently using the facilities</p>
+                </div>
+            `;
+            const currentCheckinTimeElement = document.getElementById('current-checkin-time');
+            if (currentCheckinTimeElement) {
+                currentCheckinTimeElement.textContent = formatDateTime(checkinStatus.checkin_time);
+            }
+            const currentServiceElement = document.getElementById('current-service');
+            if (currentServiceElement) {
+                currentServiceElement.textContent = checkinStatus.service_type || 'Not specified';
+            }
+            
+            if (checkinForm) checkinForm.style.display = 'none';
+            if (checkoutForm) checkoutForm.style.display = 'block';
+        } else {
+            // Show check-in form
+            checkinStatusElement.innerHTML = `
+                <div class="alert alert-success">
+                    <i class="fas fa-check-circle"></i> 
+                    <strong>Ready for check-in</strong>
+                    <p class="mb-0">Member can proceed with facility access</p>
+                </div>
+            `;
+            if (checkinForm) checkinForm.style.display = 'block';
+            if (checkoutForm) checkoutForm.style.display = 'none';
+        }
+    }
+    
+    const scanResultElement = document.getElementById('scan-result');
+    if (scanResultElement) {
+        scanResultElement.style.display = 'block';
+    }
+}
+
+function updatePrepaidDisplay(prepaidBalance) {
+    if (!prepaidBalance) {
+        console.warn('No prepaid balance data provided');
+        return;
+    }
+    
+    // Update prepaid balance card
+    const balanceElement = document.getElementById('prepaid-balance');
+    if (balanceElement) {
+        balanceElement.textContent = prepaidBalance.formatted_balance || '$0.00';
+    }
+    
+    // Get currency symbol from formatted balance (extract from the formatted_balance string)
+    const currencySymbol = prepaidBalance.formatted_balance ? 
+        prepaidBalance.formatted_balance.replace(/[\d,.\s]/g, '').trim() || '$' : '$';
+    
+    // Display amounts with currency symbol (with null checks)
+    const rechargedElement = document.getElementById('total-recharged');
+    if (rechargedElement) {
+        const recharged = prepaidBalance.total_recharged || 0;
+        rechargedElement.textContent = `${currencySymbol}${recharged.toFixed(2)}`;
+    }
+    
+    const spentElement = document.getElementById('total-spent');
+    if (spentElement) {
+        const spent = prepaidBalance.total_spent || 0;
+        spentElement.textContent = `${currencySymbol}${spent.toFixed(2)}`;
+    }
+    
+    const bonusElement = document.getElementById('total-bonus');
+    if (bonusElement) {
+        const bonus = prepaidBalance.total_bonus_earned || 0;
+        bonusElement.textContent = `${currencySymbol}${bonus.toFixed(2)}`;
+    }
+    
+    // Update card color based on balance
+    const prepaidCard = document.getElementById('prepaid-card');
+    if (!prepaidCard) return;
+    
+    const balance = prepaidBalance.current_balance || 0;
+    
+    if (balance <= 0) {
+        prepaidCard.className = 'card border-danger';
+        const header = prepaidCard.querySelector('.card-header');
+        if (header) header.className = 'card-header bg-danger text-white py-2';
+        if (balanceElement) balanceElement.className = 'text-danger mb-2';
+    } else if (balance < 10) {
+        prepaidCard.className = 'card border-warning';
+        const header = prepaidCard.querySelector('.card-header');
+        if (header) header.className = 'card-header bg-warning text-dark py-2';
+        if (balanceElement) balanceElement.className = 'text-warning mb-2';
+    } else {
+        prepaidCard.className = 'card border-success';
+        const header = prepaidCard.querySelector('.card-header');
+        if (header) header.className = 'card-header bg-success text-white py-2';
+        if (balanceElement) balanceElement.className = 'text-success mb-2';
+    }
+}
+
+function formatDateTime(dateTimeString) {
+    if (!dateTimeString) return 'Not available';
+    
+    try {
+        const date = new Date(dateTimeString);
+        return date.toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+    } catch (error) {
+        return dateTimeString;
+    }
+}
+
+function processCheckin() {
+    console.log('Starting check-in process...');
+    const serviceType = document.getElementById('service-type').value;
+    const notes = document.getElementById('checkin-notes').value.trim();
+    
+    // Debug: Log all potential sources of member ID
+    const hiddenInput = document.getElementById('hidden-member-id');
+    const memberIdElement = document.getElementById('member-id');
+    console.log('Hidden input exists:', !!hiddenInput);
+    console.log('Hidden input value:', hiddenInput?.value);
+    console.log('Member ID element exists:', !!memberIdElement);
+    console.log('Member ID text:', memberIdElement?.textContent);
+    
+    // Try multiple ways to get member ID
+    let memberId = '';
+    
+    // Check URL parameters first (for direct links)
+    const urlParams = new URLSearchParams(window.location.search);
+    memberId = urlParams.get('member_id') || '';
+    
+    // Then check hidden input
+    if (!memberId && hiddenInput?.value) {
+        memberId = hiddenInput.value;
+        console.log('Using member ID from hidden input:', memberId);
+    }
+    
+    // Then check member ID element
+    if (!memberId && memberIdElement?.textContent?.trim()) {
+        memberId = memberIdElement.textContent.trim();
+        console.log('Using member ID from member-id element:', memberId);
+    }
+    
+    // Check if we found a valid member ID
+    if (!memberId) {
+        const errorMsg = 'Could not find member ID. Please search for a member first.';
+        console.error(errorMsg, {
+            hiddenInputValue: hiddenInput?.value,
+            memberIdText: memberIdElement?.textContent,
+            urlParams: Object.fromEntries(urlParams.entries())
+        });
+        showMessage('danger', errorMsg);
+        return;
+    }
+    
+    {% if settings.require_service_type %}
+    if (!serviceType) {
+        showMessage('warning', 'Please select a service type');
+        return;
+    }
+    {% endif %}
+    
+    // Create URL-encoded form data string
+    const formData = new URLSearchParams();
+    formData.append('membership_id', memberId);
+    formData.append('service_type', serviceType);
+    formData.append('notes', notes);
+    formData.append('action', 'checkin');
+    
+    const formDataString = formData.toString();
+    console.log('Form data string:', formDataString);
+    
+    showMessage('info', 'Processing check-in...');
+    
+    // Make the request with explicit form data
+    fetch('/checkin/process', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'X-Requested-With': 'XMLHttpRequest'
+        },
+        body: formDataString
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        clearMessages();
+        if (data.success) {
+            showMessage('success', data.data.message);
+            // Show success animation
+            showCheckinSuccess(data.data);
+            setTimeout(() => {
+                resetForm();
+                window.location.href = '/checkin';
+            }, 3000);
+        } else {
+            showMessage('danger', data.error);
+        }
+    })
+    .catch(error => {
+        clearMessages();
+        showMessage('danger', `Error processing check-in: ${error.message}`);
+        console.error('Error:', error);
+    });
+}
+
+function processCheckout() {
+    const notes = document.getElementById('checkout-notes').value.trim();
+    const memberId = document.getElementById('member-id').textContent.trim();
+    
+    if (!memberId) {
+        showMessage('danger', 'No member selected. Please search for a member first.');
+        return;
+    }
+    
+    // Create URL-encoded form data
+    const formData = new URLSearchParams();
+    formData.append('membership_id', memberId);
+    formData.append('notes', notes);
+    formData.append('action', 'checkout');
+    
+    console.log('Sending checkout data:', Object.fromEntries(formData));
+    
+    showMessage('info', 'Processing check-out...');
+    
+    fetch('/checkin/process', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: formData.toString()
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        clearMessages();
+        if (data.success) {
+            showMessage('success', data.data.message);
+            // Show success animation
+            showCheckoutSuccess(data.data);
+            setTimeout(() => {
+                resetForm();
+                window.location.href = '/checkin';
+            }, 3000);
+        } else {
+            showMessage('danger', data.error);
+        }
+    })
+    .catch(error => {
+        clearMessages();
+        showMessage('danger', `Error processing check-out: ${error.message}`);
+        console.error('Error:', error);
+    });
+}
+
+function showCheckinSuccess(data) {
+    const successHtml = `
+        <div class="alert alert-success text-center" style="animation: pulse 2s infinite;">
+            <i class="fas fa-check-circle fa-3x text-success mb-3"></i>
+            <h4>✅ Check-in Successful!</h4>
+            <p class="mb-2"><strong>${data.member_name}</strong> has been checked in</p>
+            <p class="mb-0">
+                <small class="text-muted">
+                    Service: ${data.service_type || 'General'} | 
+                    Time: ${formatDateTime(data.checkin_time)}
+                </small>
+            </p>
+        </div>
+    `;
+    
+    document.getElementById('scan-result').innerHTML = successHtml;
+}
+
+function showCheckoutSuccess(data) {
+    const successHtml = `
+        <div class="alert alert-warning text-center" style="animation: pulse 2s infinite;">
+            <i class="fas fa-sign-out-alt fa-3x text-warning mb-3"></i>
+            <h4>👋 Check-out Successful!</h4>
+            <p class="mb-2"><strong>${data.member_name}</strong> has been checked out</p>
+            <p class="mb-0">
+                <small class="text-muted">
+                    Duration: ${data.duration || 'N/A'} | 
+                    Checkout: ${formatDateTime(data.checkout_time)}
+                </small>
+            </p>
+        </div>
+    `;
+    
+    document.getElementById('scan-result').innerHTML = successHtml;
+}
+
+function resetForm() {
+    document.getElementById('manual-member-id').value = '';
+    document.getElementById('scan-result').style.display = 'none';
+    currentMemberData = null;
+    
+    // Reset form fields
+    if (document.getElementById('service-type')) {
+        document.getElementById('service-type').value = '';
+    }
+    document.getElementById('checkin-notes').value = '';
+    document.getElementById('checkout-notes').value = '';
+}
+
+function showMessage(type, message) {
+    const container = document.getElementById('message-container');
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+    alertDiv.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    
+    container.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        if (alertDiv.parentNode) {
+            alertDiv.remove();
+        }
+    }, 5000);
+}
+
+function clearMessages() {
+    const messageContainer = document.getElementById('message-container');
+    messageContainer.innerHTML = '';
+}
+
+function viewMemberProfile() {
+    if (window.currentMemberId) {
+        window.location.href = `/member/${window.currentMemberId}`;
+    }
+}
+
+function managePrepaid() {
+    if (window.currentMemberId) {
+        window.location.href = `/payments/${window.currentMemberId}?tab=prepaid`;
+    }
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Escape key to reset form
+    if (e.key === 'Escape') {
+        resetForm();
+    }
+    
+    // F1 to start camera
+    if (e.key === 'F1') {
+        e.preventDefault();
+        if (!scanning) {
+            startCamera();
+        } else {
+            stopCamera();
+        }
+    }
+});
+
+// Auto-focus on member ID input when page loads
+document.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('manual-member-id').focus();
+});
+</script>
+
+<style>
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.card {
+    transition: all 0.3s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+#prepaid-card {
+    min-height: 200px;
+}
+
+#member-photo {
+    border: 3px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+#member-photo:hover {
+    border-color: #007bff;
+}
+
+.badge {
+    font-size: 0.8em;
+}
+
+.alert {
+    border-radius: 8px;
+}
+
+.btn-lg {
+    padding: 12px 24px;
+    font-size: 1.1rem;
+}
+
+.form-control:focus, .form-select:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+#scan-overlay div {
+    border-style: dashed;
+    animation: pulse 2s infinite;
+}
+
+.text-truncate {
+    max-width: 150px;
+}
+
+@media (max-width: 768px) {
+    .col-md-4, .col-md-8 {
+        margin-bottom: 1rem;
+    }
+    
+    #prepaid-card {
+        margin-bottom: 1rem;
+    }
+    
+    .text-truncate {
+        max-width: 100px;
+    }
+}
+</style>
+{% endblock %}

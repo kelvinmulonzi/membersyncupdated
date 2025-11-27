@@ -1,0 +1,570 @@
+{% extends "base.html" %}
+{% block title %}Create User - MemberSync{% endblock %}
+
+{% block content %}
+<style>
+/* ROBUST FIX - Clean and simple */
+.dynamic-card {
+    display: none;
+    margin-bottom: 1.5rem;
+}
+
+.dynamic-card.show {
+    display: block;
+}
+
+/* Fix all spacing issues */
+.card {
+    margin-bottom: 2rem;
+}
+
+.mb-4 {
+    margin-bottom: 2rem !important;
+}
+
+/* Button container fix */
+.d-flex.justify-content-between {
+    margin-top: 3rem;
+    margin-bottom: 2rem;
+    padding: 1.5rem 0;
+    border-top: 1px solid #dee2e6;
+    background-color: #f8f9fa;
+}
+
+/* Test buttons */
+.mt-2 {
+    margin-top: 1rem !important;
+    margin-bottom: 1rem !important;
+}
+
+/* Ensure proper form spacing */
+.form-control, .form-select {
+    margin-bottom: 1rem;
+}
+
+/* Fix any overlapping */
+* {
+    box-sizing: border-box;
+}
+
+body {
+    padding-bottom: 3rem;
+}
+</style>
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card">
+            <div class="card-header text-center">
+                <h3 class="mb-0">
+                    <i class="fas fa-user-plus text-primary"></i>
+                    Create New User
+                </h3>
+                <p class="text-muted mb-0">Add a new user to the system</p>
+            </div>
+            <div class="card-body p-4">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+
+                <form method="POST" id="createUserForm">
+                    <!-- Role Selection -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-user-tag"></i> Select User Type</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="user_type" class="form-label">
+                                            <i class="fas fa-users"></i> User Type <span class="text-danger">*</span>
+                                        </label>
+                                        <select class="form-select" id="user_type" name="user_type" required onchange="toggleUserType()">
+                                            <option value="">Select user type</option>
+                                            <option value="member">Member/User</option>
+                                            <option value="admin">Organization Admin</option>
+                                            <option value="superadmin">Organization Super Admin</option>
+                                            <option value="global_admin">Global Admin</option>
+                                        </select>
+                                        <div class="form-text">
+                                            <i class="fas fa-info-circle"></i>
+                                            Choose the type of user to create
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="alert alert-info" id="roleInfo" style="display: none;">
+                                        <i class="fas fa-info-circle"></i>
+                                        <span id="roleDescription">Select a user type to see description</span>
+                                    </div>
+                                    <div class="alert alert-warning" id="debugInfo" style="display: none;">
+                                        <i class="fas fa-bug"></i>
+                                        <span id="debugText">Debug info will appear here</span>
+                                    </div>
+                                    <div class="mt-2">
+                                        <button type="button" class="btn btn-sm btn-outline-secondary me-2" onclick="testMember()">Test Member</button>
+                                        <button type="button" class="btn btn-sm btn-outline-secondary me-2" onclick="testAdmin()">Test Admin</button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="resetForm()">Reset</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Basic Information -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-user"></i> Basic Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="username" class="form-label">
+                                            <i class="fas fa-user"></i> Username <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="username" 
+                                               name="username" 
+                                               placeholder="Enter username"
+                                               required 
+                                               autocomplete="username">
+                                        <div class="form-text">
+                                            <i class="fas fa-info-circle"></i>
+                                            Choose a unique username
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="email" class="form-label">
+                                            <i class="fas fa-envelope"></i> Email Address <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="email" 
+                                               class="form-control" 
+                                               id="email" 
+                                               name="email" 
+                                               placeholder="Enter email address"
+                                               required 
+                                               autocomplete="email">
+                                        <div class="form-text">
+                                            <i class="fas fa-at"></i>
+                                            Email for notifications
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="password" class="form-label">
+                                            <i class="fas fa-lock"></i> Password <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="password" 
+                                               class="form-control" 
+                                               id="password" 
+                                               name="password" 
+                                               placeholder="Enter password (min 6 characters)"
+                                               required 
+                                               minlength="6"
+                                               autocomplete="new-password">
+                                        <div class="form-text">
+                                            <i class="fas fa-shield-alt"></i>
+                                            Minimum 6 characters
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="confirm_password" class="form-label">
+                                            <i class="fas fa-lock"></i> Confirm Password <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="password" 
+                                               class="form-control" 
+                                               id="confirm_password" 
+                                               name="confirm_password" 
+                                               placeholder="Confirm password"
+                                               required 
+                                               minlength="6"
+                                               autocomplete="new-password">
+                                        <div class="form-text">
+                                            <i class="fas fa-check-circle"></i>
+                                            Re-enter password
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Organization Assignment (for admin roles) -->
+                    <div class="card mb-4 dynamic-card hide" id="organizationCard">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-building"></i> Organization Assignment</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-12">
+                                    <div class="mb-3">
+                                        <label for="organization_id" class="form-label">
+                                            <i class="fas fa-building"></i> Organization <span class="text-danger">*</span>
+                                        </label>
+                                        <select class="form-select" id="organization_id" name="organization_id" onchange="updateOrganizationPackage()">
+                                            <option value="">Select organization</option>
+                                            {% for org in organizations %}
+                                                <option value="{{ org[0] }}" data-package-id="{{ org[3] }}" data-package-name="{{ org[4] }}" data-package-price="{{ org[5] }}">
+                                                    {{ org[1] if org[1] else 'Unnamed Organization' }} {% if org[2] %}({{ org[2] }}){% endif %}
+                                                </option>
+                                            {% endfor %}
+                                        </select>
+                                        <div class="form-text">
+                                            <i class="fas fa-info-circle"></i>
+                                            Choose the organization for this user
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Organization Package Display -->
+                            <div class="row" id="organizationPackageInfo" style="display: none;">
+                                <div class="col-md-12">
+                                    <div class="alert alert-info">
+                                        <h6 class="mb-2"><i class="fas fa-box"></i> Organization Package</h6>
+                                        <div id="packageDetails">
+                                            <!-- Package details will be populated by JavaScript -->
+                                        </div>
+                                        <small class="text-muted">
+                                            <i class="fas fa-info-circle"></i>
+                                            This organization's package will be inherited by the user
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Member Information (for member role) -->
+                    <div class="card mb-4 dynamic-card hide" id="memberCard">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-id-card"></i> Member Information</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="member_name" class="form-label">
+                                            <i class="fas fa-user"></i> Full Name <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="member_name" 
+                                               name="member_name" 
+                                               placeholder="Enter full name">
+                                        <div class="form-text">
+                                            <i class="fas fa-info-circle"></i>
+                                            Member's full name
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="member_phone" class="form-label">
+                                            <i class="fas fa-phone"></i> Phone Number <span class="text-danger">*</span>
+                                        </label>
+                                        <input type="text" 
+                                               class="form-control" 
+                                               id="member_phone" 
+                                               name="member_phone" 
+                                               placeholder="Enter phone number">
+                                        <div class="form-text">
+                                            <i class="fas fa-info-circle"></i>
+                                            Member's contact number
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="member_organization_id" class="form-label">
+                                            <i class="fas fa-building"></i> Organization <span class="text-danger">*</span>
+                                        </label>
+                                        <select class="form-select" id="member_organization_id" name="member_organization_id">
+                                            <option value="">Select organization</option>
+                                            {% for org in organizations %}
+                                                <option value="{{ org[0] }}">{{ org[1] if org[1] else 'Unnamed Organization' }} {% if org[2] %}({{ org[2] }}){% endif %}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <div class="form-text">
+                                            <i class="fas fa-info-circle"></i>
+                                            Organization for this member
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="membership_type" class="form-label">
+                                            <i class="fas fa-star"></i> Membership Type <span class="text-danger">*</span>
+                                        </label>
+                                        <select class="form-select" id="membership_type" name="membership_type">
+                                            <option value="">Select membership type</option>
+                                            <option value="Silver">Silver</option>
+                                            <option value="Gold">Gold</option>
+                                            <option value="Platinum">Platinum</option>
+                                        </select>
+                                        <div class="form-text">
+                                            <i class="fas fa-info-circle"></i>
+                                            Member's membership level
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+
+                    <div class="d-flex justify-content-between mt-4">
+                        <a href="{{ url_for('manage_users') }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-user-plus"></i> Create User
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Simple and robust approach - GLOBAL FUNCTION
+function toggleUserType() {
+    console.log('=== TOGGLE USER TYPE CALLED ===');
+    
+    const userType = document.getElementById('user_type').value;
+    console.log('Selected user type:', userType);
+    
+    // Get all cards
+    const organizationCard = document.getElementById('organizationCard');
+    const memberCard = document.getElementById('memberCard');
+    const debugText = document.getElementById('debugText');
+    
+    console.log('Cards found:', {
+        organizationCard: !!organizationCard,
+        memberCard: !!memberCard
+    });
+    
+    // Hide ALL cards first
+    if (organizationCard) {
+        organizationCard.classList.remove('show');
+        organizationCard.classList.add('hide');
+    }
+    if (memberCard) {
+        memberCard.classList.remove('show');
+        memberCard.classList.add('hide');
+    }
+    
+    // Clear all form fields
+    const fieldsToClear = [
+        'organization_id', 'subscription_package_id', 
+        'member_name', 'member_phone', 'member_organization_id', 'membership_type'
+    ];
+    fieldsToClear.forEach(fieldId => {
+        const field = document.getElementById(fieldId);
+        if (field) {
+            field.value = '';
+            field.required = false;
+        }
+    });
+    
+    // Show relevant cards based on selection
+    if (userType === 'member') {
+        console.log('Showing member form');
+        if (memberCard) {
+            memberCard.classList.remove('hide');
+            memberCard.classList.add('show');
+        }
+        
+        // Set required fields
+        const memberFields = ['member_name', 'member_phone', 'member_organization_id', 'membership_type'];
+        memberFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) field.required = true;
+        });
+        
+        if (debugText) debugText.textContent = 'MEMBER FORM SHOWN';
+        
+    } else if (['admin', 'superadmin', 'global_admin'].includes(userType)) {
+        console.log('Showing admin form');
+        if (organizationCard) {
+            organizationCard.classList.remove('hide');
+            organizationCard.classList.add('show');
+        }
+        // Set required fields
+        const adminFields = ['organization_id'];
+        adminFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (field) field.required = true;
+        });
+        
+        if (debugText) debugText.textContent = 'ADMIN FORM SHOWN';
+    } else {
+        if (debugText) debugText.textContent = 'NO FORM SHOWN';
+    }
+    
+    console.log('=== TOGGLE COMPLETE ===');
+}
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Page loaded, setting up form');
+    
+    // Hide all cards initially
+    const organizationCard = document.getElementById('organizationCard');
+    const memberCard = document.getElementById('memberCard');
+    
+    if (organizationCard) {
+        organizationCard.classList.add('hide');
+        organizationCard.classList.remove('show');
+    }
+    if (memberCard) {
+        memberCard.classList.add('hide');
+        memberCard.classList.remove('show');
+    }
+    
+    // Add event listener
+    const userTypeSelect = document.getElementById('user_type');
+    if (userTypeSelect) {
+        userTypeSelect.addEventListener('change', toggleUserType);
+        console.log('Event listener added to user type select');
+    } else {
+        console.error('User type select not found!');
+    }
+    
+    console.log('Form setup complete');
+});
+
+// Global functions for testing
+window.testMember = function() {
+    document.getElementById('user_type').value = 'member';
+    toggleUserType();
+};
+
+window.testAdmin = function() {
+    document.getElementById('user_type').value = 'admin';
+    toggleUserType();
+};
+
+window.resetForm = function() {
+    document.getElementById('user_type').value = '';
+    toggleUserType();
+};
+
+// Password confirmation validation
+document.getElementById('confirm_password').addEventListener('input', function() {
+    const password = document.getElementById('password').value;
+    const confirmPassword = this.value;
+    
+    if (password !== confirmPassword) {
+        this.setCustomValidity('Passwords do not match');
+    } else {
+        this.setCustomValidity('');
+    }
+});
+
+// Real-time password matching feedback
+document.getElementById('password').addEventListener('input', function() {
+    const confirmPassword = document.getElementById('confirm_password');
+    if (confirmPassword.value) {
+        if (this.value !== confirmPassword.value) {
+            confirmPassword.setCustomValidity('Passwords do not match');
+        } else {
+            confirmPassword.setCustomValidity('');
+        }
+    }
+});
+
+// Organization package display function
+function updateOrganizationPackage() {
+    const orgSelect = document.getElementById('organization_id');
+    const packageInfo = document.getElementById('organizationPackageInfo');
+    const packageDetails = document.getElementById('packageDetails');
+    
+    if (orgSelect.value) {
+        const selectedOption = orgSelect.options[orgSelect.selectedIndex];
+        const packageId = selectedOption.getAttribute('data-package-id');
+        const packageName = selectedOption.getAttribute('data-package-name');
+        const packagePrice = selectedOption.getAttribute('data-package-price');
+        
+        if (packageId && packageName) {
+            packageDetails.innerHTML = `
+                <strong>${packageName}</strong>
+                ${packagePrice > 0 ? ` - ${packagePrice}` : ' (Free)'}
+            `;
+            packageInfo.style.display = 'block';
+        } else {
+            packageInfo.style.display = 'none';
+        }
+    } else {
+        packageInfo.style.display = 'none';
+    }
+}
+
+// Role validation
+document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+    checkbox.addEventListener('change', function() {
+        if (this.id === 'is_global_admin' && this.checked) {
+            if (!confirm('Are you sure you want to grant Global Admin privileges? This gives system-wide access.')) {
+                this.checked = false;
+            }
+        }
+    });
+});
+
+// Form submission handler
+document.getElementById('createUserForm').addEventListener('submit', function(e) {
+    const userType = document.getElementById('user_type').value;
+    
+    if (!userType) {
+        e.preventDefault();
+        alert('Please select a user type');
+        return;
+    }
+    
+    // Validate member-specific fields
+    if (userType === 'member') {
+        const memberName = document.getElementById('member_name').value;
+        const memberPhone = document.getElementById('member_phone').value;
+        const memberOrg = document.getElementById('member_organization_id').value;
+        const membershipType = document.getElementById('membership_type').value;
+        
+        if (!memberName || !memberPhone || !memberOrg || !membershipType) {
+            e.preventDefault();
+            alert('Please fill in all member information fields');
+            return;
+        }
+    }
+    
+    // Validate admin-specific fields
+    if (['admin', 'superadmin', 'global_admin'].includes(userType)) {
+        const orgId = document.getElementById('organization_id').value;
+        
+        if (!orgId) {
+            e.preventDefault();
+            alert('Please select an organization');
+            return;
+        }
+    }
+});
+</script>
+{% endblock %}
