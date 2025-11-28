@@ -281,7 +281,7 @@ def can_access_member(membership_id):
     Access is granted if:
     1. User is a global superadmin, OR
     2. User is an organization superadmin in the same org, OR
-    3. User is a location admin and member belongs to their location, OR
+    3. User is a location admin and member is in the same organization, OR
     4. User is in the same organization as the member
     """
     try:
@@ -312,32 +312,11 @@ def can_access_member(membership_id):
         if has_org_superadmin_capabilities():
             return get_user_organization_id() == member_org_id
         
-        # Location admin can only access members at their location
+        # Location admin can access any member in their organization
         if is_location_admin():
-            user_location_id = get_user_location_id()
             user_org_id = get_user_organization_id()
-            
-            # Must be same organization
-            if member_org_id != user_org_id:
-                return False
-            
-            # Check if member belongs to admin's location (home location)
-            if member_location_id == user_location_id:
-                return True
-            
-            # Also check if member recently checked in at admin's location
-            cursor.execute("""
-                SELECT COUNT(*) FROM checkins
-                WHERE membership_id = ? AND location_id = ?
-                ORDER BY checkin_time DESC
-                LIMIT 1
-            """, (membership_id, user_location_id))
-            
-            recent_checkin = cursor.fetchone()
-            if recent_checkin and recent_checkin[0] > 0:
-                return True
-            
-            return False
+            # Only check if they're in the same organization
+            return member_org_id == user_org_id
             
         # Regular organization admins can access members in their organization
         if session.get('is_admin'):
