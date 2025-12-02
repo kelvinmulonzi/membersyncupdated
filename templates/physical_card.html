@@ -32,9 +32,9 @@
         }
 
         .physical-card {
-            width: 3.375in; /* 85.6mm - Standard credit card width */
-            height: 2.125in; /* 53.98mm - Standard credit card height */
-            border-radius: 15px;
+            width: 86mm; 
+            height: 54mm; 
+            border-radius: 3.18mm;
             position: relative;
             overflow: hidden;
             box-shadow: 0 8px 20px rgba(0,0,0,0.15);
@@ -122,9 +122,9 @@
         /* Premium Member Information Panel */
         .member-info {
             background: rgba(255,255,255,0.15);
-            backdrop-filter: blur(10px);
+           /* backdrop-filter: blur(10px);*/
             border: 1px solid rgba(255,255,255,0.2);
-            border-radius: 8px;
+            border-radius: 2mm;
             padding: 8px;
             margin: 8px 0;
             position: relative;
@@ -162,7 +162,7 @@
             font-size: 8px;
             background: rgba(255,255,255,0.25);
             padding: 2px 6px;
-            border-radius: 4px;
+            border-radius: 1.5mm;
             display: inline-block;
             text-transform: uppercase;
             width: fit-content;
@@ -199,17 +199,17 @@
         }
 
         .status-indicator {
-            background: rgba(255,255,255,0.2);
-            border: 1px solid rgba(255,255,255,0.3);
-            border-radius: 4px;
-            padding: 3px 6px;
-            font-size: 6px;
-            font-weight: bold;
-            text-transform: uppercase;
-            letter-spacing: 0.2px;
-            backdrop-filter: blur(5px);
-            box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-        }
+    background: rgba(255,255,255,0.2);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 1.5mm;
+    padding: 3px 6px;
+    font-size: 6px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 0.2px;
+    /* backdrop-filter: blur(5px); */ /* REMOVED - causes blur in capture */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
 
         .status-active { background: rgba(76, 175, 80, 0.3); border-color: rgba(76, 175, 80, 0.5); }
         .status-warning { background: rgba(255, 152, 0, 0.3); border-color: rgba(255, 152, 0, 0.5); }
@@ -252,7 +252,7 @@
             width: 60px;
             height: 60px;
             background: white;
-            border-radius: 4px;
+            border-radius: 2mm;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -872,9 +872,20 @@
                 const originalText = event.target.innerHTML;
                 event.target.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
                 event.target.disabled = true;
+
+                // Optimize rendering quality
+cardClone.style.imageRendering = 'high-quality';
+cardClone.style.imageRendering = '-webkit-optimize-contrast';
+
+// Remove any filters that might cause blur
+const allElements = cardClone.querySelectorAll('*');
+allElements.forEach(el => {
+    el.style.filter = 'none';
+    el.style.webkitFilter = 'none';
+});
                 
                 const canvas = await html2canvas(cardElement, {
-                    scale: 3,
+                    scale: 6,
                     logging: false,
                     useCORS: true,
                     allowTaint: true,
@@ -906,7 +917,7 @@
             return Promise.resolve();
         }
 
-        async function captureCardSide(element, isFront) {
+async function captureCardSide(element, isFront) {
     const container = document.createElement('div');
     container.style.position = 'absolute';
     container.style.left = '-9999px';
@@ -927,6 +938,19 @@
     cardClone.style.boxShadow = 'none';
     cardClone.style.overflow = 'visible';
     
+    // Optimize rendering quality - CRITICAL FOR SHARPNESS
+    cardClone.style.imageRendering = 'high-quality';
+    cardClone.style.imageRendering = '-webkit-optimize-contrast';
+    
+    // Remove ALL filters and backdrop-filters that cause blur
+    const allElements = cardClone.querySelectorAll('*');
+    allElements.forEach(el => {
+        el.style.filter = 'none';
+        el.style.webkitFilter = 'none';
+        el.style.backdropFilter = 'none';
+        el.style.webkitBackdropFilter = 'none';
+    });
+    
     // For back card, ensure content is not cut off and preserve gradient
     if (!isFront) {
         const cardBack = cardClone.querySelector('.card-back');
@@ -935,7 +959,6 @@
             const originalBack = document.querySelector('.card-back');
             if (originalBack) {
                 const styles = window.getComputedStyle(originalBack);
-                // Explicitly set all background properties
                 cardBack.style.background = styles.background;
                 cardBack.style.backgroundColor = styles.backgroundColor;
                 cardBack.style.backgroundImage = styles.backgroundImage;
@@ -950,7 +973,6 @@
             cardBack.style.display = 'flex';
             cardBack.style.flexDirection = 'column';
             
-            // Adjust specific elements in the back card if needed
             const qrSection = cardBack.querySelector('.qr-section');
             if (qrSection) {
                 qrSection.style.margin = '5px 0';
@@ -974,14 +996,14 @@
         });
     }));
 
-    // Add small delay to ensure rendering
-    await new Promise(resolve => setTimeout(resolve, 200));
+    // Add delay to ensure rendering
+    await new Promise(resolve => setTimeout(resolve, 300));
 
-    // Capture the card - use original settings for front, adjusted for back
+    // Capture with maximum quality settings
     const canvas = await html2canvas(cardClone, {
-        scale: isFront ? 2 : 3,
+        scale: 6, // Maximum scale for sharpest output
         backgroundColor: isFront ? null : '#ffffff',
-        logging: isFront ? true : false,
+        logging: false,
         useCORS: true,
         allowTaint: true,
         removeContainer: true,
@@ -990,7 +1012,13 @@
         windowWidth: document.documentElement.offsetWidth,
         windowHeight: document.documentElement.offsetHeight,
         onclone: (clonedDoc) => {
-            // Only adjust back card in cloned document
+            // Remove filters in cloned document too
+            const clonedElements = clonedDoc.querySelectorAll('*');
+            clonedElements.forEach(el => {
+                el.style.filter = 'none';
+                el.style.backdropFilter = 'none';
+            });
+            
             if (!isFront) {
                 const backCard = clonedDoc.querySelector('.card-back');
                 if (backCard) {
