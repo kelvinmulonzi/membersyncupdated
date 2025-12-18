@@ -1598,6 +1598,7 @@ def require_admin(f):
 
 
 def require_member_access(f):
+    """Decorator to require member access (admin, superadmin, or global admin)"""
     """Fixed decorator to ensure user has access to the requested member"""
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -1636,6 +1637,26 @@ def require_organization_access(f):
             flash('Access denied to this organization.', 'danger')
             return redirect(url_for('dashboard'))
 
+        return f(*args, **kwargs)
+    return decorated_function
+
+def require_prepaid_access(f):
+    """Decorator to require prepaid management access (org admin or org superadmin only, no global admins)"""
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        # Explicitly block global admins from prepaid management
+        if session.get('is_global_superadmin'):
+            flash('Access denied. Global administrators cannot manage prepaid cards.', 'danger')
+            return redirect(url_for('dashboard'))
+            
+        # Check if user has org admin or superadmin privileges
+        is_admin = session.get('is_admin', False)
+        is_superadmin = session.get('is_superadmin', False)
+        
+        if not (is_admin or is_superadmin):
+            flash('Access denied. Organization administrator privileges required for prepaid management.', 'danger')
+            return redirect(url_for('dashboard'))
+            
         return f(*args, **kwargs)
     return decorated_function
 
@@ -4960,12 +4981,17 @@ def delete_member(membership_id):
 @app.route('/payments/<membership_id>', methods=['GET', 'POST'])
 @require_login
 def payments(membership_id):
-    """Enhanced payments route with prepaid payment option and proper access control"""
+    """Payments route with access control for viewing and adding payments"""
     try:
         # Check access first
         if not can_access_member(membership_id):
             flash('Access denied to this member.', 'danger')
             return redirect(url_for('members'))
+        
+        # Prevent global admins from adding payments
+        if request.method == 'POST' and session.get('is_global_superadmin'):
+            flash('Access denied. Global administrators cannot add payments.', 'danger')
+            return redirect(url_for('payments', membership_id=membership_id))
         
         # Get member's organization
         db = get_db()
@@ -11950,7 +11976,7 @@ def get_bonus_tiers(organization_id):
 
 @app.route('/prepaid_card/<membership_id>')
 @require_login
-@require_member_access
+@require_prepaid_access
 def prepaid_card_management(membership_id):
     """Prepaid card management page for a member"""
     try:
@@ -12015,7 +12041,7 @@ def prepaid_card_management(membership_id):
 
 @app.route('/prepaid_recharge/<membership_id>', methods=['POST'])
 @require_login
-@require_member_access
+@require_prepaid_access
 def prepaid_recharge(membership_id):
     """Process prepaid card recharge"""
     try:
@@ -12077,7 +12103,7 @@ def prepaid_recharge(membership_id):
 
 @app.route('/prepaid_usage/<membership_id>', methods=['POST'])
 @require_login
-@require_member_access
+@require_prepaid_access
 def prepaid_usage(membership_id):
     """Process prepaid balance usage"""
     try:
@@ -12127,6 +12153,7 @@ def prepaid_usage(membership_id):
 
 @app.route('/prepaid_bonus_tiers')
 @require_login
+@require_prepaid_access
 @require_superadmin
 def manage_bonus_tiers():
     """Manage bonus tiers for the organization"""

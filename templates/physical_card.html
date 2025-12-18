@@ -13,7 +13,6 @@
 
         body {
             font-family: 'Arial', 'Helvetica', sans-serif;
-            background: #f5f7fa;
             padding: 15px;
             display: flex;
             flex-direction: column;
@@ -37,13 +36,13 @@
             border-radius: 3.18mm;
             position: relative;
             overflow: hidden;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+          
             transition: transform 0.3s ease;
         }
 
         .physical-card:hover {
             transform: translateY(-2px);
-            box-shadow: 0 12px 24px rgba(0,0,0,0.2);
+            
         }
 
         /* FRONT SIDE - Premium Gradient */
@@ -61,7 +60,7 @@
 
         /* BACK SIDE - Clean White Design */
         .card-back {
-            background: linear-gradient(135deg, #ffffff 0%, #f8f9ff 50%, #f0f4ff 100%);
+            background: yellow;
             width: 100%;
             height: 100%;
             position: relative;
@@ -69,7 +68,7 @@
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            color: #1e3c72;
+            
         }
 
         /* Enhanced Front Side Elements */
@@ -251,7 +250,6 @@
         .qr-code {
             width: 60px;
             height: 60px;
-            background: white;
             border-radius: 2mm;
             display: flex;
             align-items: center;
@@ -366,6 +364,8 @@
             height: 24px;
             background: linear-gradient(90deg, #1e3c72 0%, #2a5298 25%, #3d6cb9 50%, #2a5298 75%, #1e3c72 100%);
             z-index: 1;
+            color: white !important;
+       
         }
 
         .signature-strip {
@@ -489,7 +489,7 @@
             }
             
             .physical-card {
-                box-shadow: 0 1px 3px rgba(0,0,0,0.3) !important;
+              
                 page-break-inside: avoid;
             }
             
@@ -889,7 +889,7 @@ allElements.forEach(el => {
                     logging: false,
                     useCORS: true,
                     allowTaint: true,
-                    backgroundColor: null
+                    
                 });
                 
                 const link = document.createElement('a');
@@ -923,8 +923,7 @@ async function captureCardSide(element, isFront) {
     container.style.left = '-9999px';
     container.style.top = '0';
     container.style.padding = '20px';
-    container.style.background = 'transparent';
-    container.style.overflow = 'visible';
+    container.style.background = 'white';
     document.body.appendChild(container);
 
     // Clone the card
@@ -951,34 +950,35 @@ async function captureCardSide(element, isFront) {
         el.style.webkitBackdropFilter = 'none';
     });
     
-    // For back card, ensure content is not cut off and preserve gradient
-    if (!isFront) {
-        const cardBack = cardClone.querySelector('.card-back');
-        if (cardBack) {
-            // Preserve original background and colors
-            const originalBack = document.querySelector('.card-back');
-            if (originalBack) {
-                const styles = window.getComputedStyle(originalBack);
-                cardBack.style.background = styles.background;
-                cardBack.style.backgroundColor = styles.backgroundColor;
-                cardBack.style.backgroundImage = styles.backgroundImage;
-                cardBack.style.backgroundSize = styles.backgroundSize;
-                cardBack.style.backgroundPosition = styles.backgroundPosition;
-                cardBack.style.backgroundRepeat = styles.backgroundRepeat;
-            }
+    // Preserve colors and backgrounds for BOTH front and back
+    const cardInner = isFront ? cardClone.querySelector('.card-front') : cardClone.querySelector('.card-back');
+    if (cardInner) {
+        const originalInner = isFront ? document.querySelector('.card-front') : document.querySelector('.card-back');
+        if (originalInner) {
+            const styles = window.getComputedStyle(originalInner);
+            // Copy all background-related properties
+            cardInner.style.background = styles.background;
+            cardInner.style.backgroundColor = styles.backgroundColor;
+            cardInner.style.backgroundImage = styles.backgroundImage;
+            cardInner.style.backgroundSize = styles.backgroundSize;
+            cardInner.style.backgroundPosition = styles.backgroundPosition;
+            cardInner.style.backgroundRepeat = styles.backgroundRepeat;
+            cardInner.style.color = styles.color;
+        }
+        
+        if (!isFront) {
+            cardInner.style.overflow = 'visible';
+            cardInner.style.height = 'auto';
+            cardInner.style.minHeight = '100%';
+            cardInner.style.display = 'flex';
+            cardInner.style.flexDirection = 'column';
             
-            cardBack.style.overflow = 'visible';
-            cardBack.style.height = 'auto';
-            cardBack.style.minHeight = '100%';
-            cardBack.style.display = 'flex';
-            cardBack.style.flexDirection = 'column';
-            
-            const qrSection = cardBack.querySelector('.qr-section');
+            const qrSection = cardInner.querySelector('.qr-section');
             if (qrSection) {
                 qrSection.style.margin = '5px 0';
             }
             
-            const backFooter = cardBack.querySelector('.back-footer');
+            const backFooter = cardInner.querySelector('.back-footer');
             if (backFooter) {
                 backFooter.style.marginTop = 'auto';
             }
@@ -1002,7 +1002,7 @@ async function captureCardSide(element, isFront) {
     // Capture with maximum quality settings
     const canvas = await html2canvas(cardClone, {
         scale: 6, // Maximum scale for sharpest output
-        backgroundColor: isFront ? null : '#ffffff',
+        backgroundColor: null, // Preserve transparency/backgrounds
         logging: false,
         useCORS: true,
         allowTaint: true,
@@ -1019,18 +1019,31 @@ async function captureCardSide(element, isFront) {
                 el.style.backdropFilter = 'none';
             });
             
-            if (!isFront) {
-                const backCard = clonedDoc.querySelector('.card-back');
-                if (backCard) {
-                    const originalBack = document.querySelector('.card-back');
-                    if (originalBack) {
-                        const styles = window.getComputedStyle(originalBack);
-                        backCard.style.background = styles.background;
-                        backCard.style.backgroundImage = styles.backgroundImage;
-                    }
-                    backCard.style.overflow = 'visible';
-                    backCard.style.height = 'auto';
-                    backCard.style.minHeight = '100%';
+            // Preserve background colors in cloned document
+            const clonedCardInner = isFront ? 
+                clonedDoc.querySelector('.card-front') : 
+                clonedDoc.querySelector('.card-back');
+                
+            if (clonedCardInner) {
+                const originalInner = isFront ? 
+                    document.querySelector('.card-front') : 
+                    document.querySelector('.card-back');
+                    
+                if (originalInner) {
+                    const styles = window.getComputedStyle(originalInner);
+                    clonedCardInner.style.background = styles.background;
+                    clonedCardInner.style.backgroundColor = styles.backgroundColor;
+                    clonedCardInner.style.backgroundImage = styles.backgroundImage;
+                    clonedCardInner.style.backgroundSize = styles.backgroundSize;
+                    clonedCardInner.style.backgroundPosition = styles.backgroundPosition;
+                    clonedCardInner.style.backgroundRepeat = styles.backgroundRepeat;
+                    clonedCardInner.style.color = styles.color;
+                }
+                
+                if (!isFront) {
+                    clonedCardInner.style.overflow = 'visible'; 
+                    clonedCardInner.style.height = 'auto';
+                    clonedCardInner.style.minHeight = '100%';
                 }
             }
         }
@@ -1244,6 +1257,7 @@ async function captureCardSide(element, isFront) {
             cards.forEach(card => {
                 card.style.imageRendering = 'crisp-edges';
                 card.style.shapeRendering = 'crispEdges';
+               
             });
         }
 
