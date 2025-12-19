@@ -863,50 +863,79 @@
     
     <script>
         // Function to download card as PNG
-        async function downloadAsImage(side) {
-            try {
-                const cardElement = side === 'front' ? 
-                    document.querySelector('.physical-card:first-child') : 
-                    document.querySelector('.physical-card:last-child');
-                
-                const originalText = event.target.innerHTML;
-                event.target.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-                event.target.disabled = true;
-
-                // Optimize rendering quality
-cardClone.style.imageRendering = 'high-quality';
-cardClone.style.imageRendering = '-webkit-optimize-contrast';
-
-// Remove any filters that might cause blur
-const allElements = cardClone.querySelectorAll('*');
-allElements.forEach(el => {
-    el.style.filter = 'none';
-    el.style.webkitFilter = 'none';
-});
-                
-                const canvas = await html2canvas(cardElement, {
-                    scale: 6,
-                    logging: false,
-                    useCORS: true,
-                    allowTaint: true,
-                    
-                });
-                
-                const link = document.createElement('a');
-                link.download = `card-${side}-${new Date().toISOString().slice(0,10)}.png`;
-                link.href = canvas.toDataURL('image/png');
-                link.click();
-                
-                event.target.innerHTML = originalText;
-                event.target.disabled = false;
-                
-            } catch (error) {
-                console.error('Error generating image:', error);
-                alert('Error generating image. Please try again.');
-                event.target.innerHTML = originalText;
-                event.target.disabled = false;
-            }
+async function downloadAsImage(side) {
+    let originalButton = null;
+    let originalText = '';
+    
+    try {
+        const cardElement = side === 'front' ? 
+            document.querySelector('.physical-card:first-child') : 
+            document.querySelector('.physical-card:last-child');
+        
+        if (!cardElement) {
+            throw new Error('Card element not found');
         }
+        
+        // Store button state
+        originalButton = event.target;
+        originalText = originalButton.innerHTML;
+        originalButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+        originalButton.disabled = true;
+        
+        // Force a synchronous reflow and ensure the UI updates
+        const forceReflow = cardElement.offsetHeight;
+        await new Promise(resolve => {
+            // Use double requestAnimationFrame to ensure rendering is complete
+            requestAnimationFrame(() => {
+                requestAnimationFrame(async () => {
+                    // Small delay to ensure all paints are complete
+                    await new Promise(r => setTimeout(r, 50));
+                    resolve();
+                });
+            });
+        });
+
+        // Capture with optimized settings
+        const canvas = await html2canvas(cardElement, {
+            scale: 2,  // Good balance between quality and performance
+            backgroundColor: null,  // Keep transparent
+            logging: false,
+            useCORS: true,
+            allowTaint: true,
+            removeContainer: true,
+            scrollX: 0,
+            scrollY: 0,
+            windowWidth: cardElement.offsetWidth,
+            windowHeight: cardElement.offsetHeight,
+            // Add these settings for better rendering
+            imageTimeout: 2000,  // 2 second timeout for images
+            onclone: (document, element) => {
+                // Ensure the card is visible during capture
+                element.style.visibility = 'visible';
+                element.style.opacity = '1';
+            }
+        });
+
+        // Create and trigger download
+        const link = document.createElement('a');
+        const timestamp = new Date().getTime();
+        link.download = `card-${side}-${timestamp}.png`;
+        link.href = canvas.toDataURL('image/png', 1.0); // Maximum quality
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+    } catch (error) {
+        console.error('Error generating image:', error);
+        alert('Error generating image. Please try again.');
+    } finally {
+        // Restore button state
+        if (originalButton) {
+            originalButton.innerHTML = originalText;
+            originalButton.disabled = false;
+        }
+    }
+}
         
         // Function to download canvas as PNG
         function downloadCanvasAsPNG(canvas, filename) {
@@ -1002,7 +1031,7 @@ async function captureCardSide(element, isFront) {
     // Capture with maximum quality settings
     const canvas = await html2canvas(cardClone, {
         scale: 6,
-        backgroundColor: '#FFFFFF', // Force white background for proper rendering
+        backgroundColor: isFront ? 'transparent' : '#FFFFFF', // Use transparent for front, white for back
         logging: false,
         useCORS: true,
         allowTaint: true,

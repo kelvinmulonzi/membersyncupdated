@@ -910,6 +910,7 @@
             border: none;
         }
         
+        
         .custom-language-selector option:hover {
             background: #f8f9fa;
         }
@@ -1136,9 +1137,7 @@
             
             <!-- Organization Info Display -->
             
-            <div class="collapse navbar-collapse" id="navbarNav">
-
-                    <!-- Navigation items -->
+          <div class="collapse navbar-collapse" id="navbarNav">
                     {% if session.admin %}
                         <!-- Main Navigation Group -->
                         <div class="navbar-nav me-auto">
@@ -1380,9 +1379,23 @@
                             </div>
                         </div>
                     {% else %}
-                        <a class="nav-link" href="{{ url_for('login') }}"><i class="fas fa-sign-in-alt"></i> Login</a>
-                        <a class="nav-link" href="{{ url_for('signup') }}"><i class="fas fa-user-plus"></i> Sign Up</a>
-                    {% endif %}
+    <!-- Push items to the right when not logged in -->
+    <div class="navbar-nav ms-auto">
+        <!-- Custom Professional Language Selector -->
+        <div class="nav-item">
+            <div class="custom-translate-widget">
+                <select id="custom-language-selector" class="custom-language-selector" onchange="changeLanguageCustom(this.value)" style="color: white !important;">
+                    <option value="en" selected>🇺🇸 English</option>
+                    <option value="fr">🇫🇷 Français</option>
+                    <option value="es">🇪🇸 Español</option>
+                </select>
+            </div>
+        </div>
+        
+        <a class="nav-link text-white" href="{{ url_for('login') }}" style="color: white !important;"><i class="fas fa-sign-in-alt"></i> Login</a>
+        <a class="nav-link text-white" href="{{ url_for('signup') }}" style="color: white !important;"><i class="fas fa-user-plus"></i> Sign Up</a>
+    </div>
+{% endif %}
                 </div>
             </div>
         </div>
