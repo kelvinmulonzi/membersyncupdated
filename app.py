@@ -6866,17 +6866,19 @@ def communication_center():
             if filter_org_id:
                 # Filter by specific organization
                 cursor.execute('''
-                    SELECT membership_id, name, email, phone, membership_type, status
-                    FROM members 
-                    WHERE organization_id = ?
-                    ORDER BY name
+                    SELECT m.membership_id, m.name, m.email, m.phone, m.membership_type, m.status, m.organization_id, o.name as org_name
+                    FROM members m
+                    JOIN organizations o ON m.organization_id = o.id
+                    WHERE m.organization_id = ?
+                    ORDER BY m.name
                 ''', (filter_org_id,))
             else:
                 # Get all members from all organizations
                 cursor.execute('''
-                    SELECT membership_id, name, email, phone, membership_type, status
-                    FROM members 
-                    ORDER BY name
+                    SELECT m.membership_id, m.name, m.email, m.phone, m.membership_type, m.status, m.organization_id, o.name as org_name
+                    FROM members m
+                    JOIN organizations o ON m.organization_id = o.id
+                    ORDER BY m.name
                 ''')
             
             members = cursor.fetchall()
@@ -6892,10 +6894,11 @@ def communication_center():
                 return redirect(url_for('dashboard'))
             
             cursor.execute('''
-                SELECT membership_id, name, email, phone, membership_type, status
-                FROM members 
-                WHERE organization_id = ?
-                ORDER BY name
+                SELECT m.membership_id, m.name, m.email, m.phone, m.membership_type, m.status, m.organization_id, o.name as org_name
+                FROM members m
+                JOIN organizations o ON m.organization_id = o.id
+                WHERE m.organization_id = ?
+                ORDER BY m.name
             ''', (organization_id,))
             members = cursor.fetchall()
             
@@ -6947,23 +6950,19 @@ def communication_center():
 @app.route('/send_message', methods=['POST'])
 @require_login
 def send_message():
-    """Send message to selected members with optional file attachment"""
+    """Send message to selected members or entire organization with optional file attachment"""
     try:
-        selected_members = request.form.getlist('selected_members')
+        recipient_type = request.form.get('recipient_type', 'individual')
         message_type = request.form.get('message_type')
         subject = request.form.get('subject', '')
         message_content = request.form.get('message_content', '')
-        attachment = request.files.get('attachment')  # NEW: Get uploaded file
-        
-        if not selected_members:
-            flash("Please select at least one member.", "warning")
-            return redirect(url_for('communication_center'))
+        attachment = request.files.get('attachment')
         
         if not message_content:
             flash("Please enter a message.", "warning")
             return redirect(url_for('communication_center'))
         
-        # NEW: Handle file upload
+        # Handle file upload
         attachment_path = None
         attachment_filename = None
         if attachment and attachment.filename:
@@ -6996,33 +6995,63 @@ def send_message():
         db = get_db()
         cursor = db.cursor()
         
-        placeholders = ','.join(['?' for _ in selected_members])
-        
-        # Check user role and apply appropriate filters
-        if is_global_superadmin():
-            cursor.execute(f'''
-                SELECT membership_id, name, email, phone, organization_id
-                FROM members 
-                WHERE membership_id IN ({placeholders})
-            ''', selected_members)
-            members_data = cursor.fetchall()
-            
-        else:
-            organization_id = session.get('organization_id')
-            if not organization_id:
-                flash("Organization not found. Please contact administrator.", "danger")
+        if recipient_type == 'individual':
+            selected_members = request.form.getlist('selected_members')
+            if not selected_members:
+                flash("Please select at least one member.", "warning")
                 return redirect(url_for('communication_center'))
+                
+            placeholders = ','.join(['?' for _ in selected_members])
             
-            cursor.execute(f'''
+            # Check user role and apply appropriate filters
+            if is_global_superadmin():
+                cursor.execute(f'''
+                    SELECT membership_id, name, email, phone, organization_id
+                    FROM members 
+                    WHERE membership_id IN ({placeholders})
+                ''', selected_members)
+                members_data = cursor.fetchall()
+                
+            else:
+                organization_id = session.get('organization_id')
+                if not organization_id:
+                    flash("Organization not found. Please contact administrator.", "danger")
+                    return redirect(url_for('communication_center'))
+                
+                cursor.execute(f'''
+                    SELECT membership_id, name, email, phone, organization_id
+                    FROM members 
+                    WHERE membership_id IN ({placeholders}) AND organization_id = ?
+                ''', selected_members + [organization_id])
+                
+                members_data = cursor.fetchall()
+                
+                if len(members_data) != len(selected_members):
+                    flash("Some selected members don't belong to your organization.", "danger")
+                    return redirect(url_for('communication_center'))
+        
+        else:  # Organization-based sending
+            if is_global_superadmin():
+                organization_id = request.form.get('organization_id')
+                if not organization_id:
+                    flash("Please select an organization.", "warning")
+                    return redirect(url_for('communication_center'))
+            else:
+                organization_id = session.get('organization_id')
+                if not organization_id:
+                    flash("Organization not found. Please contact administrator.", "danger")
+                    return redirect(url_for('communication_center'))
+            
+            # Get all active members from the selected organization
+            cursor.execute('''
                 SELECT membership_id, name, email, phone, organization_id
                 FROM members 
-                WHERE membership_id IN ({placeholders}) AND organization_id = ?
-            ''', selected_members + [organization_id])
-            
+                WHERE organization_id = ? AND status = 'active'
+            ''', (organization_id,))
             members_data = cursor.fetchall()
             
-            if len(members_data) != len(selected_members):
-                flash("Some selected members don't belong to your organization.", "danger")
+            if not members_data:
+                flash("No active members found in the selected organization.", "warning")
                 return redirect(url_for('communication_center'))
         
         # Proceed with sending messages

@@ -73,24 +73,47 @@
             </div>
             <div class="card-body">
                 <form method="POST" action="{{ url_for('send_message') }}" enctype="multipart/form-data">
-                    <!-- Member Selection -->
+                    <!-- Organization Selection -->
                     <div class="row mb-3">
                         <div class="col-12">
                             <label class="form-label"><strong>Select Recipients:</strong></label>
+                            <div class="mb-3">
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="recipient_type" id="recipient_type_individual" value="individual" checked>
+                                    <label class="form-check-label" for="recipient_type_individual">Individual Members</label>
+                                </div>
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="recipient_type" id="recipient_type_org" value="organization">
+                                    <label class="form-check-label" for="recipient_type_org">Entire Organization</label>
+                                </div>
+                            </div>
+                            
                             <div class="row">
                                 <div class="col-md-3">
-                                    <div class="card">
-                                        <div class="card-header bg-light">
-                                            <div class="form-check">
-                                                <input class="form-check-input" type="checkbox" id="select-all">
-                                                <label class="form-check-label" for="select-all">
-                                                    <strong>Select All</strong>
-                                                </label>
-                                            </div>
+                                    <!-- Individual Member Selection (shown by default) -->
+                                    <div id="individual-selection">
+                                        {% if is_global_superadmin %}
+                                        <div class="mb-2">
+                                            <select class="form-select form-select-sm" id="member-list-filter">
+                                                <option value="all">All Organizations</option>
+                                                {% for org in organizations %}
+                                                <option value="{{ org.id }}">{{ org.name }}</option>
+                                                {% endfor %}
+                                            </select>
                                         </div>
-                                        <div class="card-body" style="max-height: 300px; overflow-y: auto;">
+                                        {% endif %}
+                                        <div class="card">
+                                            <div class="card-header bg-light">
+                                                <div class="form-check">
+                                                    <input class="form-check-input" type="checkbox" id="select-all">
+                                                    <label class="form-check-label" for="select-all">
+                                                        <strong>Select All</strong>
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        <div class="card-body" style="max-height: 400px; overflow-y: auto;">
                                             {% for member in members %}
-                                            <div class="form-check mb-2">
+                                            <div class="form-check mb-2 member-item" data-org-id="{{ member[6] }}">
                                                 <input class="form-check-input member-checkbox"
                                                        type="checkbox"
                                                        name="selected_members"
@@ -101,6 +124,9 @@
                                                         <strong>{{ member[1] }}</strong>
                                                         <br>
                                                         <small class="text-muted">{{ member[0] }} - {{ member[4] }}</small>
+                                                        {% if is_global_superadmin %}
+                                                        <br><small class="text-muted">{{ member[7] }}</small>
+                                                        {% endif %}
                                                         <br>
                                                         {% if member[2] %}<small class="text-success"><i class="fas fa-envelope"></i></small>{% endif %}
                                                         {% if member[3] %}<small class="text-info"><i class="fas fa-sms"></i></small>{% endif %}
@@ -114,8 +140,24 @@
                                         </div>
                                     </div>
                                 </div>
+                                
+                                <!-- Organization Selection (hidden by default) -->
+                                <div id="organization-selection" style="display: none;">
+                                    <div class="card">
+                                        <div class="card-body">
+                                            <label for="organization_id" class="form-label"><strong>Select Organization</strong></label>
+                                            <select class="form-select" id="organization_id" name="organization_id">
+                                                {% for org in organizations %}
+                                                <option value="{{ org.id }}">{{ org.name }}</option>
+                                                {% endfor %}
+                                            </select>
+                                            <div class="form-text mt-2">This will send the message to all members in the selected organization.</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
 
-                                <div class="col-md-9">
+                            <div class="col-md-9">
                                     <!-- Message Type -->
                                     <div class="mb-3">
                                         <label class="form-label"><strong>Message Type:</strong></label>
@@ -262,6 +304,52 @@
 {% endwith %}
 
 <script>
+// Toggle between individual and organization selection
+document.addEventListener('DOMContentLoaded', function() {
+    const individualRadio = document.getElementById('recipient_type_individual');
+    const orgRadio = document.getElementById('recipient_type_org');
+    const individualSelection = document.getElementById('individual-selection');
+    const orgSelection = document.getElementById('organization-selection');
+    
+    function updateSelectionUI() {
+        if (individualRadio.checked) {
+            individualSelection.style.display = 'block';
+            orgSelection.style.display = 'none';
+        } else {
+            individualSelection.style.display = 'none';
+            orgSelection.style.display = 'block';
+        }
+    }
+    
+    if (individualRadio && orgRadio) {
+        individualRadio.addEventListener('change', updateSelectionUI);
+        orgRadio.addEventListener('change', updateSelectionUI);
+        
+        // Initialize UI
+        updateSelectionUI();
+    }
+});
+
+// Filter member list by organization (for Global Admin)
+const memberListFilter = document.getElementById('member-list-filter');
+if (memberListFilter) {
+    memberListFilter.addEventListener('change', function() {
+        const selectedOrgId = this.value;
+        const memberItems = document.querySelectorAll('.member-item');
+        
+        memberItems.forEach(item => {
+            if (selectedOrgId === 'all' || item.getAttribute('data-org-id') === selectedOrgId) {
+                item.style.display = 'block';
+            } else {
+                item.style.display = 'none';
+                // Uncheck hidden items to prevent accidental sending
+                const checkbox = item.querySelector('.member-checkbox');
+                if (checkbox) checkbox.checked = false;
+            }
+        });
+    });
+}
+
 // Select all functionality
 document.getElementById('select-all').addEventListener('change', function() {
     const checkboxes = document.querySelectorAll('.member-checkbox');
