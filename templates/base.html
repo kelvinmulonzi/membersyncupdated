@@ -458,7 +458,20 @@
         /* Fix navbar height - increased even more */
         .navbar {
             min-height: 80px !important;
-            max-height: 90px !important;
+            height: auto !important;
+            overflow: visible !important;
+            position: relative !important;
+            z-index: 1030 !important;
+        }
+        
+        /* Ensure nav links are white on desktop */
+        @media (min-width: 992px) {
+            .navbar-dark .navbar-nav .nav-link {
+                color: rgba(255,255,255,0.9);
+            }
+            .navbar-dark .navbar-nav .nav-link:hover {
+                color: #fff;
+            }
         }
         
         /* Fix custom language selector spacing */
@@ -684,7 +697,8 @@
         /* Fix navbar height in translations - increased even more */
         .goog-te-translated .navbar {
             min-height: 80px !important;
-            max-height: 90px !important;
+            height: auto !important;
+            overflow: visible !important;
         }
         
         /* Handle very long translated text */
@@ -723,20 +737,71 @@
         
         /* Responsive navbar adjustments for mobile */
         @media (max-width: 991px) {
+            /* Mobile Menu Card Style */
+            .navbar-collapse {
+                background-color: white;
+                padding: 15px;
+                border-radius: 10px;
+                box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                margin-top: 15px;
+                border: 1px solid rgba(0,0,0,0.05);
+                position: relative;
+                z-index: 1050;
+            }
+
             .navbar-nav {
                 flex-direction: column !important;
                 width: 100% !important;
-                margin-top: 1rem !important;
+                margin-top: 0 !important;
+                flex-wrap: nowrap !important;
+                padding-bottom: 0 !important;
             }
             
             .navbar-nav .nav-item {
-                margin: 0.25rem 0 !important;
+                margin: 2px 0 !important;
                 width: 100% !important;
             }
             
             .navbar-nav .nav-link {
-                text-align: center !important;
-                padding: 0.75rem 1rem !important;
+                text-align: left !important;
+                padding: 10px 15px !important;
+                border-radius: 5px;
+                color: #333 !important; /* Force dark text on white card */
+            }
+
+            .navbar-nav .nav-link:hover {
+                background-color: #f8f9fa;
+                color: #0d6efd !important;
+            }
+
+            .navbar-nav .nav-link i {
+                color: #0d6efd !important;
+                width: 25px;
+                text-align: center;
+            }
+
+            /* Fix language widget container in mobile */
+            .custom-translate-widget {
+                width: 100% !important;
+                margin: 5px 0 !important;
+                display: block !important;
+            }
+
+            /* Fix language selector in mobile card */
+            .custom-language-selector {
+                color: #333 !important;
+                border-color: #dee2e6 !important;
+                background-color: #f8f9fa !important;
+                width: 100%;
+                margin-bottom: 0 !important;
+                padding: 10px 35px 10px 15px !important;
+                background-position: right 15px center !important;
+                background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23333333' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e") !important;
+                background-repeat: no-repeat !important;
+                background-size: 16px 12px !important;
+                white-space: nowrap !important;
+                overflow: hidden !important;
+                text-overflow: ellipsis !important;
             }
         }
         
@@ -800,6 +865,7 @@
         .card-footer .custom-language-selector,
         .card .custom-language-selector {
             background: #ffffff !important;
+            background-color: #ffffff !important;
             border: 2px solid #007bff !important;
             color: #495057 !important;
             font-size: 0.875rem !important;
@@ -811,6 +877,10 @@
             margin: 0 auto !important;
             width: 100% !important;
             max-width: 200px !important;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23333333' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m1 6 7 7 7-7'/%3e%3c/svg%3e") !important;
+            background-repeat: no-repeat !important;
+            background-position: right 0.75rem center !important;
+            background-size: 16px 12px !important;
         }
         
         .card-footer .custom-language-selector:hover,
@@ -1381,19 +1451,19 @@
                     {% else %}
     <!-- Push items to the right when not logged in -->
     <div class="navbar-nav ms-auto">
+        <a class="nav-link" href="{{ url_for('login') }}"><i class="fas fa-sign-in-alt"></i> Login</a>
+        <a class="nav-link" href="{{ url_for('signup') }}"><i class="fas fa-user-plus"></i> Sign Up</a>
+        
         <!-- Custom Professional Language Selector -->
         <div class="nav-item">
             <div class="custom-translate-widget">
-                <select id="custom-language-selector" class="custom-language-selector" onchange="changeLanguageCustom(this.value)" style="color: white !important;">
+                <select id="custom-language-selector" class="custom-language-selector" onchange="changeLanguageCustom(this.value)">
                     <option value="en" selected>🇺🇸 English</option>
                     <option value="fr">🇫🇷 Français</option>
                     <option value="es">🇪🇸 Español</option>
                 </select>
             </div>
         </div>
-        
-        <a class="nav-link text-white" href="{{ url_for('login') }}" style="color: white !important;"><i class="fas fa-sign-in-alt"></i> Login</a>
-        <a class="nav-link text-white" href="{{ url_for('signup') }}" style="color: white !important;"><i class="fas fa-user-plus"></i> Sign Up</a>
     </div>
 {% endif %}
                 </div>
