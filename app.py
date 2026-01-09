@@ -6989,26 +6989,37 @@ def send_message():
         
         else:  # Organization-based sending
             if is_global_superadmin():
-                organization_id = request.form.get('organization_id')
-                if not organization_id:
-                    flash("Please select an organization.", "warning")
+                organization_ids = request.form.getlist('selected_organizations')
+                if not organization_ids:
+                    flash("Please select at least one organization.", "warning")
                     return redirect(url_for('communication_center'))
+                
+                placeholders = ','.join(['?' for _ in organization_ids])
+                
+                # Get all active members from the selected organizations
+                cursor.execute(f'''
+                    SELECT membership_id, name, email, phone, organization_id
+                    FROM members 
+                    WHERE organization_id IN ({placeholders}) AND status = 'active'
+                ''', organization_ids)
+                members_data = cursor.fetchall()
+                
             else:
                 organization_id = session.get('organization_id')
                 if not organization_id:
                     flash("Organization not found. Please contact administrator.", "danger")
                     return redirect(url_for('communication_center'))
-            
-            # Get all active members from the selected organization
-            cursor.execute('''
-                SELECT membership_id, name, email, phone, organization_id
-                FROM members 
-                WHERE organization_id = ? AND status = 'active'
-            ''', (organization_id,))
-            members_data = cursor.fetchall()
+                
+                # Get all active members from the selected organization
+                cursor.execute('''
+                    SELECT membership_id, name, email, phone, organization_id
+                    FROM members 
+                    WHERE organization_id = ? AND status = 'active'
+                ''', (organization_id,))
+                members_data = cursor.fetchall()
             
             if not members_data:
-                flash("No active members found in the selected organization.", "warning")
+                flash("No active members found in the selected organization(s).", "warning")
                 return redirect(url_for('communication_center'))
         
         # Proceed with sending messages

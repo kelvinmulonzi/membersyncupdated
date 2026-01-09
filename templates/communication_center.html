@@ -144,14 +144,28 @@
                                 <!-- Organization Selection (hidden by default) -->
                                 <div id="organization-selection" style="display: none;">
                                     <div class="card">
-                                        <div class="card-body">
-                                            <label for="organization_id" class="form-label"><strong>Select Organization</strong></label>
-                                            <select class="form-select" id="organization_id" name="organization_id">
+                                        <div class="card-header bg-light">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" id="select-all-orgs">
+                                                <label class="form-check-label" for="select-all-orgs">
+                                                    <strong>Select All Organizations</strong>
+                                                </label>
+                                            </div>
+                                        </div>
+                                        <div class="card-body" style="max-height: 400px; overflow-y: auto;">
+                                            {% if organizations %}
                                                 {% for org in organizations %}
-                                                <option value="{{ org.id }}">{{ org.name }}</option>
+                                                <div class="form-check mb-2">
+                                                    <input class="form-check-input org-checkbox" type="checkbox" name="selected_organizations" value="{{ org.id }}" id="org-{{ org.id }}">
+                                                    <label class="form-check-label" for="org-{{ org.id }}">{{ org.name }}</label>
+                                                </div>
                                                 {% endfor %}
-                                            </select>
-                                            <div class="form-text mt-2">This will send the message to all members in the selected organization.</div>
+                                            {% else %}
+                                                <p class="text-muted mb-0">Your organization is automatically selected.</p>
+                                            {% endif %}
+                                        </div>
+                                        <div class="card-footer text-muted">
+                                            <small>This will send the message to all members in the selected organizations.</small>
                                         </div>
                                     </div>
                                 </div>
@@ -357,6 +371,17 @@ document.getElementById('select-all').addEventListener('change', function() {
         checkbox.checked = this.checked;
     });
 });
+
+// Select all organizations functionality
+const selectAllOrgs = document.getElementById('select-all-orgs');
+if (selectAllOrgs) {
+    selectAllOrgs.addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.org-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = this.checked;
+        });
+    });
+}
 
 // Show/hide subject field based on message type
 document.querySelectorAll('input[name="message_type"]').forEach(radio => {
