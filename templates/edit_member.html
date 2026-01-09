@@ -1,6 +1,11 @@
 {% extends "base.html" %}
 {% block title %}Edit Member - {{ membership_id }}{% endblock %}
 {% block content %}
+<!-- Intl-Tel-Input CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/css/intlTelInput.css">
+<style>
+    .iti { width: 100%; }
+</style>
 <div class="row justify-content-center">
     <div class="col-md-10">
         <div class="card">
@@ -35,7 +40,8 @@
 
                             <div class="mb-3">
                                 <label for="phone" class="form-label">Phone Number</label>
-                                <input type="text" class="form-control" id="phone" name="phone" value="{{ member[2] or '' }}">
+                                <input type="tel" class="form-control" id="phone_input" value="{{ member[2] or '' }}">
+                                <input type="hidden" id="phone" name="phone" value="{{ member[2] or '' }}">
                             </div>
 
                             <div class="mb-3">
@@ -231,6 +237,35 @@
 </style>
 
 <script>
+// Initialize Intl-Tel-Input
+const phoneInput = document.querySelector("#phone_input");
+const hiddenInput = document.querySelector("#phone");
+
+// Load the library script dynamically
+const script = document.createElement('script');
+script.src = "https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/intlTelInput.min.js";
+script.onload = function() {
+    const iti = window.intlTelInput(phoneInput, {
+        utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js",
+        initialCountry: "auto",
+        geoIpLookup: callback => callback("cm"), // Default to CM if auto fails
+        separateDialCode: true,
+        preferredCountries: [
+            "cm", "ng", "ke", "gh", "za", "fr", "us", "gb", "ca",
+            "dz", "ao", "bj", "bw", "bf", "bi", "cv", "cf", "td", "km", "cg", "cd", "dj", 
+            "eg", "gq", "er", "sz", "et", "ga", "gm", "gn", "gw", "ci", "ls", "lr", "ly", 
+            "mg", "mw", "ml", "mr", "mu", "ma", "mz", "na", "ne", "rw", "st", "sn", "sc", 
+            "sl", "so", "ss", "sd", "tz", "tg", "tn", "ug", "zm", "zw"
+        ]
+    });
+
+    // Update hidden input on form submit
+    document.querySelector("form").addEventListener("submit", function() {
+        hiddenInput.value = iti.getNumber();
+    });
+};
+document.head.appendChild(script);
+
 function showRemovePhotoOption() {
     document.getElementById('remove-photo-option').style.display = 'block';
 }

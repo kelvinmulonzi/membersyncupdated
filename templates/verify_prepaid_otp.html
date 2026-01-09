@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card shadow">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">🔐 Verify Prepaid Transaction</h4>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        An OTP has been sent to the member's email and phone number.
+                        Please enter it below to confirm the transaction of <strong>{{ currency_symbol }}{{ "%.2f"|format(amount) }}</strong>.
+                    </div>
+                    
+                    <form method="POST" action="{{ url_for('verify_prepaid_otp') }}">
+                        <div class="mb-3">
+                            <label for="otp" class="form-label">One-Time Password (OTP)</label>
+                            <input type="text" class="form-control form-control-lg text-center" id="otp" name="otp" placeholder="Enter 6-digit OTP" required maxlength="6" autocomplete="off" autofocus>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success btn-lg">Verify & Process Payment</button>
+                            <a href="{{ url_for('prepaid_card_management', membership_id=membership_id) }}" class="btn btn-outline-secondary">Cancel</a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

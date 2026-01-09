@@ -1,6 +1,11 @@
 {% extends "base.html" %}
 {% block title %}Register Member - MemberSync{% endblock %}
 {% block content %}
+<!-- Intl-Tel-Input CSS -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/css/intlTelInput.css">
+<style>
+    .iti { width: 100%; }
+</style>
 <div class="row justify-content-center">
     <div class="col-md-8">
         <div class="card">
@@ -23,20 +28,15 @@
                             
                             <div class="mb-3">
                                 <label for="phone" class="form-label">
-                                    <i class="fas fa-phone"></i> Phone Number (Cameroon) *
+                                    <i class="fas fa-phone"></i> Phone Number *
                                 </label>
-                                <div class="input-group">
-                                    <span class="input-group-text">
-                                        <img src="https://flagcdn.com/w20/cm.png" alt="CM" class="me-1"> +237
-                                    </span>
-                                    <input type="tel" class="form-control" id="phone" name="phone" 
-                                           placeholder="6 XX XX XX XX" 
-                                           pattern="[0-9\s\+\-\(\)]+"
-                                           required>
-                                </div>
+                                <input type="tel" class="form-control" id="phone_input" 
+                                       placeholder="Phone number" 
+                                       required>
+                                <input type="hidden" id="phone" name="phone">
                                 <small class="form-text text-muted">
                                     <i class="fas fa-info-circle"></i>
-                                    Examples: +237 6 89 68 62 24 or 689686224 or 6 89 68 62 24
+                                    Select country code and enter phone number
                                 </small>
                                 <div id="phone-validation-feedback" class="mt-1"></div>
                             </div>
@@ -258,33 +258,39 @@ function loadLocationsForOrg(orgId) {
         });
 }
 
-// Real-time phone validation
-document.getElementById('phone').addEventListener('input', function(e) {
-    const phone = e.target.value.trim();
-    const feedbackDiv = document.getElementById('phone-validation-feedback');
-    
-    if (phone.length === 0) {
-        feedbackDiv.innerHTML = '';
-        e.target.classList.remove('is-valid', 'is-invalid');
-        return;
-    }
-    
-    // Basic client-side validation
-    const cleanPhone = phone.replace(/[\s\-\(\)]/g, '');
-    
-    // Check if it matches Cameroon phone pattern
-    const isValid = /^(\+?237)?[62]\d{8}$/.test(cleanPhone);
-    
-    if (isValid) {
-        e.target.classList.remove('is-invalid');
-        e.target.classList.add('is-valid');
-        feedbackDiv.innerHTML = '<small class="text-success"><i class="fas fa-check-circle"></i> Valid Cameroon phone number</small>';
-    } else {
-        e.target.classList.remove('is-valid');
-        e.target.classList.add('is-invalid');
-        feedbackDiv.innerHTML = '<small class="text-danger"><i class="fas fa-times-circle"></i> Invalid format. Use: 6XXXXXXXX or +237 6XXXXXXXX</small>';
-    }
-});
+// Initialize Intl-Tel-Input
+const phoneInput = document.querySelector("#phone_input");
+const hiddenInput = document.querySelector("#phone");
+const feedbackDiv = document.getElementById('phone-validation-feedback');
+
+// Load the library script dynamically if not already loaded
+const script = document.createElement('script');
+script.src = "https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/intlTelInput.min.js";
+script.onload = function() {
+    const iti = window.intlTelInput(phoneInput, {
+        utilsScript: "https://cdn.jsdelivr.net/npm/intl-tel-input@18.2.1/build/js/utils.js",
+        initialCountry: "cm", // Default to Cameroon
+        separateDialCode: true,
+        preferredCountries: [
+            "cm", "ng", "ke", "gh", "za", "fr", "us", "gb", "ca",
+            "dz", "ao", "bj", "bw", "bf", "bi", "cv", "cf", "td", "km", "cg", "cd", "dj", 
+            "eg", "gq", "er", "sz", "et", "ga", "gm", "gn", "gw", "ci", "ls", "lr", "ly", 
+            "mg", "mw", "ml", "mr", "mu", "ma", "mz", "na", "ne", "rw", "st", "sn", "sc", 
+            "sl", "so", "ss", "sd", "tz", "tg", "tn", "ug", "zm", "zw"
+        ]
+    });
+
+    // Update hidden input on form submit
+    document.querySelector("form").addEventListener("submit", function() {
+        if (iti.isValidNumber()) {
+            hiddenInput.value = iti.getNumber();
+        } else {
+            // Fallback to what user typed if invalid (backend will validate)
+            hiddenInput.value = iti.getNumber(); 
+        }
+    });
+};
+document.head.appendChild(script);
 
 // Drag and drop functionality
 document.addEventListener('DOMContentLoaded', function() {

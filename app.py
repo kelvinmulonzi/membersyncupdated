@@ -36,6 +36,7 @@ from PIL import Image, ImageDraw, ImageFont
 import phonenumbers
 from phonenumbers import geocoder, carrier, NumberParseException
 from phonenumbers import PhoneNumberFormat
+from orange_sms import OrangeSMS
 
 
 # Fix Windows console encoding for emoji support
@@ -1754,67 +1755,6 @@ def get_phone_info(phone):
     except Exception as e:
         return {'is_valid': False, 'error': str(e)}
 
-# Update these existing functions to use the new validation
-
-def validate_phone_number_enhanced(phone):
-    """Enhanced phone number validation - now uses Cameroon-specific validation"""
-    return validate_cameroon_phone(phone)
-
-def format_phone_number(phone):
-    """Format phone number - now uses Cameroon-specific formatting"""
-    return format_cameroon_phone(phone)
-
-def send_sms_notification_cameroon(phone, message):
-    """
-    Send SMS notification to Cameroon phone number
-    Note: This is a placeholder - integrate with your SMS provider
-    
-    Popular Cameroon SMS providers:
-    - Orange Cameroon SMS API
-    - MTN Cameroon SMS API
-    - Camtel SMS Gateway
-    - SMS Marketinghub
-    """
-    try:
-        # Validate and format phone number
-        is_valid, error = validate_cameroon_phone(phone)
-        if not is_valid:
-            print(f"❌ Invalid phone number for SMS: {error}")
-            return False
-        
-        formatted_phone = format_cameroon_phone(phone)
-        phone_info = get_phone_info(formatted_phone)
-        
-        print(f"\n📱 SMS Notification")
-        print(f"   To: {phone_info.get('formatted', formatted_phone)}")
-        print(f"   Carrier: {phone_info.get('carrier', 'Unknown')}")
-        print(f"   Message: {message[:50]}...")
-        
-        # TODO: Integrate with actual SMS provider
-        # Example for Orange Cameroon:
-        # response = requests.post(
-        #     'https://api.orange.cm/sms/send',
-        #     json={
-        #         'to': formatted_phone,
-        #         'message': message
-        #     },
-        #     headers={'Authorization': 'Bearer YOUR_API_KEY'}
-        # )
-        
-        # For now, just log the SMS
-        print(f"✅ SMS logged successfully (integration pending)")
-        return True
-        
-    except Exception as e:
-        print(f"❌ SMS error: {e}")
-        return False
-
-# Update the existing send_sms_notification function
-def send_sms_notification(phone, message):
-    """Send SMS notification - now uses Cameroon SMS provider"""
-    return send_sms_notification_cameroon(phone, message)
-
-
 @app.route('/debug/test-phone', methods=['GET', 'POST'])
 @require_login
 def test_phone_validation():
@@ -2364,19 +2304,66 @@ def send_email_notification(email, subject, message):
         traceback.print_exc()
         return False
 
-def send_sms_notification(phone, message):
+def send_sms_notification_twilio(phone, message):
     """Send SMS notification via Twilio"""
     try:
+        if (not TWILIO_ACCOUNT_SID or TWILIO_ACCOUNT_SID == 'your-twilio-sid' or
+            not TWILIO_AUTH_TOKEN or TWILIO_AUTH_TOKEN == 'your-twilio-token' or
+            not TWILIO_PHONE_NUMBER or TWILIO_PHONE_NUMBER == 'your-twilio-phone'):
+            print("⚠️ Twilio credentials not configured. Skipping Twilio fallback.")
+            return False, "Twilio credentials not configured"
+            
         client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
         message = client.messages.create(
             body=message,
             from_=TWILIO_PHONE_NUMBER,
             to=phone
         )
-        return True
+        return True, None
     except Exception as e:
-        print(f"SMS error: {e}")
-        return False
+        print(f"Twilio SMS error: {e}")
+        return False, str(e)
+
+def send_sms_notification_orange(phone, message):
+    """Send SMS notification via Orange API (Supports International)"""
+    try:
+        # Parse number, default to Cameroon (CM) if no country code provided
+        try:
+            parsed = phonenumbers.parse(phone, "CM")
+        except NumberParseException:
+            return False, "Invalid phone number format"
+            
+        if not phonenumbers.is_valid_number(parsed):
+            return False, "Invalid phone number"
+            
+        # Format to E.164 (e.g. +237..., +254...)
+        formatted_phone = phonenumbers.format_number(parsed, PhoneNumberFormat.E164)
+        
+        # Use Orange SMS service
+        sms_service = OrangeSMS()
+        success, response = sms_service.send_sms(formatted_phone, message)
+        
+        if success:
+            print(f"✅ SMS sent successfully via Orange to {formatted_phone} (Carrier: {carrier.name_for_number(parsed, 'en')})")
+            return True, None
+        else:
+            print(f"❌ Failed to send Orange SMS to {formatted_phone}: {response}")
+            return False, f"Orange API: {response}"
+    except Exception as e:
+        print(f"❌ Orange SMS error: {e}")
+        return False, f"Orange Exception: {str(e)}"
+
+def send_sms_notification(phone, message):
+    """Send SMS notification with priority: Orange -> Twilio"""
+    # 1. Try Orange first for ALL numbers (Local & International like Safaricom)
+    success, error = send_sms_notification_orange(phone, message)
+    if success:
+        return True, None
+    
+    print(f"⚠️ Orange SMS failed ({error}), falling back to Twilio...")
+    
+    # 2. Fallback to Twilio (Reliable for international)
+    return send_sms_notification_twilio(phone, message)
 
 def send_org_superadmin_welcome_email(username, email, org_name, user_id):
     """Send welcome email to newly created Organization Super Admin"""
@@ -2498,79 +2485,49 @@ def send_org_superadmin_welcome_email(username, email, org_name, user_id):
         print(f"❌ Error sending Organization Super Admin welcome email: {e}")
         raise
 
-def format_cameroon_phone(phone):
-    """Format phone number for Cameroon"""
-    return phone.strip()
-
-def validate_phone_number(phone):
-    """Validate Cameroon phone number format (original function)"""
-    if not phone:
-        return False
-    
-    phone_digits = re.sub(r'\D', '', phone)
-    
-    if phone_digits.startswith('237'):
-        return len(phone_digits) == 12 and phone_digits[3:4] in ['6', '2']
-    elif phone_digits.startswith('6') or phone_digits.startswith('2'):
-        return len(phone_digits) == 9
-    
-    return False
-
 def validate_phone_number_enhanced(phone):
-    """Enhanced phone number validation with international support and detailed error messages"""
+    """Enhanced phone number validation with international support using phonenumbers library."""
     if not phone:
-        return False, "Phone number is required"
-    
-    # Remove all non-digit characters
-    phone_digits = re.sub(r'\D', '', phone)
-    
-    # Check if phone is too short or too long
-    if len(phone_digits) < 7:
-        return False, "Phone number is too short"
-    if len(phone_digits) > 15:
-        return False, "Phone number is too long"
-    
-    # International format validation (E.164)
-    if phone_digits.startswith('237'):  # Cameroon
-        if len(phone_digits) == 12 and phone_digits[3:4] in ['6', '2']:
-            return True, None
-        else:
-            return False, "Invalid Cameroon phone number format"
-    
-    # US/Canada format
-    elif phone_digits.startswith('1') and len(phone_digits) == 11:
+        return False, "Phone number is required."
+
+    try:
+        # Parse the number. We assume 'CM' (Cameroon) for numbers without a country code.
+        # This allows users to enter local Cameroon numbers like '6...'.
+        # For other countries, they MUST enter the full number with '+', e.g., '+254...'.
+        parsed_number = phonenumbers.parse(phone.strip(), "CM")
+
+        if not phonenumbers.is_valid_number(parsed_number):
+            return False, "The phone number is not valid. Please include the country code for non-Cameroon numbers (e.g., +254...)."
+        
         return True, None
-    
-    # Generic international format (7-15 digits)
-    elif len(phone_digits) >= 7 and len(phone_digits) <= 15:
-        return True, None
-    
-    # Cameroon local format
-    elif phone_digits.startswith('6') or phone_digits.startswith('2'):
-        if len(phone_digits) == 9:
-            return True, None
-        else:
-            return False, "Invalid local phone number format"
-    
-    return False, "Invalid phone number format"
+
+    except NumberParseException as e:
+        error_messages = {
+            NumberParseException.INVALID_COUNTRY_CODE: "Invalid country code.",
+            NumberParseException.NOT_A_NUMBER: "This is not a valid phone number.",
+            NumberParseException.TOO_SHORT_NSN: "The phone number is too short.",
+            NumberParseException.TOO_LONG: "The phone number is too long."
+        }
+        return False, error_messages.get(e.error_type, "Invalid phone number format.")
+    except Exception as e:
+        return False, f"An unexpected error occurred: {str(e)}"
 
 def format_phone_number(phone):
-    """Format phone number to standard international format"""
+    """Format phone number to standard international E.164 format (+... )"""
     if not phone:
         return phone
-    
-    # Remove all non-digit characters
-    phone_digits = re.sub(r'\D', '', phone)
-    
-    # Format based on detected country
-    if phone_digits.startswith('237') and len(phone_digits) == 12:
-        return f"+{phone_digits}"
-    elif phone_digits.startswith('1') and len(phone_digits) == 11:
-        return f"+{phone_digits}"
-    elif len(phone_digits) >= 7:
-        return f"+{phone_digits}"
-    
-    return phone
+
+    try:
+        # Parse with 'CM' as the default region for local numbers.
+        # International numbers with '+' will be parsed correctly.
+        parsed_number = phonenumbers.parse(phone.strip(), "CM")
+        
+        # Format to E.164 format (+XXXXXXXXXXX)
+        return phonenumbers.format_number(parsed_number, PhoneNumberFormat.E164)
+
+    except (NumberParseException, Exception):
+        # If parsing fails, return the original string as a fallback.
+        return phone.strip()
 
 def validate_membership_id_immutability(current_id, submitted_id):
     """Validate that membership ID cannot be changed once assigned"""
@@ -4061,15 +4018,15 @@ def register():
             flash("Invalid email format.", "danger")
             return render_template('register.html')
 
-        # Enhanced Cameroon phone validation
-        is_valid_phone, phone_error = validate_cameroon_phone(phone)
+        # Enhanced phone validation (Allows International)
+        is_valid_phone, phone_error = validate_phone_number_enhanced(phone)
         if not is_valid_phone:
             flash(f"❌ Phone validation error: {phone_error}", "danger")
-            flash("📱 Please enter a valid Cameroon phone number (e.g., +237 6XX XX XX XX or 6XX XX XX XX)", "info")
+            flash("📱 Please enter a valid phone number (e.g., +237... or +254...)", "info")
             return render_template('register.html')
         
-        # Format phone number to E.164 format
-        phone = format_cameroon_phone(phone)
+        # Format phone number to E.164 format (International Standard)
+        phone = format_phone_number(phone)
         
         #  Get phone info for logging (optional)
         phone_info = get_phone_info(phone)
@@ -7067,7 +7024,7 @@ def send_message():
                 email_recipients.append((email, name))  # Store email with name
             
             if message_type in ['sms', 'both'] and phone:
-                if validate_phone_number(phone):
+                if validate_phone_number_enhanced(phone)[0]:
                     sms_recipients.append(phone)
         
         email_sent = 0
@@ -7114,12 +7071,18 @@ def send_message():
                         email_failed += 1
         
         # Send SMS (no attachments for SMS)
+        last_sms_error = None
         if message_type in ['sms', 'both'] and sms_recipients:
             sms_message = message_content[:160] + "..." if len(message_content) > 160 else message_content
             for phone in sms_recipients:
-                formatted_phone = format_cameroon_phone(phone)
-                if formatted_phone and send_sms_notification(formatted_phone, sms_message):
-                    sms_sent += 1
+                formatted_phone = format_phone_number(phone)
+                if formatted_phone:
+                    success, error = send_sms_notification(formatted_phone, sms_message)
+                    if success:
+                        sms_sent += 1
+                    else:
+                        sms_failed += 1
+                        last_sms_error = error
                 else:
                     sms_failed += 1
         
@@ -7149,7 +7112,11 @@ def send_message():
             attachment_msg = f" (with attachment: {attachment_filename})" if attachment_filename else ""
             flash(f"✅ Message sent successfully{attachment_msg}! Delivered: {total_sent}, Failed: {total_failed}", "success")
         else:
-            flash("❌ Failed to send messages. Please check your configuration.", "danger")
+            if sms_recipients and sms_failed > 0:
+                error_msg = f"❌ Failed to send SMS. Error: {last_sms_error}" if last_sms_error else "❌ Failed to send SMS. Check console logs."
+                flash(error_msg, "danger")
+            else:
+                flash("❌ Failed to send messages. Please check your configuration.", "danger")
     
     except Exception as e:
         flash(f"Error sending message: {e}", "danger")
@@ -9056,8 +9023,8 @@ def check_expiring_memberships():
                     
                     if email:
                         send_email_notification(email, f"We Miss You - {task_name}", personalized_message)
-                    if phone and validate_phone_number(phone):
-                        send_sms_notification(format_cameroon_phone(phone), personalized_message[:160])
+                    if phone and validate_phone_number_enhanced(phone)[0]:
+                        send_sms_notification(format_phone_number(phone), personalized_message[:160])
             
             elif task_type == 'custom':
                 cursor.execute('''
@@ -9073,8 +9040,8 @@ def check_expiring_memberships():
                     
                     if email:
                         send_email_notification(email, task_name, personalized_message)
-                    if phone and validate_phone_number(phone):
-                        send_sms_notification(format_cameroon_phone(phone), personalized_message[:160])
+                    if phone and validate_phone_number_enhanced(phone)[0]:
+                        send_sms_notification(format_phone_number(phone), personalized_message[:160])
     
     except Exception as e:
         print(f"Error running scheduled tasks: {e}")
@@ -10565,6 +10532,42 @@ def fix_database_schema():
         print(f"❌ Error fixing database schema: {e}")
         return False
 
+def seed_default_locations():
+    """Seed default locations (Bastos, Famla, Bepanda) if they don't exist"""
+    try:
+        with sqlite3.connect(DATABASE, timeout=20.0) as conn:
+            cursor = conn.cursor()
+            
+            # Get all organizations
+            cursor.execute('SELECT id, name FROM organizations')
+            organizations = cursor.fetchall()
+            
+            if not organizations:
+                return
+            
+            # Default locations to add
+            default_locations = [
+                ('Bastos', 'Yaounde', 'Centre'),
+                ('Famla', 'Bafoussam', 'West'),
+                ('Bepanda', 'Douala', 'Littoral')
+            ]
+            
+            for org_id, org_name in organizations:
+                for name, city, state in default_locations:
+                    # Check if location exists for this org
+                    cursor.execute('SELECT id FROM locations WHERE name = ? AND organization_id = ?', (name, org_id))
+                    if not cursor.fetchone():
+                        print(f"📍 Seeding location '{name}' for organization '{org_name}'")
+                        cursor.execute('''
+                            INSERT INTO locations (organization_id, name, address, city, state)
+                            VALUES (?, ?, ?, ?, ?)
+                        ''', (org_id, name, f'{name} Main Road', city, state))
+            
+            conn.commit()
+            print("✅ Default locations seeded successfully")
+    except Exception as e:
+        print(f"❌ Error seeding locations: {e}")
+
 def apply_migrations_internal():
     """Apply database migrations with smart duplicate column detection"""
     migrations_dir = 'migrations'
@@ -11714,8 +11717,8 @@ def send_recharge_notification(membership_id, organization_id, amount, bonus_amo
             message = f"Hello {name}, your prepaid card has been recharged with {currency}{amount:.2f}. New balance: {currency}{new_balance:.2f}. - MemberSync"
         
         # Send SMS if phone number available
-        if phone and validate_phone_number(phone):
-            send_sms_notification(format_cameroon_phone(phone), message)
+        if phone and validate_phone_number_enhanced(phone)[0]:
+            send_sms_notification(format_phone_number(phone), message)
         
         # Send email if email available
         if email:
@@ -11800,9 +11803,10 @@ def send_usage_notification(membership_id, organization_id, amount, new_balance,
         
         # Send SMS if phone number available
         sms_sent = False
-        if phone and validate_phone_number(phone):
+        if phone and validate_phone_number_enhanced(phone)[0]:
             print(f"Attempting to send SMS to: {phone}")
-            sms_sent = send_sms_notification(format_cameroon_phone(phone), message)
+            success, _ = send_sms_notification(format_phone_number(phone), message)
+            sms_sent = success
             print(f"SMS sent: {sms_sent}")
         else:
             print(f"No valid phone number for SMS")
@@ -12134,7 +12138,7 @@ def prepaid_recharge(membership_id):
 @require_login
 @require_prepaid_access
 def prepaid_usage(membership_id):
-    """Process prepaid balance usage"""
+    """Initiate prepaid usage with OTP verification"""
     try:
         amount = float(request.form.get('amount', 0))
         description = request.form.get('description', 'Service payment')
@@ -12161,20 +12165,111 @@ def prepaid_usage(membership_id):
                 flash('Organization not found.', 'danger')
                 return redirect(url_for('members'))
         
+        # Check balance before sending OTP
+        balance_info = get_prepaid_balance(membership_id, org_id)
+        if not balance_info:
+             flash('Could not retrieve balance information.', 'danger')
+             return redirect(url_for('prepaid_card_management', membership_id=membership_id))
+             
+        current_balance = balance_info['current_balance']
+        
+        # Calculate fee to check total required
+        fee_amount = calculate_deduction_fee(amount)
+        total_deduction = amount + fee_amount
+        
+        if current_balance < total_deduction:
+             flash(f"Insufficient balance. Required: {get_currency_symbol()}{total_deduction:.2f} (including {get_currency_symbol()}{fee_amount:.2f} fee)", "danger")
+             return redirect(url_for('prepaid_card_management', membership_id=membership_id))
+
+        # Generate OTP
+        otp = secrets.randbelow(1000000)
+        otp_str = f"{otp:06d}"
+        
+        # Get member contact info
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute('SELECT name, email, phone FROM members WHERE membership_id = ? AND organization_id = ?', (membership_id, org_id))
+        member = cursor.fetchone()
+        
+        if not member:
+             flash('Member not found.', 'danger')
+             return redirect(url_for('prepaid_card_management', membership_id=membership_id))
+             
+        name, email, phone = member
+        
+        # Send OTP via Email
+        if email:
+            send_email_notification(
+                email, 
+                "🔐 Prepaid Transaction OTP", 
+                f"Hello {name},<br><br>Your OTP for prepaid transaction of {get_currency_symbol()}{amount:.2f} is: <strong>{otp_str}</strong>.<br>Do not share this code."
+            )
+            
+        # Send OTP via SMS
+        if phone and validate_phone_number_enhanced(phone)[0]:
+             send_sms_notification(format_phone_number(phone), f"MemberSync: Your OTP for prepaid transaction is {otp_str}.")
+
+        # Store in session
+        session['prepaid_otp_context'] = {
+            'otp': otp_str,
+            'membership_id': membership_id,
+            'org_id': org_id,
+            'amount': amount,
+            'description': description,
+            'timestamp': time.time()
+        }
+        
+        return render_template('verify_prepaid_otp.html', membership_id=membership_id, amount=amount, description=description)
+
+    except ValueError:
+        flash('Invalid amount entered.', 'danger')
+        return redirect(url_for('prepaid_card_management', membership_id=membership_id))
+    except Exception as e:
+        flash(f'Error initiating usage: {e}', 'danger')
+        return redirect(url_for('prepaid_card_management', membership_id=membership_id))
+
+@app.route('/verify_prepaid_otp', methods=['POST'])
+@require_login
+@require_prepaid_access
+def verify_prepaid_otp():
+    """Verify OTP and process prepaid usage"""
+    otp_input = request.form.get('otp', '').strip()
+    context = session.get('prepaid_otp_context')
+    
+    if not context:
+        flash('Session expired or invalid transaction. Please try again.', 'danger')
+        return redirect(url_for('dashboard'))
+        
+    membership_id = context.get('membership_id')
+    
+    # Verify OTP
+    if otp_input != context.get('otp'):
+        flash('Invalid OTP. Please try again.', 'danger')
+        return render_template('verify_prepaid_otp.html', membership_id=membership_id, amount=context.get('amount'), description=context.get('description'))
+        
+    # Check expiry (e.g., 5 minutes)
+    if time.time() - context.get('timestamp', 0) > 300:
+        session.pop('prepaid_otp_context', None)
+        flash('OTP expired. Please initiate transaction again.', 'danger')
+        return redirect(url_for('prepaid_card_management', membership_id=membership_id))
+        
+    # Process Transaction
+    try:
+        org_id = context.get('org_id')
+        amount = context.get('amount')
+        description = context.get('description')
         admin_user_id = session.get('user_id')
         
-        # Process usage with fee calculation
         success, result = apply_deduction_fee(
             membership_id, org_id, amount, admin_user_id, description
         )
         
         if success:
+            session.pop('prepaid_otp_context', None)
             flash(f'✅ {result}', 'success')
         else:
             flash(f'❌ Usage failed: {result}', 'danger')
-        
-    except ValueError:
-        flash('Invalid amount entered.', 'danger')
+            
     except Exception as e:
         flash(f'Error processing usage: {e}', 'danger')
     
@@ -12559,8 +12654,8 @@ def send_checkin_notification(membership_id, organization_id, action, service_ty
             message = f"Hello {name}, you have checked out at {datetime.now().strftime('%H:%M')}. Thank you for visiting! - MemberSync"
         
         # Send SMS if available
-        if phone and validate_phone_number(phone):
-            send_sms_notification(format_cameroon_phone(phone), message)
+        if phone and validate_phone_number_enhanced(phone)[0]:
+            send_sms_notification(format_phone_number(phone), message)
         
         # Log notification
         cursor.execute('''
@@ -13686,5 +13781,8 @@ if __name__ == "__main__":
 if __name__ == '__main__':
     # Initialize database
     init_db()
+    
+    # Seed default locations
+    seed_default_locations()
     
     app.run(debug=True, host='0.0.0.0', port=5000)
