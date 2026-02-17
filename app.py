@@ -13789,9 +13789,267 @@ if __name__ == "__main__":
     print("="*60)
 
 
+# ============================================================================
+# API ROUTES FOR MEMBER APPLICATION
+# ============================================================================
+
+def add_member_password_column():
+    """Migration: Add password_hash to members table for member app login"""
+    try:
+        with sqlite3.connect(DATABASE, timeout=20.0) as conn:
+            cursor = conn.cursor()
+            cursor.execute("PRAGMA table_info(members)")
+            columns = [column[1] for column in cursor.fetchall()]
+            
+            if 'password_hash' not in columns:
+                print("🔧 Adding 'password_hash' column to members table...")
+                cursor.execute('ALTER TABLE members ADD COLUMN password_hash TEXT')
+                conn.commit()
+                print("✅ Password column added to members table")
+            return True
+    except Exception as e:
+        print(f"❌ Error adding password column: {e}")
+        return False
+
+@app.route('/api/v1/login', methods=['POST'])
+def api_member_login():
+    """API Endpoint for Member Login"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+            
+        identifier = data.get('identifier', '').strip() # Can be email, phone, or membership_id
+        password = data.get('password', '')
+        
+        if not identifier or not password:
+            return jsonify({'success': False, 'error': 'Identifier and password required'}), 400
+            
+        db = get_db()
+        cursor = db.cursor()
+        
+        # Find member by email, phone, or membership_id
+        cursor.execute('''
+            SELECT membership_id, name, email, phone, password_hash, status, organization_id, photo_filename
+            FROM members 
+            WHERE email = ? OR phone = ? OR membership_id = ?
+        ''', (identifier, identifier, identifier))
+        
+        member = cursor.fetchone()
+        
+        if not member:
+            return jsonify({'success': False, 'error': 'Invalid credentials'}), 401
+            
+        # Check password
+        stored_hash = member['password_hash']
+        if not stored_hash or not check_password_hash(stored_hash, password):
+            return jsonify({'success': False, 'error': 'Invalid credentials'}), 401
+            
+        if member['status'] != 'active':
+            return jsonify({'success': False, 'error': 'Account is not active'}), 403
+
+        # Return member data (In a real app, you would return a JWT token here)
+        return jsonify({
+            'success': True,
+            'member': {
+                'membership_id': member['membership_id'],
+                'name': member['name'],
+                'email': member['email'],
+                'phone': member['phone'],
+                'organization_id': member['organization_id'],
+                'photo_url': url_for('member_photo', membership_id=member['membership_id'], _external=True) if member['photo_filename'] else None
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/v1/register', methods=['POST'])
+def api_member_register():
+    """API Endpoint for Member Self-Registration"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+            
+        name = data.get('name', '').strip()
+        email = data.get('email', '').strip()
+        phone = data.get('phone', '').strip()
+        password = data.get('password', '')
+        organization_id = data.get('organization_id', 1) # Default to org 1 if not specified
+        membership_type = data.get('membership_type', 'Standard')
+        
+        if not all([name, email, phone, password]):
+            return jsonify({'success': False, 'error': 'Name, email, phone, and password are required'}), 400
+            
+        db = get_db()
+        cursor = db.cursor()
+        
+        # Check if email or phone already exists
+        cursor.execute('SELECT id FROM members WHERE email = ? OR phone = ?', (email, phone))
+        if cursor.fetchone():
+            return jsonify({'success': False, 'error': 'Email or phone already registered'}), 409
+            
+        # Generate ID and Hash Password
+        membership_id = generate_unique_membership_id(organization_id, "MBR")
+        password_hash = generate_password_hash(password)
+        
+        # Insert Member
+        cursor.execute('''
+            INSERT INTO members (membership_id, name, email, phone, password_hash, 
+                               membership_type, organization_id, status, created_at, payment_status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'active', datetime('now'), 'Unpaid')
+        ''', (membership_id, name, email, phone, password_hash, membership_type, organization_id))
+        
+        db.commit()
+        
+        # Generate QR Code (Optional but good for consistency)
+        try:
+            qr_img = qrcode.make(membership_id)
+            qr_dir = 'static/qr_codes'
+            os.makedirs(qr_dir, exist_ok=True)
+            qr_img.save(f'{qr_dir}/{membership_id}.png')
+        except Exception as e:
+            print(f"QR Gen Error: {e}")
+
+        return jsonify({
+            'success': True,
+            'message': 'Registration successful',
+            'member': {
+                'membership_id': membership_id,
+                'name': name,
+                'email': email,
+                'organization_id': organization_id
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/v1/set-password', methods=['POST'])
+def api_set_password():
+    """Helper endpoint to set password for existing members (since they don't have one)"""
+    try:
+        data = request.get_json()
+        membership_id = data.get('membership_id')
+        password = data.get('password')
+        
+        if not membership_id or not password:
+            return jsonify({'success': False, 'error': 'Missing data'}), 400
+            
+        db = get_db()
+        cursor = db.cursor()
+        
+        password_hash = generate_password_hash(password)
+        
+        cursor.execute('UPDATE members SET password_hash = ? WHERE membership_id = ?', 
+                      (password_hash, membership_id))
+        db.commit()
+        
+        return jsonify({'success': True, 'message': 'Password set successfully'})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/v1/members/<membership_id>/profile', methods=['GET'])
+def api_get_profile(membership_id):
+    """Get member profile data"""
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        
+        cursor.execute('''
+            SELECT m.membership_id, m.name, m.email, m.phone, m.membership_type, 
+                   m.expiration_date, m.status, m.photo_filename, o.name as org_name
+            FROM members m
+            JOIN organizations o ON m.organization_id = o.id
+            WHERE m.membership_id = ?
+        ''', (membership_id,))
+        
+        member = cursor.fetchone()
+        if not member:
+            return jsonify({'success': False, 'error': 'Member not found'}), 404
+            
+        return jsonify({
+            'success': True,
+            'data': {
+                'membership_id': member['membership_id'],
+                'name': member['name'],
+                'email': member['email'],
+                'phone': member['phone'],
+                'type': member['membership_type'],
+                'expiration': member['expiration_date'],
+                'status': member['status'],
+                'organization': member['org_name'],
+                'photo_url': url_for('member_photo', membership_id=member['membership_id'], _external=True) if member['photo_filename'] else None
+            }
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/v1/members/<membership_id>/prepaid', methods=['GET'])
+def api_get_prepaid(membership_id):
+    """Get prepaid balance and recent transactions"""
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        
+        # Get organization ID for this member
+        cursor.execute('SELECT organization_id FROM members WHERE membership_id = ?', (membership_id,))
+        result = cursor.fetchone()
+        if not result:
+            return jsonify({'success': False, 'error': 'Member not found'}), 404
+        org_id = result[0]
+        
+        # Get Balance
+        balance_info = get_prepaid_balance(membership_id, org_id)
+        
+        # Get Transactions
+        cursor.execute('''
+            SELECT transaction_type, amount, balance_after, description, transaction_date
+            FROM prepaid_transactions
+            WHERE membership_id = ? AND organization_id = ?
+            ORDER BY transaction_date DESC LIMIT 20
+        ''', (membership_id, org_id))
+        
+        transactions = [dict(row) for row in cursor.fetchall()]
+        
+        return jsonify({
+            'success': True,
+            'balance': balance_info,
+            'transactions': transactions
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/v1/members/<membership_id>/checkins', methods=['GET'])
+def api_get_checkins(membership_id):
+    """Get check-in history"""
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        
+        cursor.execute('''
+            SELECT checkin_time, checkout_time, service_type, status
+            FROM checkins
+            WHERE membership_id = ?
+            ORDER BY checkin_time DESC LIMIT 20
+        ''', (membership_id,))
+        
+        history = [dict(row) for row in cursor.fetchall()]
+        
+        return jsonify({
+            'success': True,
+            'history': history
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 if __name__ == '__main__':
     # Initialize database
     init_db()
+    
+    # Ensure members have password column for API
+    add_member_password_column()
     
     # Seed default locations
     seed_default_locations()
