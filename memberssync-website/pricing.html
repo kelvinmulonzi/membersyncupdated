@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pricing | MemberSync</title>
+    <meta name="description" content="Simple, transparent pricing for MemberSync. Starter, Business, and Enterprise plans for every type of organization.">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root{--primary:#0A2463;--secondary:#3E92CC;--accent:#00AAFF;--gold:#F4B942;--dark:#0D1B2A;--light:#F0F6FF;--lighter:#F8FAFF;--white:#FFFFFF;--text-muted:#5A7A9A;--border:rgba(10,36,99,0.1);--gradient:linear-gradient(135deg,#0A2463 0%,#1565C0 60%,#3E92CC 100%);--shadow-sm:0 4px 20px rgba(10,36,99,0.08);--shadow:0 20px 60px rgba(10,36,99,0.15);}
+        *{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+        body{font-family:'DM Sans',sans-serif;color:var(--dark);line-height:1.7;overflow-x:hidden;background:var(--white);}
+        .navbar{position:fixed;top:0;width:100%;z-index:1000;background:rgba(255,255,255,0.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);transition:all 0.3s;}
+        .navbar.scrolled{box-shadow:var(--shadow-sm);}
+        .nav-container{max-width:1400px;margin:0 auto;padding:0 2rem;display:flex;justify-content:space-between;align-items:center;height:72px;}
+        .logo-wrap{display:flex;flex-direction:column;align-items:flex-start;text-decoration:none;}
+        .logo-name{font-family:'Syne',sans-serif;font-weight:900;font-size:1.6rem;color:var(--primary);letter-spacing:-1px;line-height:1;}
+        .logo-name span{color:var(--accent);}
+        .logo-sub{font-size:0.65rem;color:var(--text-muted);font-weight:500;letter-spacing:0.5px;text-transform:uppercase;}
+        .nav-center{display:flex;align-items:center;gap:2.5rem;}
+        .nav-center a{text-decoration:none;color:var(--dark);font-weight:500;font-size:0.92rem;position:relative;transition:color 0.2s;}
+        .nav-center a:hover,.nav-center a.active{color:var(--accent);}
+        .nav-center a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:2px;background:var(--accent);transition:width 0.3s;border-radius:2px;}
+        .nav-center a:hover::after,.nav-center a.active::after{width:100%;}
+        .nav-right{display:flex;align-items:center;gap:1rem;}
+        .lang-btn{background:none;border:1px solid var(--border);padding:0.3rem 0.7rem;border-radius:6px;font-size:0.8rem;cursor:pointer;color:var(--text-muted);font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+        .lang-btn:hover{border-color:var(--accent);color:var(--accent);}
+        .lang-btn.active{background:var(--primary);color:white;border-color:var(--primary);}
+        .btn-demo{padding:0.5rem 1.2rem;border:2px solid var(--primary);color:var(--primary);border-radius:8px;text-decoration:none;font-weight:600;font-size:0.88rem;transition:all 0.2s;}
+        .btn-demo:hover{background:var(--primary);color:white;}
+        .btn-start{padding:0.5rem 1.2rem;background:var(--gold);color:var(--dark);border-radius:8px;text-decoration:none;font-weight:700;font-size:0.88rem;transition:all 0.2s;border:2px solid var(--gold);}
+        .btn-start:hover{background:#e0a830;transform:translateY(-1px);}
+        .hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px;}
+        .hamburger span{width:24px;height:2px;background:var(--primary);border-radius:2px;display:block;}
+        .mobile-nav{display:none;position:fixed;top:72px;left:0;right:0;background:white;z-index:999;border-bottom:1px solid var(--border);box-shadow:var(--shadow);padding:1.5rem 2rem;flex-direction:column;gap:1rem;}
+        .mobile-nav.open{display:flex;}
+        .mobile-nav a{text-decoration:none;color:var(--dark);font-weight:500;padding:0.5rem 0;border-bottom:1px solid var(--border);}
+        .mobile-nav .mobile-btns{display:flex;gap:1rem;margin-top:0.5rem;flex-wrap:wrap;}
+
+        .page-hero{background:var(--gradient);padding:8rem 2rem 5rem;text-align:center;position:relative;overflow:hidden;}
+        .page-hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;}
+        .page-hero-content{position:relative;z-index:1;}
+        .page-tag{display:inline-block;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:white;font-size:0.78rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:0.4rem 1rem;border-radius:50px;margin-bottom:1rem;}
+        .page-hero h1{font-family:'Syne',sans-serif;font-size:clamp(2.2rem,5vw,3.5rem);font-weight:900;color:white;letter-spacing:-2px;margin-bottom:1rem;}
+        .page-hero h1 em{color:var(--gold);font-style:normal;}
+        .page-hero p{font-size:1.1rem;color:rgba(255,255,255,0.8);max-width:600px;margin:0 auto;}
+
+        .section{padding:6rem 2rem;}
+        .section-inner{max-width:1200px;margin:0 auto;}
+        .section-title{font-family:'Syne',sans-serif;font-size:clamp(1.8rem,3.5vw,2.5rem);font-weight:800;color:var(--primary);line-height:1.2;letter-spacing:-1px;margin-bottom:1rem;}
+        .section-title em{color:var(--accent);font-style:normal;}
+        .section-sub{font-size:1rem;color:var(--text-muted);max-width:600px;line-height:1.8;}
+        .text-center{text-align:center;}
+        .text-center .section-sub{margin:0 auto;}
+
+        /* PRICING CARDS */
+        .pricing-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;margin-top:3rem;align-items:start;}
+        .price-card{border-radius:20px;border:2px solid var(--border);background:white;overflow:hidden;transition:all 0.3s;position:relative;}
+        .price-card:hover{box-shadow:var(--shadow);transform:translateY(-6px);}
+        .price-card.popular{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);}
+        .popular-badge{position:absolute;top:-1px;left:50%;transform:translateX(-50%);background:var(--accent);color:white;font-size:0.72rem;font-weight:700;padding:0.3rem 1.2rem;border-radius:0 0 10px 10px;letter-spacing:1px;text-transform:uppercase;}
+        .price-header{padding:2.5rem 2.5rem 2rem;text-align:center;border-bottom:1px solid var(--border);}
+        .price-icon{font-size:2.5rem;margin-bottom:1rem;}
+        .price-plan{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:var(--primary);margin-bottom:0.5rem;}
+        .price-desc{font-size:0.88rem;color:var(--text-muted);line-height:1.5;max-width:200px;margin:0 auto 1.5rem;}
+        .price-amount{font-family:'Syne',sans-serif;font-size:2.5rem;font-weight:900;color:var(--primary);line-height:1;}
+        .price-amount span{font-size:0.95rem;font-weight:500;color:var(--text-muted);}
+        .price-amount .period{font-size:1rem;}
+        .price-custom{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:var(--primary);}
+        .price-body{padding:2rem 2.5rem 2.5rem;}
+        .price-features{display:flex;flex-direction:column;gap:0.8rem;margin-bottom:2rem;}
+        .price-feat{display:flex;align-items:flex-start;gap:0.8rem;font-size:0.9rem;color:var(--dark);}
+        .price-feat .check{width:20px;height:20px;border-radius:50%;background:rgba(0,170,255,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--accent);font-size:0.65rem;font-weight:700;margin-top:2px;}
+        .price-feat .cross{width:20px;height:20px;border-radius:50%;background:rgba(0,0,0,0.05);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:#bbb;font-size:0.65rem;margin-top:2px;}
+        .price-feat .feat-text{color:var(--text-muted);font-size:0.88rem;}
+        .price-feat .feat-text.inactive{color:#ccc;text-decoration:line-through;}
+        .btn-plan{display:block;text-align:center;padding:0.9rem;border-radius:10px;font-weight:700;font-size:0.95rem;text-decoration:none;transition:all 0.2s;}
+        .btn-plan-outline{border:2px solid var(--primary);color:var(--primary);}
+        .btn-plan-outline:hover{background:var(--primary);color:white;}
+        .btn-plan-accent{background:var(--accent);color:white;border:2px solid var(--accent);}
+        .btn-plan-accent:hover{background:#0090dd;transform:translateY(-1px);}
+        .btn-plan-gold{background:var(--gold);color:var(--dark);border:2px solid var(--gold);}
+        .btn-plan-gold:hover{background:#e0a830;}
+
+        /* COMPARE TABLE */
+        .compare-section{background:var(--lighter);padding:6rem 2rem;}
+        .compare-inner{max-width:1200px;margin:0 auto;}
+        .compare-inner h2{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--primary);margin-bottom:2rem;text-align:center;letter-spacing:-0.5px;}
+        .compare-table{width:100%;border-collapse:collapse;background:white;border-radius:16px;overflow:hidden;box-shadow:var(--shadow-sm);}
+        .compare-table th{background:var(--primary);color:white;padding:1.2rem;font-family:'Syne',sans-serif;font-size:0.9rem;font-weight:700;text-align:center;}
+        .compare-table th:first-child{text-align:left;}
+        .compare-table td{padding:1rem 1.2rem;border-bottom:1px solid var(--border);font-size:0.9rem;}
+        .compare-table td:not(:first-child){text-align:center;font-weight:600;}
+        .compare-table tr:last-child td{border-bottom:none;}
+        .compare-table tr:hover td{background:var(--lighter);}
+        .compare-table .cat-row td{background:var(--light);font-family:'Syne',sans-serif;font-weight:700;color:var(--primary);font-size:0.85rem;text-transform:uppercase;letter-spacing:0.5px;}
+        .tick{color:#28CA41;font-size:1.2rem;}
+        .cross-x{color:#ddd;font-size:1.2rem;}
+        .tick-gold{color:var(--gold);font-size:1.2rem;}
+
+        /* CUSTOM PRICING BAND */
+        .custom-band{background:var(--primary);padding:4rem 2rem;text-align:center;}
+        .custom-band h3{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:white;margin-bottom:0.8rem;}
+        .custom-band p{color:rgba(255,255,255,0.8);font-size:1rem;margin-bottom:2rem;max-width:500px;margin-left:auto;margin-right:auto;}
+        .custom-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
+        .btn-wa{display:inline-flex;align-items:center;gap:0.5rem;padding:0.9rem 2rem;background:#25D366;color:white;border-radius:10px;text-decoration:none;font-weight:700;font-size:0.95rem;transition:all 0.2s;}
+        .btn-wa:hover{background:#1da851;transform:translateY(-2px);}
+        .btn-email{display:inline-flex;align-items:center;gap:0.5rem;padding:0.9rem 2rem;background:transparent;color:white;border-radius:10px;text-decoration:none;font-weight:600;font-size:0.95rem;border:2px solid rgba(255,255,255,0.4);transition:all 0.2s;}
+        .btn-email:hover{background:rgba(255,255,255,0.1);}
+
+        footer{background:var(--dark);color:rgba(255,255,255,0.7);padding:4rem 2rem 2rem;}
+        .footer-inner{max-width:1400px;margin:0 auto;}
+        .footer-top{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:3rem;margin-bottom:3rem;}
+        .footer-brand p{margin-top:1rem;font-size:0.9rem;line-height:1.8;max-width:280px;}
+        .footer-contact{margin-top:1.2rem;display:flex;flex-direction:column;gap:0.5rem;}
+        .footer-contact a{color:rgba(255,255,255,0.7);text-decoration:none;font-size:0.88rem;display:flex;align-items:center;gap:0.5rem;transition:color 0.2s;}
+        .footer-contact a:hover{color:var(--gold);}
+        .footer-col h4{font-family:'Syne',sans-serif;font-size:0.95rem;font-weight:700;color:white;margin-bottom:1.2rem;}
+        .footer-col ul{list-style:none;display:flex;flex-direction:column;gap:0.7rem;}
+        .footer-col ul li a{color:rgba(255,255,255,0.6);text-decoration:none;font-size:0.88rem;transition:color 0.2s;}
+        .footer-col ul li a:hover{color:white;}
+        .footer-bottom{border-top:1px solid rgba(255,255,255,0.1);padding-top:2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;}
+        .footer-bottom p,.powered-by{font-size:0.82rem;}
+        .powered-by strong{color:rgba(255,255,255,0.8);}
+        .wa-float{position:fixed;bottom:2rem;right:2rem;z-index:9999;}
+        .wa-float a{display:flex;align-items:center;justify-content:center;width:60px;height:60px;background:#25D366;border-radius:50%;text-decoration:none;box-shadow:0 8px 25px rgba(37,211,102,0.4);transition:all 0.3s;font-size:1.6rem;}
+        .wa-float a:hover{transform:scale(1.1);}
+        .wa-tooltip{position:absolute;right:70px;top:50%;transform:translateY(-50%);background:var(--dark);color:white;white-space:nowrap;padding:0.5rem 1rem;border-radius:8px;font-size:0.82rem;opacity:0;pointer-events:none;transition:opacity 0.2s;}
+        .wa-float:hover .wa-tooltip{opacity:1;}
+        @media(max-width:1024px){.pricing-grid{grid-template-columns:1fr;max-width:480px;margin-left:auto;margin-right:auto;}.footer-top{grid-template-columns:1fr 1fr;}}
+        @media(max-width:768px){.nav-center,.nav-right .btn-demo,.nav-right .btn-start{display:none;}.hamburger{display:flex;}.compare-table th:nth-child(3),.compare-table td:nth-child(3){display:none;}.footer-top{grid-template-columns:1fr;}.footer-bottom{flex-direction:column;text-align:center;}}
+    </style>
+</head>
+<body>
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="index.html" class="logo-wrap"><div class="logo-name">Member<span>Sync</span></div><div class="logo-sub">A Product of Next Solution</div></a>
+        <div class="nav-center">
+            <a href="index.html">Home</a><a href="features.html">Features</a><a href="solutions.html">Solutions</a>
+            <a href="pricing.html" class="active">Pricing</a><a href="how-it-works.html">How It Works</a><a href="about.html">About</a><a href="contact.html">Contact</a>
+        </div>
+        <div class="nav-right">
+            <button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button>
+            <button class="lang-btn" id="btn-fr" onclick="setLang('fr')">FR</button>
+            <a href="contact.html" class="btn-demo">Request Demo</a>
+            <a href="https://memberssync.com" target="_blank" class="btn-start">Get Started</a>
+        </div>
+        <div class="hamburger" onclick="toggleMobile()"><span></span><span></span><span></span></div>
+    </div>
+</nav>
+<div class="mobile-nav" id="mobileNav">
+    <a href="index.html">Home</a><a href="features.html">Features</a><a href="solutions.html">Solutions</a>
+    <a href="pricing.html">Pricing</a><a href="how-it-works.html">How It Works</a><a href="about.html">About</a><a href="contact.html">Contact</a>
+    <div class="mobile-btns"><a href="contact.html" class="btn-demo">Request Demo</a><a href="https://memberssync.com" class="btn-start">Get Started</a></div>
+</div>
+
+<section class="page-hero">
+    <div class="page-hero-content">
+        <div class="page-tag" data-lang-en="Transparent Pricing" data-lang-fr="Tarification Transparente">Transparent Pricing</div>
+        <h1 data-lang-en="Simple Plans for <em>Every Organization</em>" data-lang-fr="Des Plans Simples pour <em>Chaque Organisation</em>">Simple Plans for <em>Every Organization</em></h1>
+        <p data-lang-en="Choose the plan that fits your organization's size and needs. No hidden fees, no surprises." data-lang-fr="Choisissez le plan qui correspond à la taille et aux besoins de votre organisation. Pas de frais cachés, pas de surprises.">Choose the plan that fits your organization's size and needs. No hidden fees, no surprises.</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="section-inner">
+        <div class="pricing-grid">
+
+            <!-- STARTER -->
+            <div class="price-card">
+                <div class="price-header">
+                    <div class="price-icon">🌱</div>
+                    <div class="price-plan" data-lang-en="Starter" data-lang-fr="Débutant">Starter</div>
+                    <div class="price-desc" data-lang-en="For small churches, clubs & community groups just getting started." data-lang-fr="Pour les petites églises, clubs et groupes communautaires qui débutent.">For small churches, clubs &amp; community groups just getting started.</div>
+                    <div class="price-custom" data-lang-en="Contact Us" data-lang-fr="Contactez-Nous">Contact Us</div>
+                    <div style="color:var(--text-muted);font-size:0.82rem;margin-top:0.3rem" data-lang-en="Custom pricing for your needs" data-lang-fr="Tarification personnalisée selon vos besoins">Custom pricing for your needs</div>
+                </div>
+                <div class="price-body">
+                    <div class="price-features">
+                        <div class="price-feat"><div class="check">✓</div><span class="feat-text" data-lang-en="Up to 200 members" data-lang-fr="Jusqu'à 200 membres">Up to 200 members</span></div>
+                        <div class="price-feat"><div class="check">✓</div><span class="feat-text" data-lang-en="Member registration & profiles" data-lang-fr="Inscription et profils des membres">Member registration &amp; profiles</span></div>
+                        <div class="price-feat"><div class="check">✓</div><span class="feat-text" data-lang-en="Basic admin dashboard" data-lang-fr="Tableau de bord admin basique">Basic admin dashboard</span></div>
+                        <div class="price-feat"><div class="check">✓</div><span class="feat-text" data-lang-en="Digital membership cards" data-lang-fr="Cartes de membre numériques">Digital membership cards</span></div>
+                        <div class="price-feat"><div class="check">✓</div><span class="feat-text" data-lang-en="Email support" data-lang-fr="Support par e-mail">Email support</span></div>
+                        <div class="price-feat"><div class="cross">✗</div><span class="feat-text inactive" data-lang-en="Payment & wallet system" data-lang-fr="Système de paiement et portefeuille">Payment &amp; wallet system</span></div>
+                        <div class="price-feat"><div class="cross">✗</div><span class="feat-text inactive" data-lang-en="Advanced analytics" data-lang-fr="Analyses avancées">Advanced analytics</span></div>
+                        <div class="price-feat"><div class="cross">✗</div><span class="feat-text inactive" data-lang-en="Multi-organization" data-lang-fr="Multi-organisations">Multi-organization</span></div>
+                    </div>
+                    <a href="contact.html" class="btn-plan btn-plan-outline" data-lang-en="Get Started →" data-lang-fr="Commencer →">Get Started →</a>
+                </div>
+            </div>
+
+            <!-- BUSINESS - POPULAR -->
+            <div class="price-card popular">
+                <div class="popular-badge" data-lang-en="Most Popular" data-lang-fr="Le Plus Populaire">Most Popular</div>
+                <div class="price-header" style="padding-top:3rem">
+                    <div class="price-icon">🚀</div>
+                    <div class="price-plan" data-lang-en="Business" data-lang-fr="Business">Business</div>
+                    <div class="price-desc" data-lang-en="For growing businesses, gyms, schools & active associations." data-lang-fr="Pour les entreprises en croissance, gymnases, écoles et associations actives.">For growing businesses, gyms, schools &amp; active associations.</div>
+                    <div class="price-custom" data-lang-en="Contact Us" data-lang-fr="Contactez-Nous">Contact Us</div>
+                    <div style="color:var(--text-muted);font-size:0.82rem;margin-top:0.3rem" data-lang-en="Custom pricing for your needs" data-lang-fr="Tarification personnalisée selon vos besoins">Custom pricing for your needs</div>
+                </div>
+                <div class="price-body">
+                    <div class="price-features">
+                        <div class="price-feat"><div class="check">✓</div><span class="feat-text" data-lang-en="Up to 1,000 members" data-lang-fr="Jusqu'à 1 000 membres">Up to 1,000 members</span></div>
+                        <div class="price-feat"><div class="check">✓</div><span class="feat-text" data-lang-en="All Starter features" data-lang-fr="Toutes les fonctionnalités Débutant">All Starter features</span></div>
+                        <div class="price-feat"><div class="check">✓</div><span class="feat-text" data-lang-en="Full payment & wallet system" data-lang-fr="Système de paiement et portefeuille complet">Full payment &amp; wallet system</span></div>
+                        <div class="price-feat"><div class="check">✓</div><span class="feat-text" data-lang-en="Reward points & loyalty program" data-lang-fr="Points de récompense et programme de fidélité">Reward points &amp; loyalty program</span></div>
+                        <div class="price-feat"><div class="check">✓</div><span class="feat-text" data-lang-en="Analytics, reports & CSV export" data-lang-fr="Analyses, rapports et export CSV">Analytics, reports &amp; CSV export</span></div>
+                        <div class="price-feat"><div class="check">✓</div><span class="feat-text" data-lang-en="Email communication tools" data-lang-fr="Outils de communication par e-mail">Email communication tools</span></div>
+                        <div class="price-feat"><div class="check">✓</div><span class="feat-text" data-lang-en="Priority email support" data-lang-fr="Support e-mail prioritaire">Priority email support</span></div>
+                        <div class="price-feat"><div class="cross">✗</div><span class="feat-text inactive" data-lang-en="Multi-organization management" data-lang-fr="Gestion multi-organisations">Multi-organization management</span></div>
+                    </div>
+                    <a href="contact.html" class="btn-plan btn-plan-accent" data-lang-en="Get Business Plan →" data-lang-fr="Obtenir le Plan Business →">Get Business Plan →</a>
+                </div>
+            </div>
+
+            <!-- ENTERPRISE -->
+            <div class="price-card">
+                <div class="price-header">
+                    <div class="price-icon">🏛️</div>
+                    <div class="price-plan" data-lang-en="Enterprise" data-lang-fr="Entreprise">Enterprise</div>
+                    <div class="price-desc" data-lang-en="For large organizations, multi-branch networks & enterprise clients." data-lang-fr="Pour les grandes organisations, réseaux multi-succursales et clients entreprise.">For large organizations, multi-branch networks &amp; enterprise clients.</div>
+                    <div class="price-custom" data-lang-en="Custom Quote" data-lang-fr="Devis Personnalisé">Custom Quote</div>
+                    <div style="color:var(--text-muted);font-size:0.82rem;margin-top:0.3rem" data-lang-en="Contact us for enterprise pricing" data-lang-fr="Contactez-nous pour les tarifs entreprise">Contact us for enterprise pricing</div>
+                </div>
+                <div class="price-body">
+                    <div class="price-features">
+                        <div class="price-feat"><div class="check">✓</div><span class="feat-text" data-lang-en="Unlimited members" data-lang-fr="Membres illimités">Unlimited members</span></div>
+                        <div class="price-feat"><div class="check">✓</div><span class="feat-text" data-lang-en="All Business features" data-lang-fr="Toutes les fonctionnalités Business">All Business features</span></div>
+                        <div class="price-feat"><div class="check">✓</div><span class="feat-text" data-lang-en="Multi-organization management" data-lang-fr="Gestion multi-organisations">Multi-organization management</span></div>
+                        <div class="price-feat"><div class="check">✓</div><span class="feat-text" data-lang-en="Custom features & integrations" data-lang-fr="Fonctionnalités personnalisées et intégrations">Custom features &amp; integrations</span></div>
+                        <div class="price-feat"><div class="check">✓</div><span class="feat-text" data-lang-en="Advanced analytics & custom reports" data-lang-fr="Analyses avancées et rapports personnalisés">Advanced analytics &amp; custom reports</span></div>
+                        <div class="price-feat"><div class="check">✓</div><span class="feat-text" data-lang-en="Dedicated account manager" data-lang-fr="Gestionnaire de compte dédié">Dedicated account manager</span></div>
+                        <div class="price-feat"><div class="check">✓</div><span class="feat-text" data-lang-en="SLA & priority 24/7 support" data-lang-fr="SLA et support prioritaire 24/7">SLA &amp; priority 24/7 support</span></div>
+                        <div class="price-feat"><div class="check">✓</div><span class="feat-text" data-lang-en="Custom branding & white-label" data-lang-fr="Marque personnalisée et marque blanche">Custom branding &amp; white-label</span></div>
+                    </div>
+                    <a href="contact.html" class="btn-plan btn-plan-gold" data-lang-en="Contact for Enterprise →" data-lang-fr="Contacter pour Entreprise →">Contact for Enterprise →</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- COMPARE TABLE -->
+<section class="compare-section">
+    <div class="compare-inner">
+        <h2 data-lang-en="Full Feature Comparison" data-lang-fr="Comparaison Complète des Fonctionnalités">Full Feature Comparison</h2>
+        <table class="compare-table">
+            <thead>
+                <tr>
+                    <th data-lang-en="Feature" data-lang-fr="Fonctionnalité">Feature</th>
+                    <th data-lang-en="Starter" data-lang-fr="Débutant">Starter</th>
+                    <th data-lang-en="Business" data-lang-fr="Business">Business</th>
+                    <th data-lang-en="Enterprise" data-lang-fr="Entreprise">Enterprise</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="cat-row"><td colspan="4" data-lang-en="Member Management" data-lang-fr="Gestion des Membres">Member Management</td></tr>
+                <tr><td data-lang-en="Online member registration" data-lang-fr="Inscription en ligne">Online member registration</td><td><span class="tick">✓</span></td><td><span class="tick">✓</span></td><td><span class="tick">✓</span></td></tr>
+                <tr><td data-lang-en="Member profiles & history" data-lang-fr="Profils et historique">Member profiles &amp; history</td><td><span class="tick">✓</span></td><td><span class="tick">✓</span></td><td><span class="tick">✓</span></td></tr>
+                <tr><td data-lang-en="Digital membership cards (QR)" data-lang-fr="Cartes numériques (QR)">Digital membership cards (QR)</td><td><span class="tick">✓</span></td><td><span class="tick">✓</span></td><td><span class="tick">✓</span></td></tr>
+                <tr><td data-lang-en="Member limit" data-lang-fr="Limite de membres">Member limit</td><td>200</td><td>1,000</td><td data-lang-en="Unlimited" data-lang-fr="Illimité">Unlimited</td></tr>
+                <tr class="cat-row"><td colspan="4" data-lang-en="Payments & Finance" data-lang-fr="Paiements et Finance">Payments &amp; Finance</td></tr>
+                <tr><td data-lang-en="Payment tracking" data-lang-fr="Suivi des paiements">Payment tracking</td><td><span class="cross-x">✗</span></td><td><span class="tick">✓</span></td><td><span class="tick">✓</span></td></tr>
+                <tr><td data-lang-en="Member wallet (prepaid)" data-lang-fr="Portefeuille membre (prépayé)">Member wallet (prepaid)</td><td><span class="cross-x">✗</span></td><td><span class="tick">✓</span></td><td><span class="tick">✓</span></td></tr>
+                <tr><td data-lang-en="Reward points system" data-lang-fr="Système de points de récompense">Reward points system</td><td><span class="cross-x">✗</span></td><td><span class="tick">✓</span></td><td><span class="tick">✓</span></td></tr>
+                <tr><td data-lang-en="Financial reports & CSV export" data-lang-fr="Rapports financiers et export CSV">Financial reports &amp; CSV export</td><td><span class="cross-x">✗</span></td><td><span class="tick">✓</span></td><td><span class="tick">✓</span></td></tr>
+                <tr class="cat-row"><td colspan="4" data-lang-en="Analytics & Communication" data-lang-fr="Analyses et Communication">Analytics &amp; Communication</td></tr>
+                <tr><td data-lang-en="Basic dashboard analytics" data-lang-fr="Analyses de tableau de bord basiques">Basic dashboard analytics</td><td><span class="tick">✓</span></td><td><span class="tick">✓</span></td><td><span class="tick">✓</span></td></tr>
+                <tr><td data-lang-en="Advanced reporting" data-lang-fr="Rapports avancés">Advanced reporting</td><td><span class="cross-x">✗</span></td><td><span class="tick">✓</span></td><td><span class="tick">✓</span></td></tr>
+                <tr><td data-lang-en="Email announcements" data-lang-fr="Annonces par e-mail">Email announcements</td><td><span class="cross-x">✗</span></td><td><span class="tick">✓</span></td><td><span class="tick">✓</span></td></tr>
+                <tr class="cat-row"><td colspan="4" data-lang-en="Scale & Support" data-lang-fr="Échelle et Support">Scale &amp; Support</td></tr>
+                <tr><td data-lang-en="Multi-organization management" data-lang-fr="Gestion multi-organisations">Multi-organization management</td><td><span class="cross-x">✗</span></td><td><span class="cross-x">✗</span></td><td><span class="tick">✓</span></td></tr>
+                <tr><td data-lang-en="Custom features & integrations" data-lang-fr="Fonctionnalités personnalisées">Custom features &amp; integrations</td><td><span class="cross-x">✗</span></td><td><span class="cross-x">✗</span></td><td><span class="tick">✓</span></td></tr>
+                <tr><td data-lang-en="Support level" data-lang-fr="Niveau de support">Support level</td><td data-lang-en="Email" data-lang-fr="E-mail">Email</td><td data-lang-en="Priority Email" data-lang-fr="E-mail Prioritaire">Priority Email</td><td data-lang-en="24/7 Dedicated" data-lang-fr="Dédié 24/7">24/7 Dedicated</td></tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<!-- CUSTOM PRICING BAND -->
+<div class="custom-band">
+    <h3 data-lang-en="Not Sure Which Plan Is Right For You?" data-lang-fr="Vous ne Savez pas Quel Plan Vous Convient ?">Not Sure Which Plan Is Right For You?</h3>
+    <p data-lang-en="Contact us directly on WhatsApp or by email. We'll recommend the best plan for your specific organization and budget." data-lang-fr="Contactez-nous directement sur WhatsApp ou par e-mail. Nous recommanderons le meilleur plan pour votre organisation et budget spécifiques.">Contact us directly on WhatsApp or by email. We'll recommend the best plan for your specific organization and budget.</p>
+    <div class="custom-btns">
+        <a href="https://wa.me/237658504815" target="_blank" class="btn-wa">💬 +237 658 50 48 15</a>
+        <a href="mailto:support@memberssync.com" class="btn-email">✉️ support@memberssync.com</a>
+    </div>
+</div>
+
+<footer><div class="footer-inner">
+    <div class="footer-top">
+        <div class="footer-brand"><a href="index.html" class="logo-wrap" style="margin-bottom:1rem"><div class="logo-name">Member<span style="color:var(--accent)">Sync</span></div><div class="logo-sub" style="color:rgba(255,255,255,0.5)">A Product of Next Solution</div></a><p style="color:rgba(255,255,255,0.7)">Smart membership management for growing organizations across Africa and beyond.</p><div class="footer-contact"><a href="tel:+237658504815">📞 +237 658 50 48 15</a><a href="mailto:support@memberssync.com">✉️ support@memberssync.com</a><a href="https://wa.me/237658504815" target="_blank">💬 WhatsApp</a></div></div>
+        <div class="footer-col"><h4>Product</h4><ul><li><a href="features.html">Features</a></li><li><a href="solutions.html">Solutions</a></li><li><a href="pricing.html">Pricing</a></li><li><a href="how-it-works.html">How It Works</a></li><li><a href="contact.html">Request Demo</a></li></ul></div>
+        <div class="footer-col"><h4>Company</h4><ul><li><a href="about.html">About Us</a></li><li><a href="contact.html">Contact</a></li><li><a href="#">Privacy Policy</a></li><li><a href="#">Terms of Service</a></li></ul></div>
+        <div class="footer-col"><h4>Powered By</h4><p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.8;">Next Solution — Technology &amp; business services company in Cameroon.</p></div>
+    </div>
+    <div class="footer-bottom"><p>© 2026 MemberSync. All rights reserved.</p><div class="powered-by">A product by <strong>Next Solution</strong> — Cameroon 🇨🇲</div></div>
+</div></footer>
+
+<div class="wa-float"><div class="wa-tooltip">Chat on WhatsApp</div><a href="https://wa.me/237658504815" target="_blank">💬</a></div>
+
+<script>
+    const navbar=document.getElementById('navbar');
+    window.addEventListener('scroll',()=>{navbar.classList.toggle('scrolled',window.scrollY>50);});
+    function toggleMobile(){document.getElementById('mobileNav').classList.toggle('open');}
+    let currentLang=localStorage.getItem('ms-lang')||'en';
+    function setLang(lang){currentLang=lang;localStorage.setItem('ms-lang',lang);document.getElementById('btn-en').classList.toggle('active',lang==='en');document.getElementById('btn-fr').classList.toggle('active',lang==='fr');document.querySelectorAll('[data-lang-en]').forEach(el=>{const val=el.getAttribute('data-lang-'+lang);if(val)el.innerHTML=val;});}
+    setLang(currentLang);
+</script>
+</body>
+</html>

@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About | MemberSync by Next Solution</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root{--primary:#0A2463;--secondary:#3E92CC;--accent:#00AAFF;--gold:#F4B942;--dark:#0D1B2A;--light:#F0F6FF;--lighter:#F8FAFF;--white:#FFFFFF;--text-muted:#5A7A9A;--border:rgba(10,36,99,0.1);--gradient:linear-gradient(135deg,#0A2463 0%,#1565C0 60%,#3E92CC 100%);--shadow-sm:0 4px 20px rgba(10,36,99,0.08);--shadow:0 20px 60px rgba(10,36,99,0.15);}
+        *{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+        body{font-family:'DM Sans',sans-serif;color:var(--dark);line-height:1.7;overflow-x:hidden;background:var(--white);}
+        .navbar{position:fixed;top:0;width:100%;z-index:1000;background:rgba(255,255,255,0.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);transition:all 0.3s;}
+        .navbar.scrolled{box-shadow:var(--shadow-sm);}
+        .nav-container{max-width:1400px;margin:0 auto;padding:0 2rem;display:flex;justify-content:space-between;align-items:center;height:72px;}
+        .logo-wrap{display:flex;flex-direction:column;align-items:flex-start;text-decoration:none;}
+        .logo-name{font-family:'Syne',sans-serif;font-weight:900;font-size:1.6rem;color:var(--primary);letter-spacing:-1px;line-height:1;}
+        .logo-name span{color:var(--accent);}
+        .logo-sub{font-size:0.65rem;color:var(--text-muted);font-weight:500;letter-spacing:0.5px;text-transform:uppercase;}
+        .nav-center{display:flex;align-items:center;gap:2.5rem;}
+        .nav-center a{text-decoration:none;color:var(--dark);font-weight:500;font-size:0.92rem;position:relative;transition:color 0.2s;}
+        .nav-center a:hover,.nav-center a.active{color:var(--accent);}
+        .nav-center a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:2px;background:var(--accent);transition:width 0.3s;border-radius:2px;}
+        .nav-center a:hover::after,.nav-center a.active::after{width:100%;}
+        .nav-right{display:flex;align-items:center;gap:1rem;}
+        .lang-btn{background:none;border:1px solid var(--border);padding:0.3rem 0.7rem;border-radius:6px;font-size:0.8rem;cursor:pointer;color:var(--text-muted);font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+        .lang-btn.active{background:var(--primary);color:white;border-color:var(--primary);}
+        .btn-demo{padding:0.5rem 1.2rem;border:2px solid var(--primary);color:var(--primary);border-radius:8px;text-decoration:none;font-weight:600;font-size:0.88rem;transition:all 0.2s;}
+        .btn-demo:hover{background:var(--primary);color:white;}
+        .btn-start{padding:0.5rem 1.2rem;background:var(--gold);color:var(--dark);border-radius:8px;text-decoration:none;font-weight:700;font-size:0.88rem;transition:all 0.2s;border:2px solid var(--gold);}
+        .btn-start:hover{background:#e0a830;transform:translateY(-1px);}
+        .hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px;}
+        .hamburger span{width:24px;height:2px;background:var(--primary);border-radius:2px;display:block;}
+        .mobile-nav{display:none;position:fixed;top:72px;left:0;right:0;background:white;z-index:999;border-bottom:1px solid var(--border);box-shadow:var(--shadow);padding:1.5rem 2rem;flex-direction:column;gap:1rem;}
+        .mobile-nav.open{display:flex;}
+        .mobile-nav a{text-decoration:none;color:var(--dark);font-weight:500;padding:0.5rem 0;border-bottom:1px solid var(--border);}
+        .mobile-nav .mobile-btns{display:flex;gap:1rem;margin-top:0.5rem;flex-wrap:wrap;}
+        .page-hero{background:var(--gradient);padding:8rem 2rem 5rem;text-align:center;position:relative;overflow:hidden;}
+        .page-hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;}
+        .page-hero-content{position:relative;z-index:1;}
+        .page-tag{display:inline-block;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:white;font-size:0.78rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:0.4rem 1rem;border-radius:50px;margin-bottom:1rem;}
+        .page-hero h1{font-family:'Syne',sans-serif;font-size:clamp(2.2rem,5vw,3.5rem);font-weight:900;color:white;letter-spacing:-2px;margin-bottom:1rem;}
+        .page-hero h1 em{color:var(--gold);font-style:normal;}
+        .page-hero p{font-size:1.1rem;color:rgba(255,255,255,0.8);max-width:600px;margin:0 auto;}
+        .section{padding:6rem 2rem;}
+        .section-inner{max-width:1400px;margin:0 auto;}
+        .section-tag{display:inline-block;background:var(--light);color:var(--accent);font-size:0.78rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:0.4rem 1rem;border-radius:50px;border:1px solid rgba(0,170,255,0.2);margin-bottom:1rem;}
+        .section-title{font-family:'Syne',sans-serif;font-size:clamp(1.8rem,3.5vw,2.5rem);font-weight:800;color:var(--primary);line-height:1.2;letter-spacing:-1px;margin-bottom:1.2rem;}
+        .section-title em{color:var(--accent);font-style:normal;}
+        .about-grid{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center;margin-top:2rem;}
+        .about-text p{color:var(--text-muted);font-size:1rem;line-height:1.9;margin-bottom:1.2rem;}
+        .about-visual{background:var(--gradient);border-radius:24px;padding:3rem 2.5rem;color:white;}
+        .about-visual h3{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;margin-bottom:2rem;}
+        .about-stats{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;}
+        .about-stat .num{font-family:'Syne',sans-serif;font-size:2.2rem;font-weight:900;color:var(--gold);}
+        .about-stat .lbl{font-size:0.85rem;color:rgba(255,255,255,0.75);margin-top:0.2rem;}
+        .mission-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:3rem;}
+        .mission-card{border-radius:16px;padding:2.5rem;border:1px solid var(--border);}
+        .mission-card.mission{background:var(--primary);color:white;}
+        .mission-card.vision{background:var(--lighter);}
+        .mission-card h3{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:700;margin-bottom:1rem;}
+        .mission-card.mission h3{color:var(--gold);}
+        .mission-card.vision h3{color:var(--primary);}
+        .mission-card p{font-size:0.95rem;line-height:1.8;}
+        .mission-card.mission p{color:rgba(255,255,255,0.8);}
+        .mission-card.vision p{color:var(--text-muted);}
+        .values-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3rem;}
+        .value-card{background:white;border:1px solid var(--border);border-radius:16px;padding:2rem;transition:all 0.3s;text-align:center;}
+        .value-card:hover{box-shadow:var(--shadow);transform:translateY(-4px);}
+        .value-icon{font-size:2.5rem;margin-bottom:1rem;}
+        .value-card h3{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:700;color:var(--primary);margin-bottom:0.7rem;}
+        .value-card p{font-size:0.88rem;color:var(--text-muted);line-height:1.7;}
+        .ns-section{background:var(--dark);padding:6rem 2rem;}
+        .ns-inner{max-width:1100px;margin:0 auto;}
+        .ns-grid{display:grid;grid-template-columns:1fr 2fr;gap:4rem;align-items:start;}
+        .ns-logo-name{font-family:'Syne',sans-serif;font-size:2rem;font-weight:900;color:white;letter-spacing:-1px;}
+        .ns-logo-name span{color:var(--gold);}
+        .ns-tagline{color:rgba(255,255,255,0.5);font-size:0.85rem;margin-top:0.4rem;}
+        .ns-flag{font-size:2rem;margin-top:1.2rem;}
+        .ns-divider{width:40px;height:3px;background:var(--gold);border-radius:2px;margin:1.2rem 0;}
+        .ns-text p{color:rgba(255,255,255,0.75);font-size:0.98rem;line-height:1.9;margin-bottom:1rem;}
+        .ns-services{display:flex;flex-wrap:wrap;gap:0.6rem;margin-top:1.5rem;}
+        .ns-service{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.12);padding:0.4rem 0.9rem;border-radius:6px;font-size:0.82rem;color:rgba(255,255,255,0.65);}
+        .cta-section{background:var(--gradient);padding:6rem 2rem;text-align:center;}
+        .cta-section h2{font-family:'Syne',sans-serif;font-size:clamp(2rem,4vw,3rem);font-weight:900;color:white;letter-spacing:-1px;margin-bottom:1rem;}
+        .cta-section p{color:rgba(255,255,255,0.8);font-size:1.1rem;max-width:500px;margin:0 auto 2.5rem;}
+        .cta-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
+        .btn-cta-gold{padding:1rem 2.5rem;background:var(--gold);color:var(--dark);border-radius:10px;text-decoration:none;font-weight:700;font-size:1rem;transition:all 0.2s;}
+        .btn-cta-gold:hover{background:#e0a830;transform:translateY(-2px);}
+        .btn-cta-white{padding:1rem 2.5rem;background:transparent;color:white;border-radius:10px;text-decoration:none;font-weight:600;font-size:1rem;border:2px solid rgba(255,255,255,0.5);transition:all 0.2s;}
+        footer{background:var(--dark);color:rgba(255,255,255,0.7);padding:4rem 2rem 2rem;border-top:1px solid rgba(255,255,255,0.05);}
+        .footer-inner{max-width:1400px;margin:0 auto;}
+        .footer-top{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:3rem;margin-bottom:3rem;}
+        .footer-brand p{margin-top:1rem;font-size:0.9rem;line-height:1.8;max-width:280px;}
+        .footer-contact{margin-top:1.2rem;display:flex;flex-direction:column;gap:0.5rem;}
+        .footer-contact a{color:rgba(255,255,255,0.7);text-decoration:none;font-size:0.88rem;display:flex;align-items:center;gap:0.5rem;transition:color 0.2s;}
+        .footer-contact a:hover{color:var(--gold);}
+        .footer-col h4{font-family:'Syne',sans-serif;font-size:0.95rem;font-weight:700;color:white;margin-bottom:1.2rem;}
+        .footer-col ul{list-style:none;display:flex;flex-direction:column;gap:0.7rem;}
+        .footer-col ul li a{color:rgba(255,255,255,0.6);text-decoration:none;font-size:0.88rem;transition:color 0.2s;}
+        .footer-col ul li a:hover{color:white;}
+        .footer-bottom{border-top:1px solid rgba(255,255,255,0.1);padding-top:2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;}
+        .footer-bottom p,.powered-by{font-size:0.82rem;}
+        .powered-by strong{color:rgba(255,255,255,0.8);}
+        .wa-float{position:fixed;bottom:2rem;right:2rem;z-index:9999;}
+        .wa-float a{display:flex;align-items:center;justify-content:center;width:60px;height:60px;background:#25D366;border-radius:50%;text-decoration:none;box-shadow:0 8px 25px rgba(37,211,102,0.4);transition:all 0.3s;font-size:1.6rem;}
+        .wa-float a:hover{transform:scale(1.1);}
+        .wa-tooltip{position:absolute;right:70px;top:50%;transform:translateY(-50%);background:var(--dark);color:white;white-space:nowrap;padding:0.5rem 1rem;border-radius:8px;font-size:0.82rem;opacity:0;pointer-events:none;transition:opacity 0.2s;}
+        .wa-float:hover .wa-tooltip{opacity:1;}
+        @media(max-width:1024px){.about-grid,.ns-grid,.mission-grid{grid-template-columns:1fr;}.values-grid{grid-template-columns:repeat(2,1fr);}.footer-top{grid-template-columns:1fr 1fr;}}
+        @media(max-width:768px){.nav-center,.nav-right .btn-demo,.nav-right .btn-start{display:none;}.hamburger{display:flex;}.values-grid{grid-template-columns:1fr;}.footer-top{grid-template-columns:1fr;}.footer-bottom{flex-direction:column;text-align:center;}}
+    </style>
+</head>
+<body>
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="index.html" class="logo-wrap"><div class="logo-name">Member<span>Sync</span></div><div class="logo-sub">A Product of Next Solution</div></a>
+        <div class="nav-center"><a href="index.html">Home</a><a href="features.html">Features</a><a href="solutions.html">Solutions</a><a href="pricing.html">Pricing</a><a href="how-it-works.html">How It Works</a><a href="about.html" class="active">About</a><a href="contact.html">Contact</a></div>
+        <div class="nav-right"><button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button><button class="lang-btn" id="btn-fr" onclick="setLang('fr')">FR</button><a href="contact.html" class="btn-demo">Request Demo</a><a href="https://memberssync.com" target="_blank" class="btn-start">Get Started</a></div>
+        <div class="hamburger" onclick="toggleMobile()"><span></span><span></span><span></span></div>
+    </div>
+</nav>
+<div class="mobile-nav" id="mobileNav"><a href="index.html">Home</a><a href="features.html">Features</a><a href="solutions.html">Solutions</a><a href="pricing.html">Pricing</a><a href="how-it-works.html">How It Works</a><a href="about.html">About</a><a href="contact.html">Contact</a><div class="mobile-btns"><a href="contact.html" class="btn-demo">Request Demo</a><a href="https://memberssync.com" class="btn-start">Get Started</a></div></div>
+
+<section class="page-hero">
+    <div class="page-hero-content">
+        <div class="page-tag" data-lang-en="Our Story" data-lang-fr="Notre Histoire">Our Story</div>
+        <h1 data-lang-en="Built in Africa, <em>For Africa</em>" data-lang-fr="Construit en Afrique, <em>Pour l'Afrique</em>">Built in Africa, <em>For Africa</em></h1>
+        <p data-lang-en="MemberSync was born from a simple observation: African organizations deserve modern, powerful tools to manage their members — without complexity or excessive costs." data-lang-fr="MemberSync est né d'une simple observation : les organisations africaines méritent des outils modernes et puissants pour gérer leurs membres — sans complexité ni coûts excessifs.">MemberSync was born from a simple observation: African organizations deserve modern, powerful tools to manage their members — without complexity or excessive costs.</p>
+    </div>
+</section>
+
+<!-- ABOUT MEMBERSYNC -->
+<section class="section">
+    <div class="section-inner">
+        <div class="about-grid">
+            <div class="about-text">
+                <div class="section-tag" data-lang-en="About MemberSync" data-lang-fr="À Propos de MemberSync">About MemberSync</div>
+                <h2 class="section-title" data-lang-en="The Smart Way to <em>Manage Members</em>" data-lang-fr="La Façon Intelligente de <em>Gérer les Membres</em>">The Smart Way to <em>Manage Members</em></h2>
+                <p data-lang-en="MemberSync is a cloud-based membership management software developed by Next Solution. Designed specifically for the African market, it understands the realities of organizations across Cameroon, Central Africa, and the continent." data-lang-fr="MemberSync est un logiciel de gestion des membres basé sur le cloud développé par Next Solution. Conçu spécifiquement pour le marché africain, il comprend les réalités des organisations au Cameroun, en Afrique centrale et sur le continent.">MemberSync is a cloud-based membership management software developed by Next Solution. Designed specifically for the African market, it understands the realities of organizations across Cameroon, Central Africa, and the continent.</p>
+                <p data-lang-en="We saw churches maintaining paper attendance books. Businesses running loyalty programs on handwritten cards. Schools tracking fees in physical notebooks. Gyms with no idea who had paid for the month. MemberSync was built to solve all of that." data-lang-fr="Nous avons vu des églises maintenir des registres de présence papier. Des entreprises gérant des programmes de fidélité sur des cartes manuscrites. Des écoles suivant les frais dans des cahiers physiques. Des gymnases sans idée de qui avait payé. MemberSync a été construit pour résoudre tout cela.">We saw churches maintaining paper attendance books. Businesses running loyalty programs on handwritten cards. Schools tracking fees in physical notebooks. Gyms with no idea who had paid for the month. MemberSync was built to solve all of that.</p>
+                <p data-lang-en="Today, MemberSync serves organizations of all sizes — from small community groups to multi-branch businesses — giving them a professional, secure, and scalable platform at an accessible price." data-lang-fr="Aujourd'hui, MemberSync sert des organisations de toutes tailles — des petits groupes communautaires aux entreprises multi-succursales — leur offrant une plateforme professionnelle, sécurisée et évolutive à un prix accessible.">Today, MemberSync serves organizations of all sizes — from small community groups to multi-branch businesses — giving them a professional, secure, and scalable platform at an accessible price.</p>
+            </div>
+            <div class="about-visual">
+                <h3 data-lang-en="MemberSync at a Glance" data-lang-fr="MemberSync en un Coup d'Œil">MemberSync at a Glance</h3>
+                <div class="about-stats">
+                    <div class="about-stat"><div class="num">10K+</div><div class="lbl" data-lang-en="Members Managed" data-lang-fr="Membres Gérés">Members Managed</div></div>
+                    <div class="about-stat"><div class="num">50+</div><div class="lbl" data-lang-en="Organizations Served" data-lang-fr="Organisations Servies">Organizations Served</div></div>
+                    <div class="about-stat"><div class="num">99.9%</div><div class="lbl" data-lang-en="System Uptime" data-lang-fr="Disponibilité">System Uptime</div></div>
+                    <div class="about-stat"><div class="num">🇨🇲</div><div class="lbl" data-lang-en="Made in Cameroon" data-lang-fr="Fabriqué au Cameroun">Made in Cameroon</div></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MISSION / VISION -->
+        <div style="margin-top:5rem">
+            <div class="section-tag" data-lang-en="Our Purpose" data-lang-fr="Notre Mission">Our Purpose</div>
+            <div class="mission-grid">
+                <div class="mission-card mission">
+                    <h3 data-lang-en="🎯 Our Mission" data-lang-fr="🎯 Notre Mission">🎯 Our Mission</h3>
+                    <p data-lang-en="To empower every African organization — regardless of size or technical capacity — with a modern, affordable, and reliable membership management system that saves time, reduces errors, and improves member experience." data-lang-fr="Donner à chaque organisation africaine — quelle que soit sa taille ou sa capacité technique — un système de gestion des membres moderne, abordable et fiable qui fait gagner du temps, réduit les erreurs et améliore l'expérience des membres.">To empower every African organization — regardless of size or technical capacity — with a modern, affordable, and reliable membership management system that saves time, reduces errors, and improves member experience.</p>
+                </div>
+                <div class="mission-card vision">
+                    <h3 data-lang-en="🔭 Our Vision" data-lang-fr="🔭 Notre Vision">🔭 Our Vision</h3>
+                    <p data-lang-en="To become the leading membership management platform across Africa — the system that every church, business, school, gym, and association thinks of first when they want to go digital and professional." data-lang-fr="Devenir la plateforme de gestion des membres leader en Afrique — le système auquel chaque église, entreprise, école, gymnase et association pense en premier lorsqu'elle veut passer au numérique et au professionnel.">To become the leading membership management platform across Africa — the system that every church, business, school, gym, and association thinks of first when they want to go digital and professional.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- VALUES -->
+        <div style="margin-top:5rem">
+            <div class="section-tag" data-lang-en="Our Values" data-lang-fr="Nos Valeurs">Our Values</div>
+            <div class="values-grid">
+                <div class="value-card"><div class="value-icon">🎯</div><h3 data-lang-en="Simplicity First" data-lang-fr="Simplicité Avant Tout">Simplicity First</h3><p data-lang-en="We build tools that anyone can use, not just technical people. If it's not simple, we redesign it." data-lang-fr="Nous construisons des outils que tout le monde peut utiliser, pas seulement les techniciens. Si ce n'est pas simple, nous le repensons.">We build tools that anyone can use, not just technical people. If it's not simple, we redesign it.</p></div>
+                <div class="value-card"><div class="value-icon">🔐</div><h3 data-lang-en="Security & Trust" data-lang-fr="Sécurité et Confiance">Security &amp; Trust</h3><p data-lang-en="Member data is sensitive. We treat it with the highest level of security and never compromise on protection." data-lang-fr="Les données des membres sont sensibles. Nous les traitons avec le plus haut niveau de sécurité et ne compromettrons jamais la protection.">Member data is sensitive. We treat it with the highest level of security and never compromise on protection.</p></div>
+                <div class="value-card"><div class="value-icon">🌍</div><h3 data-lang-en="Built for Africa" data-lang-fr="Construit pour l'Afrique">Built for Africa</h3><p data-lang-en="Every decision we make is guided by the real needs and context of African organizations — not copied from elsewhere." data-lang-fr="Chaque décision que nous prenons est guidée par les besoins et le contexte réels des organisations africaines — pas copiée d'ailleurs.">Every decision we make is guided by the real needs and context of African organizations — not copied from elsewhere.</p></div>
+                <div class="value-card"><div class="value-icon">📈</div><h3 data-lang-en="Grow With You" data-lang-fr="Grandir avec Vous">Grow With You</h3><p data-lang-en="Whether you have 20 or 20,000 members, MemberSync scales with your organization without disruption." data-lang-fr="Que vous ayez 20 ou 20 000 membres, MemberSync évolue avec votre organisation sans perturbation.">Whether you have 20 or 20,000 members, MemberSync scales without disruption.</p></div>
+                <div class="value-card"><div class="value-icon">🤝</div><h3 data-lang-en="Real Support" data-lang-fr="Vrai Support">Real Support</h3><p data-lang-en="You're not alone. Our team is reachable on WhatsApp and email to help you every step of the way." data-lang-fr="Vous n'êtes pas seul. Notre équipe est joignable sur WhatsApp et e-mail pour vous aider à chaque étape.">You're not alone. Our team is reachable on WhatsApp and email to help you every step of the way.</p></div>
+                <div class="value-card"><div class="value-icon">💡</div><h3 data-lang-en="Always Improving" data-lang-fr="Toujours en Amélioration">Always Improving</h3><p data-lang-en="We listen to our users and constantly release improvements. Your feedback shapes the product." data-lang-fr="Nous écoutons nos utilisateurs et publions constamment des améliorations. Vos retours façonnent le produit.">We listen to our users and constantly release improvements. Your feedback shapes the product.</p></div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- NEXT SOLUTION SECTION -->
+<section class="ns-section">
+    <div class="ns-inner">
+        <div class="ns-grid">
+            <div>
+                <div class="ns-logo-name">Next<span>Solution</span></div>
+                <div class="ns-tagline" data-lang-en="Technology & Business Services" data-lang-fr="Technologie et Services aux Entreprises">Technology &amp; Business Services</div>
+                <div class="ns-flag">🇨🇲</div>
+                <div class="ns-divider"></div>
+                <p style="color:rgba(255,255,255,0.5);font-size:0.82rem;font-style:italic;" data-lang-en="Cameroon, Central Africa" data-lang-fr="Cameroun, Afrique Centrale">Cameroon, Central Africa</p>
+            </div>
+            <div class="ns-text">
+                <p data-lang-en="MemberSync is a flagship product of Next Solution, a technology and business services company based in Cameroon. Next Solution was founded with a clear goal: to bring professional-grade digital tools to African businesses and organizations." data-lang-fr="MemberSync est un produit phare de Next Solution, une entreprise de technologie et de services aux entreprises basée au Cameroun. Next Solution a été fondée avec un objectif clair : apporter des outils numériques de qualité professionnelle aux entreprises et organisations africaines.">MemberSync is a flagship product of Next Solution, a technology and business services company based in Cameroon. Next Solution was founded with a clear goal: to bring professional-grade digital tools to African businesses and organizations.</p>
+                <p data-lang-en="Beyond MemberSync, Next Solution provides a full range of technology and business services to clients across the region. This deep expertise in multiple domains is what allows us to build and continuously improve a product as comprehensive as MemberSync." data-lang-fr="Au-delà de MemberSync, Next Solution fournit une gamme complète de services technologiques et commerciaux aux clients de la région. Cette expertise approfondie dans plusieurs domaines est ce qui nous permet de construire et d'améliorer continuellement un produit aussi complet que MemberSync.">Beyond MemberSync, Next Solution provides a full range of technology and business services to clients across the region. This deep expertise in multiple domains is what allows us to build and continuously improve a product as comprehensive as MemberSync.</p>
+                <div class="ns-services">
+                    <span class="ns-service" data-lang-en="💻 Software Development" data-lang-fr="💻 Développement Logiciel">💻 Software Development</span>
+                    <span class="ns-service" data-lang-en="📱 Mobile App Development" data-lang-fr="📱 Développement Mobile">📱 Mobile App Development</span>
+                    <span class="ns-service" data-lang-en="📣 Digital Marketing" data-lang-fr="📣 Marketing Digital">📣 Digital Marketing</span>
+                    <span class="ns-service" data-lang-en="🖨️ Print Solutions" data-lang-fr="🖨️ Solutions d'Impression">🖨️ Print Solutions</span>
+                    <span class="ns-service" data-lang-en="🗄️ Database Architecture" data-lang-fr="🗄️ Architecture de Base de Données">🗄️ Database Architecture</span>
+                    <span class="ns-service" data-lang-en="⚙️ Business Automation" data-lang-fr="⚙️ Automatisation des Affaires">⚙️ Business Automation</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="cta-section">
+    <h2 data-lang-en="Ready to Join the MemberSync Family?" data-lang-fr="Prêt à Rejoindre la Famille MemberSync ?">Ready to Join the MemberSync Family?</h2>
+    <p data-lang-en="Hundreds of organizations across Africa already trust MemberSync. Yours could be next." data-lang-fr="Des centaines d'organisations à travers l'Afrique font déjà confiance à MemberSync. La vôtre pourrait être la prochaine.">Hundreds of organizations across Africa already trust MemberSync. Yours could be next.</p>
+    <div class="cta-btns">
+        <a href="https://memberssync.com" target="_blank" class="btn-cta-gold" data-lang-en="Get Started Free" data-lang-fr="Commencer Gratuitement">Get Started Free</a>
+        <a href="contact.html" class="btn-cta-white" data-lang-en="Contact Us" data-lang-fr="Nous Contacter">Contact Us</a>
+    </div>
+</section>
+
+<footer><div class="footer-inner">
+    <div class="footer-top">
+        <div class="footer-brand"><a href="index.html" class="logo-wrap" style="margin-bottom:1rem"><div class="logo-name">Member<span style="color:var(--accent)">Sync</span></div><div class="logo-sub" style="color:rgba(255,255,255,0.5)">A Product of Next Solution</div></a><p style="color:rgba(255,255,255,0.7)">Smart membership management for growing organizations across Africa and beyond.</p><div class="footer-contact"><a href="tel:+237658504815">📞 +237 658 50 48 15</a><a href="mailto:support@memberssync.com">✉️ support@memberssync.com</a><a href="https://wa.me/237658504815" target="_blank">💬 WhatsApp</a></div></div>
+        <div class="footer-col"><h4>Product</h4><ul><li><a href="features.html">Features</a></li><li><a href="solutions.html">Solutions</a></li><li><a href="pricing.html">Pricing</a></li><li><a href="how-it-works.html">How It Works</a></li><li><a href="contact.html">Request Demo</a></li></ul></div>
+        <div class="footer-col"><h4>Company</h4><ul><li><a href="about.html">About Us</a></li><li><a href="contact.html">Contact</a></li><li><a href="#">Privacy Policy</a></li><li><a href="#">Terms of Service</a></li></ul></div>
+        <div class="footer-col"><h4>Powered By</h4><p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.8;">Next Solution — Technology &amp; business services company in Cameroon.</p></div>
+    </div>
+    <div class="footer-bottom"><p>© 2026 MemberSync. All rights reserved.</p><div class="powered-by">A product by <strong>Next Solution</strong> — Cameroon 🇨🇲</div></div>
+</div></footer>
+<div class="wa-float"><div class="wa-tooltip">Chat on WhatsApp</div><a href="https://wa.me/237658504815" target="_blank">💬</a></div>
+<script>
+    const navbar=document.getElementById('navbar');
+    window.addEventListener('scroll',()=>{navbar.classList.toggle('scrolled',window.scrollY>50);});
+    function toggleMobile(){document.getElementById('mobileNav').classList.toggle('open');}
+    let currentLang=localStorage.getItem('ms-lang')||'en';
+    function setLang(lang){currentLang=lang;localStorage.setItem('ms-lang',lang);document.getElementById('btn-en').classList.toggle('active',lang==='en');document.getElementById('btn-fr').classList.toggle('active',lang==='fr');document.querySelectorAll('[data-lang-en]').forEach(el=>{const val=el.getAttribute('data-lang-'+lang);if(val)el.innerHTML=val;});}
+    setLang(currentLang);
+</script>
+</body>
+</html>

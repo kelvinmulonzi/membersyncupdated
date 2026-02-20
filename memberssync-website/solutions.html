@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solutions | MemberSync</title>
+    <meta name="description" content="MemberSync is built for businesses, churches, schools, gyms, and associations across Africa. Find the solution for your organization.">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root{--primary:#0A2463;--secondary:#3E92CC;--accent:#00AAFF;--gold:#F4B942;--dark:#0D1B2A;--light:#F0F6FF;--lighter:#F8FAFF;--white:#FFFFFF;--text-muted:#5A7A9A;--border:rgba(10,36,99,0.1);--gradient:linear-gradient(135deg,#0A2463 0%,#1565C0 60%,#3E92CC 100%);--shadow-sm:0 4px 20px rgba(10,36,99,0.08);--shadow:0 20px 60px rgba(10,36,99,0.15);}
+        *{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+        body{font-family:'DM Sans',sans-serif;color:var(--dark);line-height:1.7;overflow-x:hidden;background:var(--white);}
+        .navbar{position:fixed;top:0;width:100%;z-index:1000;background:rgba(255,255,255,0.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);transition:all 0.3s;}
+        .navbar.scrolled{box-shadow:var(--shadow-sm);}
+        .nav-container{max-width:1400px;margin:0 auto;padding:0 2rem;display:flex;justify-content:space-between;align-items:center;height:72px;}
+        .logo-wrap{display:flex;flex-direction:column;align-items:flex-start;text-decoration:none;}
+        .logo-name{font-family:'Syne',sans-serif;font-weight:900;font-size:1.6rem;color:var(--primary);letter-spacing:-1px;line-height:1;}
+        .logo-name span{color:var(--accent);}
+        .logo-sub{font-size:0.65rem;color:var(--text-muted);font-weight:500;letter-spacing:0.5px;text-transform:uppercase;}
+        .nav-center{display:flex;align-items:center;gap:2.5rem;}
+        .nav-center a{text-decoration:none;color:var(--dark);font-weight:500;font-size:0.92rem;position:relative;transition:color 0.2s;}
+        .nav-center a:hover,.nav-center a.active{color:var(--accent);}
+        .nav-center a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:2px;background:var(--accent);transition:width 0.3s;border-radius:2px;}
+        .nav-center a:hover::after,.nav-center a.active::after{width:100%;}
+        .nav-right{display:flex;align-items:center;gap:1rem;}
+        .lang-btn{background:none;border:1px solid var(--border);padding:0.3rem 0.7rem;border-radius:6px;font-size:0.8rem;cursor:pointer;color:var(--text-muted);font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+        .lang-btn:hover{border-color:var(--accent);color:var(--accent);}
+        .lang-btn.active{background:var(--primary);color:white;border-color:var(--primary);}
+        .btn-demo{padding:0.5rem 1.2rem;border:2px solid var(--primary);color:var(--primary);border-radius:8px;text-decoration:none;font-weight:600;font-size:0.88rem;transition:all 0.2s;}
+        .btn-demo:hover{background:var(--primary);color:white;}
+        .btn-start{padding:0.5rem 1.2rem;background:var(--gold);color:var(--dark);border-radius:8px;text-decoration:none;font-weight:700;font-size:0.88rem;transition:all 0.2s;border:2px solid var(--gold);}
+        .btn-start:hover{background:#e0a830;transform:translateY(-1px);}
+        .hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px;}
+        .hamburger span{width:24px;height:2px;background:var(--primary);border-radius:2px;display:block;}
+        .mobile-nav{display:none;position:fixed;top:72px;left:0;right:0;background:white;z-index:999;border-bottom:1px solid var(--border);box-shadow:var(--shadow);padding:1.5rem 2rem;flex-direction:column;gap:1rem;}
+        .mobile-nav.open{display:flex;}
+        .mobile-nav a{text-decoration:none;color:var(--dark);font-weight:500;padding:0.5rem 0;border-bottom:1px solid var(--border);}
+        .mobile-nav .mobile-btns{display:flex;gap:1rem;margin-top:0.5rem;flex-wrap:wrap;}
+
+        .page-hero{background:var(--gradient);padding:8rem 2rem 5rem;text-align:center;position:relative;overflow:hidden;}
+        .page-hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;}
+        .page-hero-content{position:relative;z-index:1;}
+        .page-tag{display:inline-block;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:white;font-size:0.78rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:0.4rem 1rem;border-radius:50px;margin-bottom:1rem;}
+        .page-hero h1{font-family:'Syne',sans-serif;font-size:clamp(2.2rem,5vw,3.5rem);font-weight:900;color:white;letter-spacing:-2px;margin-bottom:1rem;}
+        .page-hero h1 em{color:var(--gold);font-style:normal;}
+        .page-hero p{font-size:1.1rem;color:rgba(255,255,255,0.8);max-width:600px;margin:0 auto;}
+
+        .section{padding:6rem 2rem;}
+        .section-inner{max-width:1400px;margin:0 auto;}
+        .section-tag{display:inline-block;background:var(--light);color:var(--accent);font-size:0.78rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:0.4rem 1rem;border-radius:50px;border:1px solid rgba(0,170,255,0.2);margin-bottom:1rem;}
+        .section-title{font-family:'Syne',sans-serif;font-size:clamp(1.8rem,3.5vw,2.5rem);font-weight:800;color:var(--primary);line-height:1.2;letter-spacing:-1px;margin-bottom:1rem;}
+        .section-title em{color:var(--accent);font-style:normal;}
+        .section-sub{font-size:1rem;color:var(--text-muted);max-width:600px;line-height:1.8;}
+        .text-center{text-align:center;}
+        .text-center .section-sub{margin:0 auto;}
+
+        /* SOLUTION CARDS */
+        .solutions-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:2rem;margin-top:3rem;}
+        .sol-card{border-radius:20px;overflow:hidden;border:1px solid var(--border);transition:all 0.3s;background:white;}
+        .sol-card:hover{box-shadow:var(--shadow);transform:translateY(-4px);}
+        .sol-header{padding:2.5rem;display:flex;align-items:flex-start;gap:1.5rem;}
+        .sol-emoji{font-size:3rem;line-height:1;}
+        .sol-header-text h2{font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:var(--primary);margin-bottom:0.4rem;}
+        .sol-header-text p{font-size:0.95rem;color:var(--text-muted);line-height:1.7;}
+        .sol-body{padding:0 2.5rem 2.5rem;}
+        .sol-benefits{display:flex;flex-direction:column;gap:0.6rem;margin-bottom:1.5rem;}
+        .sol-benefit{display:flex;align-items:center;gap:0.8rem;font-size:0.92rem;color:var(--dark);}
+        .sol-benefit::before{content:'→';color:var(--accent);font-weight:700;flex-shrink:0;}
+        .sol-cta{display:inline-block;padding:0.7rem 1.5rem;background:var(--light);color:var(--primary);border-radius:8px;text-decoration:none;font-weight:700;font-size:0.9rem;border:1px solid var(--border);transition:all 0.2s;}
+        .sol-card:hover .sol-cta{background:var(--primary);color:white;border-color:var(--primary);}
+        .sol-card.featured{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent);}
+        .sol-card.featured .sol-header{background:linear-gradient(135deg,var(--light),var(--lighter));}
+
+        /* INDUSTRY STRIP */
+        .industry-strip{background:var(--lighter);padding:4rem 2rem;}
+        .industry-inner{max-width:1400px;margin:0 auto;text-align:center;}
+        .industry-inner h3{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:700;color:var(--text-muted);margin-bottom:2rem;text-transform:uppercase;letter-spacing:1px;}
+        .industries{display:flex;flex-wrap:wrap;justify-content:center;gap:1rem;}
+        .industry-pill{display:flex;align-items:center;gap:0.5rem;background:white;border:1px solid var(--border);padding:0.6rem 1.2rem;border-radius:50px;font-size:0.88rem;font-weight:500;color:var(--dark);transition:all 0.2s;}
+        .industry-pill:hover{border-color:var(--accent);color:var(--accent);transform:translateY(-2px);}
+
+        /* CTA */
+        .cta-section{background:var(--gradient);padding:6rem 2rem;text-align:center;}
+        .cta-section h2{font-family:'Syne',sans-serif;font-size:clamp(2rem,4vw,3rem);font-weight:900;color:white;letter-spacing:-1px;margin-bottom:1rem;}
+        .cta-section p{color:rgba(255,255,255,0.8);font-size:1.1rem;max-width:500px;margin:0 auto 2.5rem;}
+        .cta-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
+        .btn-cta-gold{padding:1rem 2.5rem;background:var(--gold);color:var(--dark);border-radius:10px;text-decoration:none;font-weight:700;font-size:1rem;transition:all 0.2s;}
+        .btn-cta-gold:hover{background:#e0a830;transform:translateY(-2px);}
+        .btn-cta-white{padding:1rem 2.5rem;background:transparent;color:white;border-radius:10px;text-decoration:none;font-weight:600;font-size:1rem;border:2px solid rgba(255,255,255,0.5);transition:all 0.2s;}
+        .btn-cta-white:hover{background:rgba(255,255,255,0.1);}
+
+        footer{background:var(--dark);color:rgba(255,255,255,0.7);padding:4rem 2rem 2rem;}
+        .footer-inner{max-width:1400px;margin:0 auto;}
+        .footer-top{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:3rem;margin-bottom:3rem;}
+        .footer-brand .logo-name{color:white;font-size:1.4rem;}
+        .footer-brand p{margin-top:1rem;font-size:0.9rem;line-height:1.8;max-width:280px;}
+        .footer-contact{margin-top:1.2rem;display:flex;flex-direction:column;gap:0.5rem;}
+        .footer-contact a{color:rgba(255,255,255,0.7);text-decoration:none;font-size:0.88rem;display:flex;align-items:center;gap:0.5rem;transition:color 0.2s;}
+        .footer-contact a:hover{color:var(--gold);}
+        .footer-col h4{font-family:'Syne',sans-serif;font-size:0.95rem;font-weight:700;color:white;margin-bottom:1.2rem;}
+        .footer-col ul{list-style:none;display:flex;flex-direction:column;gap:0.7rem;}
+        .footer-col ul li a{color:rgba(255,255,255,0.6);text-decoration:none;font-size:0.88rem;transition:color 0.2s;}
+        .footer-col ul li a:hover{color:white;}
+        .footer-bottom{border-top:1px solid rgba(255,255,255,0.1);padding-top:2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;}
+        .footer-bottom p,.powered-by{font-size:0.82rem;}
+        .powered-by strong{color:rgba(255,255,255,0.8);}
+        .wa-float{position:fixed;bottom:2rem;right:2rem;z-index:9999;}
+        .wa-float a{display:flex;align-items:center;justify-content:center;width:60px;height:60px;background:#25D366;border-radius:50%;text-decoration:none;box-shadow:0 8px 25px rgba(37,211,102,0.4);transition:all 0.3s;font-size:1.6rem;}
+        .wa-float a:hover{transform:scale(1.1);}
+        .wa-tooltip{position:absolute;right:70px;top:50%;transform:translateY(-50%);background:var(--dark);color:white;white-space:nowrap;padding:0.5rem 1rem;border-radius:8px;font-size:0.82rem;opacity:0;pointer-events:none;transition:opacity 0.2s;}
+        .wa-float:hover .wa-tooltip{opacity:1;}
+        @media(max-width:1024px){.solutions-grid{grid-template-columns:1fr;}.footer-top{grid-template-columns:1fr 1fr;}}
+        @media(max-width:768px){.nav-center,.nav-right .btn-demo,.nav-right .btn-start{display:none;}.hamburger{display:flex;}.footer-top{grid-template-columns:1fr;}.footer-bottom{flex-direction:column;text-align:center;}}
+    </style>
+</head>
+<body>
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="index.html" class="logo-wrap"><div class="logo-name">Member<span>Sync</span></div><div class="logo-sub">A Product of Next Solution</div></a>
+        <div class="nav-center">
+            <a href="index.html">Home</a><a href="features.html">Features</a><a href="solutions.html" class="active">Solutions</a>
+            <a href="pricing.html">Pricing</a><a href="how-it-works.html">How It Works</a><a href="about.html">About</a><a href="contact.html">Contact</a>
+        </div>
+        <div class="nav-right">
+            <button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button>
+            <button class="lang-btn" id="btn-fr" onclick="setLang('fr')">FR</button>
+            <a href="contact.html" class="btn-demo">Request Demo</a>
+            <a href="https://memberssync.com" target="_blank" class="btn-start">Get Started</a>
+        </div>
+        <div class="hamburger" onclick="toggleMobile()"><span></span><span></span><span></span></div>
+    </div>
+</nav>
+<div class="mobile-nav" id="mobileNav">
+    <a href="index.html">Home</a><a href="features.html">Features</a><a href="solutions.html">Solutions</a>
+    <a href="pricing.html">Pricing</a><a href="how-it-works.html">How It Works</a><a href="about.html">About</a><a href="contact.html">Contact</a>
+    <div class="mobile-btns"><a href="contact.html" class="btn-demo">Request Demo</a><a href="https://memberssync.com" class="btn-start">Get Started</a></div>
+</div>
+
+<section class="page-hero">
+    <div class="page-hero-content">
+        <div class="page-tag" data-lang-en="Who It's For" data-lang-fr="Pour Qui C'est">Who It's For</div>
+        <h1 data-lang-en="Built for <em>Your Type</em> of Organization" data-lang-fr="Conçu pour <em>Votre Type</em> d'Organisation">Built for <em>Your Type</em> of Organization</h1>
+        <p data-lang-en="Whether you run a business, a church, a gym, or a school — MemberSync has a solution designed for your specific needs." data-lang-fr="Que vous gériez une entreprise, une église, un gymnase ou une école — MemberSync a une solution conçue pour vos besoins spécifiques.">Whether you run a business, a church, a gym, or a school — MemberSync has a solution designed for your specific needs.</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="section-inner">
+        <div class="text-center">
+            <div class="section-tag" data-lang-en="Solutions" data-lang-fr="Solutions">Solutions</div>
+            <h2 class="section-title" data-lang-en="One Platform, <em>Many Organizations</em>" data-lang-fr="Une Plateforme, <em>Plusieurs Organisations</em>">One Platform, <em>Many Organizations</em></h2>
+            <p class="section-sub" data-lang-en="MemberSync adapts to your organization's unique structure, size, and goals." data-lang-fr="MemberSync s'adapte à la structure, à la taille et aux objectifs uniques de votre organisation.">MemberSync adapts to your organization's unique structure, size, and goals.</p>
+        </div>
+        <div class="solutions-grid">
+
+            <div class="sol-card featured">
+                <div class="sol-header">
+                    <div class="sol-emoji">🏢</div>
+                    <div class="sol-header-text">
+                        <h2 data-lang-en="Businesses & Associations" data-lang-fr="Entreprises et Associations">Businesses &amp; Associations</h2>
+                        <p data-lang-en="Run powerful loyalty and rewards programs that keep your customers coming back." data-lang-fr="Gérez de puissants programmes de fidélité et de récompenses qui fidélisent vos clients.">Run powerful loyalty and rewards programs that keep your customers coming back.</p>
+                    </div>
+                </div>
+                <div class="sol-body">
+                    <div class="sol-benefits">
+                        <div class="sol-benefit" data-lang-en="Loyalty program with digital membership cards" data-lang-fr="Programme de fidélité avec cartes de membre numériques">Loyalty program with digital membership cards</div>
+                        <div class="sol-benefit" data-lang-en="Reward points system for repeat clients" data-lang-fr="Système de points de récompense pour clients réguliers">Reward points system for repeat clients</div>
+                        <div class="sol-benefit" data-lang-en="Full client database with purchase history" data-lang-fr="Base de données clients complète avec historique d'achat">Full client database with purchase history</div>
+                        <div class="sol-benefit" data-lang-en="Prepaid wallet system for services" data-lang-fr="Système de portefeuille prépayé pour les services">Prepaid wallet system for services</div>
+                        <div class="sol-benefit" data-lang-en="Association member registration and dues tracking" data-lang-fr="Inscription des membres d'association et suivi des cotisations">Association member registration and dues tracking</div>
+                        <div class="sol-benefit" data-lang-en="Marketing emails to customer segments" data-lang-fr="Emails marketing aux segments clients">Marketing emails to customer segments</div>
+                    </div>
+                    <a href="contact.html" class="sol-cta" data-lang-en="Get Started for Business →" data-lang-fr="Commencer pour les Entreprises →">Get Started for Business →</a>
+                </div>
+            </div>
+
+            <div class="sol-card">
+                <div class="sol-header">
+                    <div class="sol-emoji">⛪</div>
+                    <div class="sol-header-text">
+                        <h2 data-lang-en="Churches & Religious Organizations" data-lang-fr="Églises et Organisations Religieuses">Churches &amp; Religious Organizations</h2>
+                        <p data-lang-en="Keep your congregation organized, informed, and engaged all year round." data-lang-fr="Gardez votre congrégation organisée, informée et engagée tout au long de l'année.">Keep your congregation organized, informed, and engaged all year round.</p>
+                    </div>
+                </div>
+                <div class="sol-body">
+                    <div class="sol-benefits">
+                        <div class="sol-benefit" data-lang-en="Complete member/congregation database" data-lang-fr="Base de données complète des membres/congrégation">Complete member/congregation database</div>
+                        <div class="sol-benefit" data-lang-en="Digital membership cards for church members" data-lang-fr="Cartes de membre numériques pour les membres de l'église">Digital membership cards for church members</div>
+                        <div class="sol-benefit" data-lang-en="Donation and tithe tracking" data-lang-fr="Suivi des dons et des dîmes">Donation and tithe tracking</div>
+                        <div class="sol-benefit" data-lang-en="Event and service registration" data-lang-fr="Inscription aux événements et services">Event and service registration</div>
+                        <div class="sol-benefit" data-lang-en="Announcements and broadcast messages" data-lang-fr="Annonces et messages de diffusion">Announcements and broadcast messages</div>
+                        <div class="sol-benefit" data-lang-en="Multi-branch / department management" data-lang-fr="Gestion multi-succursales / départements">Multi-branch / department management</div>
+                    </div>
+                    <a href="contact.html" class="sol-cta" data-lang-en="Get Started for Churches →" data-lang-fr="Commencer pour les Églises →">Get Started for Churches →</a>
+                </div>
+            </div>
+
+            <div class="sol-card">
+                <div class="sol-header">
+                    <div class="sol-emoji">🎓</div>
+                    <div class="sol-header-text">
+                        <h2 data-lang-en="Schools & Training Centers" data-lang-fr="Écoles et Centres de Formation">Schools &amp; Training Centers</h2>
+                        <p data-lang-en="Streamline student management, fees, and communication in one place." data-lang-fr="Rationalisez la gestion des étudiants, les frais et la communication en un seul endroit.">Streamline student management, fees, and communication in one place.</p>
+                    </div>
+                </div>
+                <div class="sol-body">
+                    <div class="sol-benefits">
+                        <div class="sol-benefit" data-lang-en="Student enrollment and membership system" data-lang-fr="Système d'inscription et d'adhésion des étudiants">Student enrollment and membership system</div>
+                        <div class="sol-benefit" data-lang-en="School fee payment tracking and history" data-lang-fr="Suivi des paiements de frais scolaires et historique">School fee payment tracking and history</div>
+                        <div class="sol-benefit" data-lang-en="Digital student ID cards with QR code" data-lang-fr="Cartes d'identité étudiantes numériques avec QR code">Digital student ID cards with QR code</div>
+                        <div class="sol-benefit" data-lang-en="Parent and staff communication tools" data-lang-fr="Outils de communication parents et personnel">Parent and staff communication tools</div>
+                        <div class="sol-benefit" data-lang-en="Multi-class or multi-campus support" data-lang-fr="Support multi-classes ou multi-campus">Multi-class or multi-campus support</div>
+                        <div class="sol-benefit" data-lang-en="Attendance and enrollment reports" data-lang-fr="Rapports de présence et d'inscription">Attendance and enrollment reports</div>
+                    </div>
+                    <a href="contact.html" class="sol-cta" data-lang-en="Get Started for Schools →" data-lang-fr="Commencer pour les Écoles →">Get Started for Schools →</a>
+                </div>
+            </div>
+
+            <div class="sol-card">
+                <div class="sol-header">
+                    <div class="sol-emoji">🏋️</div>
+                    <div class="sol-header-text">
+                        <h2 data-lang-en="Gyms, Clubs & Sports Centers" data-lang-fr="Gymnases, Clubs et Centres Sportifs">Gyms, Clubs &amp; Sports Centers</h2>
+                        <p data-lang-en="Manage subscriptions, access, and member performance all from your dashboard." data-lang-fr="Gérez les abonnements, les accès et les performances des membres depuis votre tableau de bord.">Manage subscriptions, access, and member performance all from your dashboard.</p>
+                    </div>
+                </div>
+                <div class="sol-body">
+                    <div class="sol-benefits">
+                        <div class="sol-benefit" data-lang-en="Monthly/annual subscription management" data-lang-fr="Gestion des abonnements mensuels/annuels">Monthly/annual subscription management</div>
+                        <div class="sol-benefit" data-lang-en="Digital access cards with QR verification" data-lang-fr="Cartes d'accès numériques avec vérification QR">Digital access cards with QR verification</div>
+                        <div class="sol-benefit" data-lang-en="Subscription renewal alerts and reminders" data-lang-fr="Alertes et rappels de renouvellement d'abonnement">Subscription renewal alerts and reminders</div>
+                        <div class="sol-benefit" data-lang-en="Prepaid session wallet for pay-per-use" data-lang-fr="Portefeuille de séances prépayées pour paiement à l'utilisation">Prepaid session wallet for pay-per-use</div>
+                        <div class="sol-benefit" data-lang-en="Member progress and attendance tracking" data-lang-fr="Suivi des progrès et de la présence des membres">Member progress and attendance tracking</div>
+                        <div class="sol-benefit" data-lang-en="Loyalty rewards for long-term members" data-lang-fr="Récompenses de fidélité pour les membres de longue date">Loyalty rewards for long-term members</div>
+                    </div>
+                    <a href="contact.html" class="sol-cta" data-lang-en="Get Started for Gyms →" data-lang-fr="Commencer pour les Gymnases →">Get Started for Gyms →</a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+
+<!-- INDUSTRY STRIP -->
+<div class="industry-strip">
+    <div class="industry-inner">
+        <h3 data-lang-en="Also Works For" data-lang-fr="Fonctionne Aussi Pour">Also Works For</h3>
+        <div class="industries">
+            <div class="industry-pill">🏥 Health Clinics</div>
+            <div class="industry-pill">🎨 Art Studios</div>
+            <div class="industry-pill">🏘️ Cooperatives</div>
+            <div class="industry-pill">🎪 Event Organizers</div>
+            <div class="industry-pill">🏗️ Professional Unions</div>
+            <div class="industry-pill">👶 Daycare Centers</div>
+            <div class="industry-pill">🍽️ Restaurant Clubs</div>
+            <div class="industry-pill">🚗 Car Clubs</div>
+            <div class="industry-pill">📚 Libraries</div>
+            <div class="industry-pill">🌿 NGOs & Charities</div>
+        </div>
+    </div>
+</div>
+
+<section class="cta-section">
+    <h2 data-lang-en="Don't See Your Industry?" data-lang-fr="Vous ne Voyez pas Votre Secteur ?">Don't See Your Industry?</h2>
+    <p data-lang-en="MemberSync is flexible enough to work for almost any organization that manages people. Contact us and we'll show you how." data-lang-fr="MemberSync est suffisamment flexible pour fonctionner pour presque toute organisation qui gère des personnes. Contactez-nous et nous vous montrerons comment.">MemberSync is flexible enough to work for almost any organization that manages people. Contact us and we'll show you how.</p>
+    <div class="cta-btns">
+        <a href="https://wa.me/237658504815" target="_blank" class="btn-cta-gold" data-lang-en="💬 Chat on WhatsApp" data-lang-fr="💬 Discuter sur WhatsApp">💬 Chat on WhatsApp</a>
+        <a href="contact.html" class="btn-cta-white" data-lang-en="Request a Demo" data-lang-fr="Demander une Démo">Request a Demo</a>
+    </div>
+</section>
+
+<footer><div class="footer-inner">
+    <div class="footer-top">
+        <div class="footer-brand"><a href="index.html" class="logo-wrap" style="margin-bottom:1rem"><div class="logo-name">Member<span style="color:var(--accent)">Sync</span></div><div class="logo-sub" style="color:rgba(255,255,255,0.5)">A Product of Next Solution</div></a><p>Smart membership management for growing organizations across Africa and beyond.</p><div class="footer-contact"><a href="tel:+237658504815">📞 +237 658 50 48 15</a><a href="mailto:support@memberssync.com">✉️ support@memberssync.com</a><a href="https://wa.me/237658504815" target="_blank">💬 WhatsApp</a></div></div>
+        <div class="footer-col"><h4>Product</h4><ul><li><a href="features.html">Features</a></li><li><a href="solutions.html">Solutions</a></li><li><a href="pricing.html">Pricing</a></li><li><a href="how-it-works.html">How It Works</a></li><li><a href="contact.html">Request Demo</a></li></ul></div>
+        <div class="footer-col"><h4>Company</h4><ul><li><a href="about.html">About Us</a></li><li><a href="contact.html">Contact</a></li><li><a href="#">Privacy Policy</a></li><li><a href="#">Terms of Service</a></li></ul></div>
+        <div class="footer-col"><h4>Powered By</h4><p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.8;">Next Solution — Technology &amp; business services company in Cameroon.</p></div>
+    </div>
+    <div class="footer-bottom"><p>© 2026 MemberSync. All rights reserved.</p><div class="powered-by">A product by <strong>Next Solution</strong> — Cameroon 🇨🇲</div></div>
+</div></footer>
+
+<div class="wa-float"><div class="wa-tooltip">Chat on WhatsApp</div><a href="https://wa.me/237658504815" target="_blank">💬</a></div>
+
+<script>
+    const navbar=document.getElementById('navbar');
+    window.addEventListener('scroll',()=>{navbar.classList.toggle('scrolled',window.scrollY>50);});
+    function toggleMobile(){document.getElementById('mobileNav').classList.toggle('open');}
+    let currentLang=localStorage.getItem('ms-lang')||'en';
+    function setLang(lang){currentLang=lang;localStorage.setItem('ms-lang',lang);document.getElementById('btn-en').classList.toggle('active',lang==='en');document.getElementById('btn-fr').classList.toggle('active',lang==='fr');document.querySelectorAll('[data-lang-en]').forEach(el=>{const val=el.getAttribute('data-lang-'+lang);if(val)el.innerHTML=val;});}
+    setLang(currentLang);
+</script>
+</body>
+</html>

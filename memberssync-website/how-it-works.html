@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>How It Works | MemberSync</title>
+    <meta name="description" content="Learn how MemberSync works in 4 simple steps. Set up your organization and start managing members in minutes.">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root{--primary:#0A2463;--secondary:#3E92CC;--accent:#00AAFF;--gold:#F4B942;--dark:#0D1B2A;--light:#F0F6FF;--lighter:#F8FAFF;--white:#FFFFFF;--text-muted:#5A7A9A;--border:rgba(10,36,99,0.1);--gradient:linear-gradient(135deg,#0A2463 0%,#1565C0 60%,#3E92CC 100%);--shadow-sm:0 4px 20px rgba(10,36,99,0.08);--shadow:0 20px 60px rgba(10,36,99,0.15);}
+        *{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+        body{font-family:'DM Sans',sans-serif;color:var(--dark);line-height:1.7;overflow-x:hidden;background:var(--white);}
+        .navbar{position:fixed;top:0;width:100%;z-index:1000;background:rgba(255,255,255,0.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);transition:all 0.3s;}
+        .navbar.scrolled{box-shadow:var(--shadow-sm);}
+        .nav-container{max-width:1400px;margin:0 auto;padding:0 2rem;display:flex;justify-content:space-between;align-items:center;height:72px;}
+        .logo-wrap{display:flex;flex-direction:column;align-items:flex-start;text-decoration:none;}
+        .logo-name{font-family:'Syne',sans-serif;font-weight:900;font-size:1.6rem;color:var(--primary);letter-spacing:-1px;line-height:1;}
+        .logo-name span{color:var(--accent);}
+        .logo-sub{font-size:0.65rem;color:var(--text-muted);font-weight:500;letter-spacing:0.5px;text-transform:uppercase;}
+        .nav-center{display:flex;align-items:center;gap:2.5rem;}
+        .nav-center a{text-decoration:none;color:var(--dark);font-weight:500;font-size:0.92rem;position:relative;transition:color 0.2s;}
+        .nav-center a:hover,.nav-center a.active{color:var(--accent);}
+        .nav-center a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:2px;background:var(--accent);transition:width 0.3s;border-radius:2px;}
+        .nav-center a:hover::after,.nav-center a.active::after{width:100%;}
+        .nav-right{display:flex;align-items:center;gap:1rem;}
+        .lang-btn{background:none;border:1px solid var(--border);padding:0.3rem 0.7rem;border-radius:6px;font-size:0.8rem;cursor:pointer;color:var(--text-muted);font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+        .lang-btn.active{background:var(--primary);color:white;border-color:var(--primary);}
+        .btn-demo{padding:0.5rem 1.2rem;border:2px solid var(--primary);color:var(--primary);border-radius:8px;text-decoration:none;font-weight:600;font-size:0.88rem;transition:all 0.2s;}
+        .btn-demo:hover{background:var(--primary);color:white;}
+        .btn-start{padding:0.5rem 1.2rem;background:var(--gold);color:var(--dark);border-radius:8px;text-decoration:none;font-weight:700;font-size:0.88rem;transition:all 0.2s;border:2px solid var(--gold);}
+        .btn-start:hover{background:#e0a830;transform:translateY(-1px);}
+        .hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px;}
+        .hamburger span{width:24px;height:2px;background:var(--primary);border-radius:2px;display:block;}
+        .mobile-nav{display:none;position:fixed;top:72px;left:0;right:0;background:white;z-index:999;border-bottom:1px solid var(--border);box-shadow:var(--shadow);padding:1.5rem 2rem;flex-direction:column;gap:1rem;}
+        .mobile-nav.open{display:flex;}
+        .mobile-nav a{text-decoration:none;color:var(--dark);font-weight:500;padding:0.5rem 0;border-bottom:1px solid var(--border);}
+        .mobile-nav .mobile-btns{display:flex;gap:1rem;margin-top:0.5rem;flex-wrap:wrap;}
+
+        .page-hero{background:var(--gradient);padding:8rem 2rem 5rem;text-align:center;position:relative;overflow:hidden;}
+        .page-hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;}
+        .page-hero-content{position:relative;z-index:1;}
+        .page-tag{display:inline-block;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:white;font-size:0.78rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:0.4rem 1rem;border-radius:50px;margin-bottom:1rem;}
+        .page-hero h1{font-family:'Syne',sans-serif;font-size:clamp(2.2rem,5vw,3.5rem);font-weight:900;color:white;letter-spacing:-2px;margin-bottom:1rem;}
+        .page-hero h1 em{color:var(--gold);font-style:normal;}
+        .page-hero p{font-size:1.1rem;color:rgba(255,255,255,0.8);max-width:600px;margin:0 auto;}
+
+        .section{padding:6rem 2rem;}
+        .section-inner{max-width:1200px;margin:0 auto;}
+        .text-center{text-align:center;}
+
+        /* STEPS */
+        .steps-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:2.5rem;margin-top:4rem;}
+        .step-card{background:white;border:1px solid var(--border);border-radius:20px;padding:2.5rem;position:relative;transition:all 0.3s;overflow:hidden;}
+        .step-card::before{content:'';position:absolute;top:0;left:0;right:0;height:4px;background:var(--gradient);}
+        .step-card:hover{box-shadow:var(--shadow);transform:translateY(-4px);}
+        .step-num{font-family:'Syne',sans-serif;font-size:4rem;font-weight:900;color:var(--light);line-height:1;position:absolute;top:1.5rem;right:2rem;}
+        .step-icon{width:64px;height:64px;border-radius:16px;background:var(--light);display:flex;align-items:center;justify-content:center;font-size:2rem;margin-bottom:1.5rem;border:2px solid var(--border);}
+        .step-card h3{font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;color:var(--primary);margin-bottom:0.8rem;line-height:1.2;}
+        .step-card p{color:var(--text-muted);font-size:0.95rem;line-height:1.8;margin-bottom:1.2rem;}
+        .step-details{display:flex;flex-direction:column;gap:0.5rem;}
+        .step-detail{display:flex;align-items:center;gap:0.6rem;font-size:0.87rem;color:var(--dark);}
+        .step-detail::before{content:'•';color:var(--accent);font-size:1.2rem;flex-shrink:0;}
+        .step-connector{display:flex;justify-content:center;align-items:center;font-size:2rem;color:var(--secondary);opacity:0.5;}
+
+        /* FAQ */
+        .faq-section{background:var(--lighter);padding:6rem 2rem;}
+        .faq-inner{max-width:800px;margin:0 auto;}
+        .faq-inner h2{font-family:'Syne',sans-serif;font-size:2rem;font-weight:800;color:var(--primary);margin-bottom:3rem;text-align:center;letter-spacing:-0.5px;}
+        .faq-item{background:white;border:1px solid var(--border);border-radius:12px;margin-bottom:1rem;overflow:hidden;}
+        .faq-q{display:flex;justify-content:space-between;align-items:center;padding:1.5rem;cursor:pointer;font-weight:600;color:var(--primary);font-size:1rem;transition:all 0.2s;}
+        .faq-q:hover{background:var(--lighter);}
+        .faq-arrow{transition:transform 0.3s;color:var(--accent);font-size:1.2rem;flex-shrink:0;margin-left:1rem;}
+        .faq-item.open .faq-arrow{transform:rotate(180deg);}
+        .faq-a{display:none;padding:0 1.5rem 1.5rem;color:var(--text-muted);font-size:0.95rem;line-height:1.8;border-top:1px solid var(--border);margin-top:0;}
+        .faq-item.open .faq-a{display:block;}
+
+        /* CTA */
+        .cta-section{background:var(--gradient);padding:6rem 2rem;text-align:center;}
+        .cta-section h2{font-family:'Syne',sans-serif;font-size:clamp(2rem,4vw,3rem);font-weight:900;color:white;letter-spacing:-1px;margin-bottom:1rem;}
+        .cta-section p{color:rgba(255,255,255,0.8);font-size:1.1rem;max-width:500px;margin:0 auto 2.5rem;}
+        .cta-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
+        .btn-cta-gold{padding:1rem 2.5rem;background:var(--gold);color:var(--dark);border-radius:10px;text-decoration:none;font-weight:700;font-size:1rem;transition:all 0.2s;}
+        .btn-cta-gold:hover{background:#e0a830;transform:translateY(-2px);}
+        .btn-cta-white{padding:1rem 2.5rem;background:transparent;color:white;border-radius:10px;text-decoration:none;font-weight:600;font-size:1rem;border:2px solid rgba(255,255,255,0.5);transition:all 0.2s;}
+
+        footer{background:var(--dark);color:rgba(255,255,255,0.7);padding:4rem 2rem 2rem;}
+        .footer-inner{max-width:1400px;margin:0 auto;}
+        .footer-top{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:3rem;margin-bottom:3rem;}
+        .footer-brand p{margin-top:1rem;font-size:0.9rem;line-height:1.8;max-width:280px;}
+        .footer-contact{margin-top:1.2rem;display:flex;flex-direction:column;gap:0.5rem;}
+        .footer-contact a{color:rgba(255,255,255,0.7);text-decoration:none;font-size:0.88rem;display:flex;align-items:center;gap:0.5rem;transition:color 0.2s;}
+        .footer-contact a:hover{color:var(--gold);}
+        .footer-col h4{font-family:'Syne',sans-serif;font-size:0.95rem;font-weight:700;color:white;margin-bottom:1.2rem;}
+        .footer-col ul{list-style:none;display:flex;flex-direction:column;gap:0.7rem;}
+        .footer-col ul li a{color:rgba(255,255,255,0.6);text-decoration:none;font-size:0.88rem;transition:color 0.2s;}
+        .footer-col ul li a:hover{color:white;}
+        .footer-bottom{border-top:1px solid rgba(255,255,255,0.1);padding-top:2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;}
+        .footer-bottom p,.powered-by{font-size:0.82rem;}
+        .powered-by strong{color:rgba(255,255,255,0.8);}
+        .wa-float{position:fixed;bottom:2rem;right:2rem;z-index:9999;}
+        .wa-float a{display:flex;align-items:center;justify-content:center;width:60px;height:60px;background:#25D366;border-radius:50%;text-decoration:none;box-shadow:0 8px 25px rgba(37,211,102,0.4);transition:all 0.3s;font-size:1.6rem;}
+        .wa-float a:hover{transform:scale(1.1);}
+        .wa-tooltip{position:absolute;right:70px;top:50%;transform:translateY(-50%);background:var(--dark);color:white;white-space:nowrap;padding:0.5rem 1rem;border-radius:8px;font-size:0.82rem;opacity:0;pointer-events:none;transition:opacity 0.2s;}
+        .wa-float:hover .wa-tooltip{opacity:1;}
+        @media(max-width:1024px){.steps-grid{grid-template-columns:1fr;}.footer-top{grid-template-columns:1fr 1fr;}}
+        @media(max-width:768px){.nav-center,.nav-right .btn-demo,.nav-right .btn-start{display:none;}.hamburger{display:flex;}.footer-top{grid-template-columns:1fr;}.footer-bottom{flex-direction:column;text-align:center;}}
+    </style>
+</head>
+<body>
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="index.html" class="logo-wrap"><div class="logo-name">Member<span>Sync</span></div><div class="logo-sub">A Product of Next Solution</div></a>
+        <div class="nav-center">
+            <a href="index.html">Home</a><a href="features.html">Features</a><a href="solutions.html">Solutions</a>
+            <a href="pricing.html">Pricing</a><a href="how-it-works.html" class="active">How It Works</a><a href="about.html">About</a><a href="contact.html">Contact</a>
+        </div>
+        <div class="nav-right">
+            <button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button>
+            <button class="lang-btn" id="btn-fr" onclick="setLang('fr')">FR</button>
+            <a href="contact.html" class="btn-demo">Request Demo</a>
+            <a href="https://memberssync.com" target="_blank" class="btn-start">Get Started</a>
+        </div>
+        <div class="hamburger" onclick="toggleMobile()"><span></span><span></span><span></span></div>
+    </div>
+</nav>
+<div class="mobile-nav" id="mobileNav">
+    <a href="index.html">Home</a><a href="features.html">Features</a><a href="solutions.html">Solutions</a>
+    <a href="pricing.html">Pricing</a><a href="how-it-works.html">How It Works</a><a href="about.html">About</a><a href="contact.html">Contact</a>
+    <div class="mobile-btns"><a href="contact.html" class="btn-demo">Request Demo</a><a href="https://memberssync.com" class="btn-start">Get Started</a></div>
+</div>
+
+<section class="page-hero">
+    <div class="page-hero-content">
+        <div class="page-tag" data-lang-en="Simple Setup" data-lang-fr="Configuration Simple">Simple Setup</div>
+        <h1 data-lang-en="Up and Running in <em>4 Simple Steps</em>" data-lang-fr="Opérationnel en <em>4 Étapes Simples</em>">Up and Running in <em>4 Simple Steps</em></h1>
+        <p data-lang-en="No technical expertise needed. MemberSync is designed to be simple for everyone — from churches to corporations." data-lang-fr="Aucune expertise technique requise. MemberSync est conçu pour être simple pour tous — des églises aux entreprises.">No technical expertise needed. MemberSync is designed to be simple for everyone — from churches to corporations.</p>
+    </div>
+</section>
+
+<!-- 4 STEPS -->
+<section class="section">
+    <div class="section-inner">
+        <div class="text-center" style="margin-bottom:1rem">
+            <h2 style="font-family:'Syne',sans-serif;font-size:clamp(1.8rem,3.5vw,2.5rem);font-weight:800;color:var(--primary);letter-spacing:-1px;" data-lang-en="How MemberSync Works" data-lang-fr="Comment Fonctionne MemberSync">How MemberSync Works</h2>
+            <p style="color:var(--text-muted);max-width:550px;margin:0.8rem auto 0;" data-lang-en="From sign-up to full membership management in minutes, not days." data-lang-fr="De l'inscription à la gestion complète des membres en minutes, pas en jours.">From sign-up to full membership management in minutes, not days.</p>
+        </div>
+        <div class="steps-grid">
+            <div class="step-card">
+                <div class="step-num">01</div>
+                <div class="step-icon">🏢</div>
+                <h3 data-lang-en="Register Your Organization" data-lang-fr="Inscrivez Votre Organisation">Register Your Organization</h3>
+                <p data-lang-en="Create your MemberSync account and set up your organization profile. This takes less than 5 minutes." data-lang-fr="Créez votre compte MemberSync et configurez le profil de votre organisation. Cela prend moins de 5 minutes.">Create your MemberSync account and set up your organization profile. This takes less than 5 minutes.</p>
+                <div class="step-details">
+                    <div class="step-detail" data-lang-en="Create super admin account" data-lang-fr="Créer un compte super administrateur">Create super admin account</div>
+                    <div class="step-detail" data-lang-en="Set up organization name, logo & details" data-lang-fr="Configurer le nom, le logo et les détails de l'organisation">Set up organization name, logo &amp; details</div>
+                    <div class="step-detail" data-lang-en="Choose your plan (Starter, Business or Enterprise)" data-lang-fr="Choisir votre plan (Débutant, Business ou Entreprise)">Choose your plan (Starter, Business or Enterprise)</div>
+                    <div class="step-detail" data-lang-en="Invite additional admins if needed" data-lang-fr="Inviter des administrateurs supplémentaires si nécessaire">Invite additional admins if needed</div>
+                </div>
+            </div>
+
+            <div class="step-card">
+                <div class="step-num">02</div>
+                <div class="step-icon">👥</div>
+                <h3 data-lang-en="Add Your Members" data-lang-fr="Ajoutez Vos Membres">Add Your Members</h3>
+                <p data-lang-en="Start adding members to your system — one by one, or bulk import from your existing spreadsheet." data-lang-fr="Commencez à ajouter des membres à votre système — un par un, ou importation en masse depuis votre feuille de calcul existante.">Start adding members to your system — one by one, or bulk import from your existing spreadsheet.</p>
+                <div class="step-details">
+                    <div class="step-detail" data-lang-en="Share the online registration link with your members" data-lang-fr="Partager le lien d'inscription en ligne avec vos membres">Share the online registration link with your members</div>
+                    <div class="step-detail" data-lang-en="Or manually add member profiles from the admin panel" data-lang-fr="Ou ajouter manuellement des profils de membres depuis le panneau admin">Or manually add member profiles from the admin panel</div>
+                    <div class="step-detail" data-lang-en="Review and approve registrations" data-lang-fr="Examiner et approuver les inscriptions">Review and approve registrations</div>
+                    <div class="step-detail" data-lang-en="Assign member categories and plans" data-lang-fr="Attribuer des catégories et des plans aux membres">Assign member categories and plans</div>
+                </div>
+            </div>
+
+            <div class="step-card">
+                <div class="step-num">03</div>
+                <div class="step-icon">🪪</div>
+                <h3 data-lang-en="Issue Digital Cards" data-lang-fr="Émettre des Cartes Numériques">Issue Digital Cards</h3>
+                <p data-lang-en="The system automatically generates a unique digital membership card with QR code for every approved member." data-lang-fr="Le système génère automatiquement une carte de membre numérique unique avec QR code pour chaque membre approuvé.">The system automatically generates a unique digital membership card with QR code for every approved member.</p>
+                <div class="step-details">
+                    <div class="step-detail" data-lang-en="QR code generated instantly on approval" data-lang-fr="QR code généré instantanément à l'approbation">QR code generated instantly on approval</div>
+                    <div class="step-detail" data-lang-en="Members receive their card digitally (email/WhatsApp)" data-lang-fr="Les membres reçoivent leur carte numériquement (e-mail/WhatsApp)">Members receive their card digitally (email/WhatsApp)</div>
+                    <div class="step-detail" data-lang-en="Scan cards at entry points for instant verification" data-lang-fr="Scanner les cartes aux points d'entrée pour une vérification instantanée">Scan cards at entry points for instant verification</div>
+                    <div class="step-detail" data-lang-en="Cards update automatically when member data changes" data-lang-fr="Les cartes se mettent à jour automatiquement lors des changements de données">Cards update automatically when member data changes</div>
+                </div>
+            </div>
+
+            <div class="step-card">
+                <div class="step-num">04</div>
+                <div class="step-icon">📊</div>
+                <h3 data-lang-en="Manage & Grow" data-lang-fr="Gérez et Grandissez">Manage &amp; Grow</h3>
+                <p data-lang-en="Use your dashboard to track payments, send communications, generate reports, and grow your membership confidently." data-lang-fr="Utilisez votre tableau de bord pour suivre les paiements, envoyer des communications, générer des rapports et développer votre adhésion avec confiance.">Use your dashboard to track payments, send communications, generate reports, and grow your membership confidently.</p>
+                <div class="step-details">
+                    <div class="step-detail" data-lang-en="Track payments, dues, and member wallets" data-lang-fr="Suivre les paiements, cotisations et portefeuilles des membres">Track payments, dues, and member wallets</div>
+                    <div class="step-detail" data-lang-en="Send announcements and reminders" data-lang-fr="Envoyer des annonces et des rappels">Send announcements and reminders</div>
+                    <div class="step-detail" data-lang-en="View real-time analytics and reports" data-lang-fr="Consulter les analyses et rapports en temps réel">View real-time analytics and reports</div>
+                    <div class="step-detail" data-lang-en="Export data, manage rewards, scale your org" data-lang-fr="Exporter les données, gérer les récompenses, développer votre organisation">Export data, manage rewards, scale your org</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FAQ -->
+<section class="faq-section">
+    <div class="faq-inner">
+        <h2 data-lang-en="Frequently Asked Questions" data-lang-fr="Questions Fréquemment Posées">Frequently Asked Questions</h2>
+
+        <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+                <span data-lang-en="Do I need technical skills to use MemberSync?" data-lang-fr="Ai-je besoin de compétences techniques pour utiliser MemberSync ?">Do I need technical skills to use MemberSync?</span>
+                <span class="faq-arrow">▼</span>
+            </div>
+            <div class="faq-a" data-lang-en="Not at all. MemberSync is designed to be intuitive and easy to use for everyone, regardless of technical background. If you can use a smartphone or a web browser, you can use MemberSync." data-lang-fr="Pas du tout. MemberSync est conçu pour être intuitif et facile à utiliser pour tous, quel que soit le niveau technique. Si vous pouvez utiliser un smartphone ou un navigateur web, vous pouvez utiliser MemberSync.">Not at all. MemberSync is designed to be intuitive and easy to use for everyone, regardless of technical background. If you can use a smartphone or a web browser, you can use MemberSync.</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+                <span data-lang-en="How long does it take to set up?" data-lang-fr="Combien de temps faut-il pour s'installer ?">How long does it take to set up?</span>
+                <span class="faq-arrow">▼</span>
+            </div>
+            <div class="faq-a" data-lang-en="Most organizations are fully set up within 30 minutes. Creating your account and adding your first members can be done in under 10 minutes. Our support team is available via WhatsApp to help you get started." data-lang-fr="La plupart des organisations sont entièrement configurées en 30 minutes. La création de votre compte et l'ajout de vos premiers membres peuvent être effectués en moins de 10 minutes. Notre équipe d'assistance est disponible via WhatsApp pour vous aider à démarrer.">Most organizations are fully set up within 30 minutes. Creating your account and adding your first members can be done in under 10 minutes. Our support team is available via WhatsApp to help you get started.</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+                <span data-lang-en="Can I migrate my existing member data?" data-lang-fr="Puis-je migrer mes données membres existantes ?">Can I migrate my existing member data?</span>
+                <span class="faq-arrow">▼</span>
+            </div>
+            <div class="faq-a" data-lang-en="Yes. If you have existing member data in a spreadsheet or CSV file, our team can help you import it into MemberSync quickly. Contact us on WhatsApp at +237 658 50 48 15 for assisted migration." data-lang-fr="Oui. Si vous avez des données membres existantes dans une feuille de calcul ou un fichier CSV, notre équipe peut vous aider à les importer rapidement dans MemberSync. Contactez-nous sur WhatsApp au +237 658 50 48 15 pour une migration assistée.">Yes. If you have existing member data in a spreadsheet or CSV file, our team can help you import it into MemberSync quickly. Contact us on WhatsApp at +237 658 50 48 15 for assisted migration.</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+                <span data-lang-en="Is my data secure?" data-lang-fr="Mes données sont-elles sécurisées ?">Is my data secure?</span>
+                <span class="faq-arrow">▼</span>
+            </div>
+            <div class="faq-a" data-lang-en="Yes. MemberSync uses industry-standard encryption and secure servers to protect your organization's data. Each organization's data is completely isolated from others on the platform." data-lang-fr="Oui. MemberSync utilise un chiffrement aux normes industrielles et des serveurs sécurisés pour protéger les données de votre organisation. Les données de chaque organisation sont complètement isolées des autres sur la plateforme.">Yes. MemberSync uses industry-standard encryption and secure servers to protect your organization's data. Each organization's data is completely isolated from others on the platform.</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+                <span data-lang-en="Can I manage multiple branches or organizations?" data-lang-fr="Puis-je gérer plusieurs succursales ou organisations ?">Can I manage multiple branches or organizations?</span>
+                <span class="faq-arrow">▼</span>
+            </div>
+            <div class="faq-a" data-lang-en="Yes, the Enterprise plan supports managing multiple organizations or branches from a single super-admin account. Each organization has its own separate dashboard and data space." data-lang-fr="Oui, le plan Enterprise prend en charge la gestion de plusieurs organisations ou succursales depuis un seul compte super-admin. Chaque organisation dispose de son propre tableau de bord séparé et espace de données.">Yes, the Enterprise plan supports managing multiple organizations or branches from a single super-admin account. Each organization has its own separate dashboard and data space.</div>
+        </div>
+
+        <div class="faq-item">
+            <div class="faq-q" onclick="toggleFaq(this)">
+                <span data-lang-en="How do I contact support?" data-lang-fr="Comment contacter le support ?">How do I contact support?</span>
+                <span class="faq-arrow">▼</span>
+            </div>
+            <div class="faq-a" data-lang-en="You can reach our support team via WhatsApp at +237 658 50 48 15 or by email at support@memberssync.com. We typically respond within a few hours during business hours (Cameroon time, Monday–Saturday)." data-lang-fr="Vous pouvez joindre notre équipe d'assistance via WhatsApp au +237 658 50 48 15 ou par e-mail à support@memberssync.com. Nous répondons généralement dans quelques heures pendant les heures de bureau (heure du Cameroun, lundi–samedi).">You can reach our support team via WhatsApp at +237 658 50 48 15 or by email at support@memberssync.com. We typically respond within a few hours during business hours (Cameroon time, Monday–Saturday).</div>
+        </div>
+
+    </div>
+</section>
+
+<section class="cta-section">
+    <h2 data-lang-en="Ready to Get Started?" data-lang-fr="Prêt à Commencer ?">Ready to Get Started?</h2>
+    <p data-lang-en="Join your first members in minutes. No technical skills required — just sign up and go." data-lang-fr="Rejoignez vos premiers membres en quelques minutes. Aucune compétence technique requise — inscrivez-vous simplement et commencez.">Join your first members in minutes. No technical skills required — just sign up and go.</p>
+    <div class="cta-btns">
+        <a href="https://memberssync.com" target="_blank" class="btn-cta-gold" data-lang-en="Get Started Free" data-lang-fr="Commencer Gratuitement">Get Started Free</a>
+        <a href="https://wa.me/237658504815" target="_blank" class="btn-cta-white" data-lang-en="💬 WhatsApp Us" data-lang-fr="💬 WhatsApp">💬 WhatsApp Us</a>
+    </div>
+</section>
+
+<footer><div class="footer-inner">
+    <div class="footer-top">
+        <div class="footer-brand"><a href="index.html" class="logo-wrap" style="margin-bottom:1rem"><div class="logo-name">Member<span style="color:var(--accent)">Sync</span></div><div class="logo-sub" style="color:rgba(255,255,255,0.5)">A Product of Next Solution</div></a><p style="color:rgba(255,255,255,0.7)">Smart membership management for growing organizations across Africa and beyond.</p><div class="footer-contact"><a href="tel:+237658504815">📞 +237 658 50 48 15</a><a href="mailto:support@memberssync.com">✉️ support@memberssync.com</a><a href="https://wa.me/237658504815" target="_blank">💬 WhatsApp</a></div></div>
+        <div class="footer-col"><h4>Product</h4><ul><li><a href="features.html">Features</a></li><li><a href="solutions.html">Solutions</a></li><li><a href="pricing.html">Pricing</a></li><li><a href="how-it-works.html">How It Works</a></li><li><a href="contact.html">Request Demo</a></li></ul></div>
+        <div class="footer-col"><h4>Company</h4><ul><li><a href="about.html">About Us</a></li><li><a href="contact.html">Contact</a></li><li><a href="#">Privacy Policy</a></li><li><a href="#">Terms of Service</a></li></ul></div>
+        <div class="footer-col"><h4>Powered By</h4><p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.8;">Next Solution — Technology &amp; business services company in Cameroon.</p></div>
+    </div>
+    <div class="footer-bottom"><p>© 2026 MemberSync. All rights reserved.</p><div class="powered-by">A product by <strong>Next Solution</strong> — Cameroon 🇨🇲</div></div>
+</div></footer>
+
+<div class="wa-float"><div class="wa-tooltip">Chat on WhatsApp</div><a href="https://wa.me/237658504815" target="_blank">💬</a></div>
+
+<script>
+    const navbar=document.getElementById('navbar');
+    window.addEventListener('scroll',()=>{navbar.classList.toggle('scrolled',window.scrollY>50);});
+    function toggleMobile(){document.getElementById('mobileNav').classList.toggle('open');}
+    function toggleFaq(el){const item=el.parentElement;item.classList.toggle('open');}
+    let currentLang=localStorage.getItem('ms-lang')||'en';
+    function setLang(lang){currentLang=lang;localStorage.setItem('ms-lang',lang);document.getElementById('btn-en').classList.toggle('active',lang==='en');document.getElementById('btn-fr').classList.toggle('active',lang==='fr');document.querySelectorAll('[data-lang-en]').forEach(el=>{const val=el.getAttribute('data-lang-'+lang);if(val)el.innerHTML=val;});}
+    setLang(currentLang);
+</script>
+</body>
+</html>

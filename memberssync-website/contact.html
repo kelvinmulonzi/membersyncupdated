@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact | MemberSync</title>
+    <meta name="description" content="Contact MemberSync. Phone: +237 658 50 48 15. Email: support@memberssync.com. WhatsApp available.">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root{--primary:#0A2463;--secondary:#3E92CC;--accent:#00AAFF;--gold:#F4B942;--dark:#0D1B2A;--light:#F0F6FF;--lighter:#F8FAFF;--white:#FFFFFF;--text-muted:#5A7A9A;--border:rgba(10,36,99,0.1);--gradient:linear-gradient(135deg,#0A2463 0%,#1565C0 60%,#3E92CC 100%);--shadow-sm:0 4px 20px rgba(10,36,99,0.08);--shadow:0 20px 60px rgba(10,36,99,0.15);}
+        *{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+        body{font-family:'DM Sans',sans-serif;color:var(--dark);line-height:1.7;overflow-x:hidden;background:var(--white);}
+        .navbar{position:fixed;top:0;width:100%;z-index:1000;background:rgba(255,255,255,0.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);transition:all 0.3s;}
+        .navbar.scrolled{box-shadow:var(--shadow-sm);}
+        .nav-container{max-width:1400px;margin:0 auto;padding:0 2rem;display:flex;justify-content:space-between;align-items:center;height:72px;}
+        .logo-wrap{display:flex;flex-direction:column;align-items:flex-start;text-decoration:none;}
+        .logo-name{font-family:'Syne',sans-serif;font-weight:900;font-size:1.6rem;color:var(--primary);letter-spacing:-1px;line-height:1;}
+        .logo-name span{color:var(--accent);}
+        .logo-sub{font-size:0.65rem;color:var(--text-muted);font-weight:500;letter-spacing:0.5px;text-transform:uppercase;}
+        .nav-center{display:flex;align-items:center;gap:2.5rem;}
+        .nav-center a{text-decoration:none;color:var(--dark);font-weight:500;font-size:0.92rem;position:relative;transition:color 0.2s;}
+        .nav-center a:hover,.nav-center a.active{color:var(--accent);}
+        .nav-center a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:2px;background:var(--accent);transition:width 0.3s;border-radius:2px;}
+        .nav-center a:hover::after,.nav-center a.active::after{width:100%;}
+        .nav-right{display:flex;align-items:center;gap:1rem;}
+        .lang-btn{background:none;border:1px solid var(--border);padding:0.3rem 0.7rem;border-radius:6px;font-size:0.8rem;cursor:pointer;color:var(--text-muted);font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+        .lang-btn.active{background:var(--primary);color:white;border-color:var(--primary);}
+        .btn-demo{padding:0.5rem 1.2rem;border:2px solid var(--primary);color:var(--primary);border-radius:8px;text-decoration:none;font-weight:600;font-size:0.88rem;transition:all 0.2s;}
+        .btn-demo:hover{background:var(--primary);color:white;}
+        .btn-start{padding:0.5rem 1.2rem;background:var(--gold);color:var(--dark);border-radius:8px;text-decoration:none;font-weight:700;font-size:0.88rem;transition:all 0.2s;border:2px solid var(--gold);}
+        .btn-start:hover{background:#e0a830;transform:translateY(-1px);}
+        .hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px;}
+        .hamburger span{width:24px;height:2px;background:var(--primary);border-radius:2px;display:block;}
+        .mobile-nav{display:none;position:fixed;top:72px;left:0;right:0;background:white;z-index:999;border-bottom:1px solid var(--border);box-shadow:var(--shadow);padding:1.5rem 2rem;flex-direction:column;gap:1rem;}
+        .mobile-nav.open{display:flex;}
+        .mobile-nav a{text-decoration:none;color:var(--dark);font-weight:500;padding:0.5rem 0;border-bottom:1px solid var(--border);}
+        .mobile-nav .mobile-btns{display:flex;gap:1rem;margin-top:0.5rem;flex-wrap:wrap;}
+        .page-hero{background:var(--gradient);padding:8rem 2rem 5rem;text-align:center;position:relative;overflow:hidden;}
+        .page-hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;}
+        .page-hero-content{position:relative;z-index:1;}
+        .page-tag{display:inline-block;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:white;font-size:0.78rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:0.4rem 1rem;border-radius:50px;margin-bottom:1rem;}
+        .page-hero h1{font-family:'Syne',sans-serif;font-size:clamp(2.2rem,5vw,3.5rem);font-weight:900;color:white;letter-spacing:-2px;margin-bottom:1rem;}
+        .page-hero h1 em{color:var(--gold);font-style:normal;}
+        .page-hero p{font-size:1.1rem;color:rgba(255,255,255,0.8);max-width:600px;margin:0 auto;}
+        .section{padding:6rem 2rem;}
+        .section-inner{max-width:1200px;margin:0 auto;}
+
+        /* CONTACT GRID */
+        .contact-grid{display:grid;grid-template-columns:1fr 1.5fr;gap:4rem;margin-top:2rem;}
+
+        /* INFO CARDS */
+        .contact-info{display:flex;flex-direction:column;gap:1.2rem;}
+        .info-card{background:white;border:1px solid var(--border);border-radius:16px;padding:1.8rem;transition:all 0.3s;}
+        .info-card:hover{box-shadow:var(--shadow-sm);transform:translateY(-2px);}
+        .info-card a{text-decoration:none;color:var(--dark);}
+        .info-icon{font-size:2rem;margin-bottom:0.8rem;}
+        .info-label{font-size:0.78rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted);margin-bottom:0.3rem;}
+        .info-value{font-family:'Syne',sans-serif;font-size:1.1rem;font-weight:700;color:var(--primary);}
+        .info-sub{font-size:0.85rem;color:var(--text-muted);margin-top:0.2rem;}
+        .info-card.wa-card{background:linear-gradient(135deg,#075E54,#128C7E);border-color:transparent;cursor:pointer;}
+        .info-card.wa-card .info-label{color:rgba(255,255,255,0.7);}
+        .info-card.wa-card .info-value{color:white;}
+        .info-card.wa-card .info-sub{color:rgba(255,255,255,0.7);}
+        .info-card.wa-card:hover{transform:translateY(-3px);box-shadow:0 15px 40px rgba(18,140,126,0.3);}
+        .hours-card{background:var(--lighter);border:1px solid var(--border);border-radius:16px;padding:1.8rem;}
+        .hours-card h4{font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;color:var(--primary);margin-bottom:1rem;}
+        .hours-row{display:flex;justify-content:space-between;padding:0.5rem 0;border-bottom:1px solid var(--border);font-size:0.88rem;}
+        .hours-row:last-child{border-bottom:none;}
+        .hours-row .day{color:var(--text-muted);}
+        .hours-row .time{font-weight:600;color:var(--dark);}
+        .hours-row .open{color:#28CA41;font-weight:600;}
+        .hours-row .closed{color:#FF5F57;font-weight:600;}
+
+        /* FORM */
+        .contact-form-wrap{background:white;border:1px solid var(--border);border-radius:20px;padding:3rem;box-shadow:var(--shadow-sm);}
+        .contact-form-wrap h2{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:800;color:var(--primary);margin-bottom:0.5rem;letter-spacing:-0.5px;}
+        .contact-form-wrap p{color:var(--text-muted);font-size:0.95rem;margin-bottom:2rem;}
+        .form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;}
+        .form-group{display:flex;flex-direction:column;gap:0.4rem;margin-bottom:1rem;}
+        .form-group label{font-size:0.85rem;font-weight:600;color:var(--dark);}
+        .form-group label span{color:#FF5F57;}
+        .form-group input,.form-group select,.form-group textarea{padding:0.9rem 1.1rem;border:1.5px solid var(--border);border-radius:10px;font-family:'DM Sans',sans-serif;font-size:0.95rem;color:var(--dark);transition:all 0.2s;background:var(--lighter);outline:none;}
+        .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);background:white;box-shadow:0 0 0 3px rgba(0,170,255,0.08);}
+        .form-group textarea{min-height:130px;resize:vertical;}
+        .btn-submit{width:100%;padding:1.1rem;background:var(--primary);color:white;border:none;border-radius:10px;font-family:'Syne',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;transition:all 0.2s;letter-spacing:0.3px;}
+        .btn-submit:hover{background:#0d2e7a;transform:translateY(-1px);box-shadow:0 8px 25px rgba(10,36,99,0.3);}
+        .form-note{text-align:center;font-size:0.82rem;color:var(--text-muted);margin-top:1rem;}
+        .success-msg{display:none;background:linear-gradient(135deg,#e8fff0,#d0f5e0);border:1px solid #28CA41;border-radius:10px;padding:1.5rem;text-align:center;color:#1a8a33;font-weight:600;}
+
+        footer{background:var(--dark);color:rgba(255,255,255,0.7);padding:4rem 2rem 2rem;}
+        .footer-inner{max-width:1400px;margin:0 auto;}
+        .footer-top{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:3rem;margin-bottom:3rem;}
+        .footer-brand p{margin-top:1rem;font-size:0.9rem;line-height:1.8;max-width:280px;}
+        .footer-contact{margin-top:1.2rem;display:flex;flex-direction:column;gap:0.5rem;}
+        .footer-contact a{color:rgba(255,255,255,0.7);text-decoration:none;font-size:0.88rem;display:flex;align-items:center;gap:0.5rem;transition:color 0.2s;}
+        .footer-contact a:hover{color:var(--gold);}
+        .footer-col h4{font-family:'Syne',sans-serif;font-size:0.95rem;font-weight:700;color:white;margin-bottom:1.2rem;}
+        .footer-col ul{list-style:none;display:flex;flex-direction:column;gap:0.7rem;}
+        .footer-col ul li a{color:rgba(255,255,255,0.6);text-decoration:none;font-size:0.88rem;transition:color 0.2s;}
+        .footer-col ul li a:hover{color:white;}
+        .footer-bottom{border-top:1px solid rgba(255,255,255,0.1);padding-top:2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;}
+        .footer-bottom p,.powered-by{font-size:0.82rem;}
+        .powered-by strong{color:rgba(255,255,255,0.8);}
+        .wa-float{position:fixed;bottom:2rem;right:2rem;z-index:9999;}
+        .wa-float a{display:flex;align-items:center;justify-content:center;width:60px;height:60px;background:#25D366;border-radius:50%;text-decoration:none;box-shadow:0 8px 25px rgba(37,211,102,0.4);transition:all 0.3s;font-size:1.6rem;}
+        .wa-float a:hover{transform:scale(1.1);}
+        .wa-tooltip{position:absolute;right:70px;top:50%;transform:translateY(-50%);background:var(--dark);color:white;white-space:nowrap;padding:0.5rem 1rem;border-radius:8px;font-size:0.82rem;opacity:0;pointer-events:none;transition:opacity 0.2s;}
+        .wa-float:hover .wa-tooltip{opacity:1;}
+        @media(max-width:1024px){.contact-grid{grid-template-columns:1fr;}.footer-top{grid-template-columns:1fr 1fr;}}
+        @media(max-width:768px){.nav-center,.nav-right .btn-demo,.nav-right .btn-start{display:none;}.hamburger{display:flex;}.form-row{grid-template-columns:1fr;}.footer-top{grid-template-columns:1fr;}.footer-bottom{flex-direction:column;text-align:center;}}
+    </style>
+</head>
+<body>
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="index.html" class="logo-wrap"><div class="logo-name">Member<span>Sync</span></div><div class="logo-sub">A Product of Next Solution</div></a>
+        <div class="nav-center"><a href="index.html">Home</a><a href="features.html">Features</a><a href="solutions.html">Solutions</a><a href="pricing.html">Pricing</a><a href="how-it-works.html">How It Works</a><a href="about.html">About</a><a href="contact.html" class="active">Contact</a></div>
+        <div class="nav-right"><button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button><button class="lang-btn" id="btn-fr" onclick="setLang('fr')">FR</button><a href="contact.html" class="btn-demo">Request Demo</a><a href="https://memberssync.com" target="_blank" class="btn-start">Get Started</a></div>
+        <div class="hamburger" onclick="toggleMobile()"><span></span><span></span><span></span></div>
+    </div>
+</nav>
+<div class="mobile-nav" id="mobileNav"><a href="index.html">Home</a><a href="features.html">Features</a><a href="solutions.html">Solutions</a><a href="pricing.html">Pricing</a><a href="how-it-works.html">How It Works</a><a href="about.html">About</a><a href="contact.html">Contact</a><div class="mobile-btns"><a href="contact.html" class="btn-demo">Request Demo</a><a href="https://memberssync.com" class="btn-start">Get Started</a></div></div>
+
+<section class="page-hero">
+    <div class="page-hero-content">
+        <div class="page-tag" data-lang-en="Get in Touch" data-lang-fr="Prendre Contact">Get in Touch</div>
+        <h1 data-lang-en="Let's Help You <em>Grow</em>" data-lang-fr="Laissez-nous Vous Aider à <em>Grandir</em>">Let's Help You <em>Grow</em></h1>
+        <p data-lang-en="Have a question? Want a demo? Ready to get started? Our team is available on WhatsApp, email, and phone — reach out anytime." data-lang-fr="Vous avez une question ? Vous voulez une démo ? Prêt à commencer ? Notre équipe est disponible sur WhatsApp, par e-mail et par téléphone — contactez-nous à tout moment.">Have a question? Want a demo? Ready to get started? Our team is available on WhatsApp, email, and phone — reach out anytime.</p>
+    </div>
+</section>
+
+<section class="section">
+    <div class="section-inner">
+        <div class="contact-grid">
+            <!-- LEFT: CONTACT INFO -->
+            <div class="contact-info">
+                <a href="https://wa.me/237658504815" target="_blank" style="text-decoration:none">
+                    <div class="info-card wa-card">
+                        <div class="info-icon">💬</div>
+                        <div class="info-label" data-lang-en="Fastest Response" data-lang-fr="Réponse la Plus Rapide">Fastest Response</div>
+                        <div class="info-value">WhatsApp</div>
+                        <div class="info-sub">+237 658 50 48 15 — <span data-lang-en="Tap to chat now" data-lang-fr="Appuyez pour discuter">Tap to chat now</span></div>
+                    </div>
+                </a>
+
+                <a href="tel:+237658504815" style="text-decoration:none">
+                    <div class="info-card">
+                        <div class="info-icon">📞</div>
+                        <div class="info-label" data-lang-en="Phone" data-lang-fr="Téléphone">Phone</div>
+                        <div class="info-value">+237 658 50 48 15</div>
+                        <div class="info-sub" data-lang-en="Call during business hours" data-lang-fr="Appelez pendant les heures de bureau">Call during business hours</div>
+                    </div>
+                </a>
+
+                <a href="mailto:support@memberssync.com" style="text-decoration:none">
+                    <div class="info-card">
+                        <div class="info-icon">✉️</div>
+                        <div class="info-label" data-lang-en="Email" data-lang-fr="E-mail">Email</div>
+                        <div class="info-value">support@memberssync.com</div>
+                        <div class="info-sub" data-lang-en="We reply within a few hours" data-lang-fr="Nous répondons en quelques heures">We reply within a few hours</div>
+                    </div>
+                </a>
+
+                <div class="info-card">
+                    <div class="info-icon">📍</div>
+                    <div class="info-label" data-lang-en="Location" data-lang-fr="Emplacement">Location</div>
+                    <div class="info-value" data-lang-en="Cameroon 🇨🇲" data-lang-fr="Cameroun 🇨🇲">Cameroon 🇨🇲</div>
+                    <div class="info-sub" data-lang-en="Serving organizations across Africa" data-lang-fr="Servant des organisations à travers l'Afrique">Serving organizations across Africa</div>
+                </div>
+
+                <div class="hours-card">
+                    <h4 data-lang-en="🕐 Business Hours" data-lang-fr="🕐 Heures de Bureau">🕐 Business Hours</h4>
+                    <div class="hours-row"><span class="day" data-lang-en="Monday – Friday" data-lang-fr="Lundi – Vendredi">Monday – Friday</span><span class="open">8:00 – 18:00</span></div>
+                    <div class="hours-row"><span class="day" data-lang-en="Saturday" data-lang-fr="Samedi">Saturday</span><span class="open">9:00 – 14:00</span></div>
+                    <div class="hours-row"><span class="day" data-lang-en="Sunday" data-lang-fr="Dimanche">Sunday</span><span class="closed" data-lang-en="Closed" data-lang-fr="Fermé">Closed</span></div>
+                    <p style="font-size:0.78rem;color:var(--text-muted);margin-top:0.8rem;" data-lang-en="All times in Cameroon Time (WAT/GMT+1)" data-lang-fr="Toutes les heures en heure du Cameroun (WAT/GMT+1)">All times in Cameroon Time (WAT/GMT+1)</p>
+                </div>
+            </div>
+
+            <!-- RIGHT: FORM -->
+            <div class="contact-form-wrap">
+                <h2 data-lang-en="Send Us a Message" data-lang-fr="Envoyez-nous un Message">Send Us a Message</h2>
+                <p data-lang-en="Fill in the form below and we'll get back to you as soon as possible — usually within a few hours." data-lang-fr="Remplissez le formulaire ci-dessous et nous vous répondrons dès que possible — généralement en quelques heures.">Fill in the form below and we'll get back to you as soon as possible — usually within a few hours.</p>
+
+                <div class="success-msg" id="successMsg">
+                    ✅ <span data-lang-en="Thank you! Your message has been sent. We'll be in touch soon." data-lang-fr="Merci ! Votre message a été envoyé. Nous vous contacterons bientôt.">Thank you! Your message has been sent. We'll be in touch soon.</span>
+                </div>
+
+                <form id="contactForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><span data-lang-en="Full Name" data-lang-fr="Nom Complet">Full Name</span> <span>*</span></label>
+                            <input type="text" placeholder="Jean Kamga" required>
+                        </div>
+                        <div class="form-group">
+                            <label><span data-lang-en="Organization" data-lang-fr="Organisation">Organization</span></label>
+                            <input type="text" placeholder="Church Alpha / Gym Pro...">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label><span data-lang-en="Email" data-lang-fr="E-mail">Email</span> <span>*</span></label>
+                            <input type="email" placeholder="you@example.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label><span data-lang-en="Phone / WhatsApp" data-lang-fr="Téléphone / WhatsApp">Phone / WhatsApp</span></label>
+                            <input type="tel" placeholder="+237 6XX XX XX XX">
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label><span data-lang-en="I'm interested in..." data-lang-fr="Je suis intéressé par...">I'm interested in...</span></label>
+                        <select>
+                            <option value="" data-lang-en="Select an option" data-lang-fr="Sélectionner une option">Select an option</option>
+                            <option value="demo" data-lang-en="Requesting a Demo" data-lang-fr="Demander une Démo">Requesting a Demo</option>
+                            <option value="starter" data-lang-en="Starter Plan" data-lang-fr="Plan Débutant">Starter Plan</option>
+                            <option value="business" data-lang-en="Business Plan" data-lang-fr="Plan Business">Business Plan</option>
+                            <option value="enterprise" data-lang-en="Enterprise Plan" data-lang-fr="Plan Entreprise">Enterprise Plan</option>
+                            <option value="pricing" data-lang-en="Custom Pricing" data-lang-fr="Tarification Personnalisée">Custom Pricing</option>
+                            <option value="support" data-lang-en="Technical Support" data-lang-fr="Support Technique">Technical Support</option>
+                            <option value="other" data-lang-en="Other" data-lang-fr="Autre">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label><span data-lang-en="Message" data-lang-fr="Message">Message</span> <span>*</span></label>
+                        <textarea placeholder="Tell us about your organization and what you need..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn-submit" data-lang-en="Send Message →" data-lang-fr="Envoyer le Message →">Send Message →</button>
+                    <p class="form-note" data-lang-en="Or reach us instantly on WhatsApp: +237 658 50 48 15" data-lang-fr="Ou contactez-nous instantanément sur WhatsApp : +237 658 50 48 15">Or reach us instantly on WhatsApp: +237 658 50 48 15</p>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+<footer><div class="footer-inner">
+    <div class="footer-top">
+        <div class="footer-brand"><a href="index.html" class="logo-wrap" style="margin-bottom:1rem"><div class="logo-name">Member<span style="color:var(--accent)">Sync</span></div><div class="logo-sub" style="color:rgba(255,255,255,0.5)">A Product of Next Solution</div></a><p style="color:rgba(255,255,255,0.7)">Smart membership management for growing organizations across Africa and beyond.</p><div class="footer-contact"><a href="tel:+237658504815">📞 +237 658 50 48 15</a><a href="mailto:support@memberssync.com">✉️ support@memberssync.com</a><a href="https://wa.me/237658504815" target="_blank">💬 WhatsApp</a></div></div>
+        <div class="footer-col"><h4>Product</h4><ul><li><a href="features.html">Features</a></li><li><a href="solutions.html">Solutions</a></li><li><a href="pricing.html">Pricing</a></li><li><a href="how-it-works.html">How It Works</a></li><li><a href="contact.html">Request Demo</a></li></ul></div>
+        <div class="footer-col"><h4>Company</h4><ul><li><a href="about.html">About Us</a></li><li><a href="contact.html">Contact</a></li><li><a href="#">Privacy Policy</a></li><li><a href="#">Terms of Service</a></li></ul></div>
+        <div class="footer-col"><h4>Powered By</h4><p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.8;">Next Solution — Technology &amp; business services company in Cameroon.</p></div>
+    </div>
+    <div class="footer-bottom"><p>© 2026 MemberSync. All rights reserved.</p><div class="powered-by">A product by <strong>Next Solution</strong> — Cameroon 🇨🇲</div></div>
+</div></footer>
+<div class="wa-float"><div class="wa-tooltip">Chat on WhatsApp</div><a href="https://wa.me/237658504815" target="_blank">💬</a></div>
+<script>
+    const navbar=document.getElementById('navbar');
+    window.addEventListener('scroll',()=>{navbar.classList.toggle('scrolled',window.scrollY>50);});
+    function toggleMobile(){document.getElementById('mobileNav').classList.toggle('open');}
+    let currentLang=localStorage.getItem('ms-lang')||'en';
+    function setLang(lang){currentLang=lang;localStorage.setItem('ms-lang',lang);document.getElementById('btn-en').classList.toggle('active',lang==='en');document.getElementById('btn-fr').classList.toggle('active',lang==='fr');document.querySelectorAll('[data-lang-en]').forEach(el=>{const val=el.getAttribute('data-lang-'+lang);if(val)el.innerHTML=val;});}
+    setLang(currentLang);
+    document.getElementById('contactForm').addEventListener('submit',function(e){
+        e.preventDefault();
+        this.style.display='none';
+        document.getElementById('successMsg').style.display='block';
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Features | MemberSync</title>
+    <meta name="description" content="Explore MemberSync's powerful features: digital membership cards, payment system, member registration, dashboards, and more.">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800;900&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root{--primary:#0A2463;--secondary:#3E92CC;--accent:#00AAFF;--gold:#F4B942;--dark:#0D1B2A;--mid:#2D4A6B;--light:#F0F6FF;--lighter:#F8FAFF;--white:#FFFFFF;--text-muted:#5A7A9A;--border:rgba(10,36,99,0.1);--gradient:linear-gradient(135deg,#0A2463 0%,#1565C0 60%,#3E92CC 100%);--shadow-sm:0 4px 20px rgba(10,36,99,0.08);--shadow:0 20px 60px rgba(10,36,99,0.15);}
+        *{margin:0;padding:0;box-sizing:border-box;}html{scroll-behavior:smooth;}
+        body{font-family:'DM Sans',sans-serif;color:var(--dark);line-height:1.7;overflow-x:hidden;background:var(--white);}
+        .navbar{position:fixed;top:0;width:100%;z-index:1000;background:rgba(255,255,255,0.97);backdrop-filter:blur(20px);border-bottom:1px solid var(--border);transition:all 0.3s;}
+        .navbar.scrolled{box-shadow:var(--shadow-sm);}
+        .nav-container{max-width:1400px;margin:0 auto;padding:0 2rem;display:flex;justify-content:space-between;align-items:center;height:72px;}
+        .logo-wrap{display:flex;flex-direction:column;align-items:flex-start;text-decoration:none;}
+        .logo-name{font-family:'Syne',sans-serif;font-weight:900;font-size:1.6rem;color:var(--primary);letter-spacing:-1px;line-height:1;}
+        .logo-name span{color:var(--accent);}
+        .logo-sub{font-size:0.65rem;color:var(--text-muted);font-weight:500;letter-spacing:0.5px;text-transform:uppercase;}
+        .nav-center{display:flex;align-items:center;gap:2.5rem;}
+        .nav-center a{text-decoration:none;color:var(--dark);font-weight:500;font-size:0.92rem;position:relative;transition:color 0.2s;}
+        .nav-center a:hover,.nav-center a.active{color:var(--accent);}
+        .nav-center a::after{content:'';position:absolute;bottom:-4px;left:0;width:0;height:2px;background:var(--accent);transition:width 0.3s;border-radius:2px;}
+        .nav-center a:hover::after,.nav-center a.active::after{width:100%;}
+        .nav-right{display:flex;align-items:center;gap:1rem;}
+        .lang-btn{background:none;border:1px solid var(--border);padding:0.3rem 0.7rem;border-radius:6px;font-size:0.8rem;cursor:pointer;color:var(--text-muted);font-family:'DM Sans',sans-serif;transition:all 0.2s;}
+        .lang-btn:hover{border-color:var(--accent);color:var(--accent);}
+        .lang-btn.active{background:var(--primary);color:white;border-color:var(--primary);}
+        .btn-demo{padding:0.5rem 1.2rem;border:2px solid var(--primary);color:var(--primary);border-radius:8px;text-decoration:none;font-weight:600;font-size:0.88rem;transition:all 0.2s;}
+        .btn-demo:hover{background:var(--primary);color:white;}
+        .btn-start{padding:0.5rem 1.2rem;background:var(--gold);color:var(--dark);border-radius:8px;text-decoration:none;font-weight:700;font-size:0.88rem;transition:all 0.2s;border:2px solid var(--gold);}
+        .btn-start:hover{background:#e0a830;border-color:#e0a830;transform:translateY(-1px);}
+        .hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:4px;}
+        .hamburger span{width:24px;height:2px;background:var(--primary);border-radius:2px;transition:all 0.3s;display:block;}
+        .mobile-nav{display:none;position:fixed;top:72px;left:0;right:0;background:white;z-index:999;border-bottom:1px solid var(--border);box-shadow:var(--shadow);padding:1.5rem 2rem;flex-direction:column;gap:1rem;}
+        .mobile-nav.open{display:flex;}
+        .mobile-nav a{text-decoration:none;color:var(--dark);font-weight:500;padding:0.5rem 0;border-bottom:1px solid var(--border);}
+        .mobile-nav a:last-child{border-bottom:none;}
+        .mobile-nav .mobile-btns{display:flex;gap:1rem;margin-top:0.5rem;flex-wrap:wrap;}
+
+        /* PAGE HERO */
+        .page-hero{background:var(--gradient);padding:8rem 2rem 5rem;text-align:center;position:relative;overflow:hidden;}
+        .page-hero::before{content:'';position:absolute;inset:0;background:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Ccircle cx='30' cy='30' r='2'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") repeat;}
+        .page-hero-content{position:relative;z-index:1;}
+        .page-tag{display:inline-block;background:rgba(255,255,255,0.15);border:1px solid rgba(255,255,255,0.25);color:white;font-size:0.78rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:0.4rem 1rem;border-radius:50px;margin-bottom:1rem;}
+        .page-hero h1{font-family:'Syne',sans-serif;font-size:clamp(2.2rem,5vw,3.5rem);font-weight:900;color:white;letter-spacing:-2px;margin-bottom:1rem;}
+        .page-hero h1 em{color:var(--gold);font-style:normal;}
+        .page-hero p{font-size:1.1rem;color:rgba(255,255,255,0.8);max-width:600px;margin:0 auto;}
+
+        /* SECTIONS */
+        .section{padding:6rem 2rem;}
+        .section-inner{max-width:1400px;margin:0 auto;}
+        .section-tag{display:inline-block;background:var(--light);color:var(--accent);font-size:0.78rem;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:0.4rem 1rem;border-radius:50px;border:1px solid rgba(0,170,255,0.2);margin-bottom:1rem;}
+        .section-title{font-family:'Syne',sans-serif;font-size:clamp(1.8rem,3.5vw,2.5rem);font-weight:800;color:var(--primary);line-height:1.2;letter-spacing:-1px;margin-bottom:1rem;}
+        .section-title em{color:var(--accent);font-style:normal;}
+        .section-sub{font-size:1rem;color:var(--text-muted);max-width:600px;line-height:1.8;}
+        .text-center{text-align:center;}
+        .text-center .section-sub{margin:0 auto;}
+
+        /* FEATURE BLOCKS */
+        .feat-block{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center;padding:5rem 0;border-bottom:1px solid var(--border);}
+        .feat-block:last-child{border-bottom:none;}
+        .feat-block.reverse{direction:rtl;}
+        .feat-block.reverse > *{direction:ltr;}
+        .feat-icon-big{width:80px;height:80px;border-radius:20px;background:var(--light);display:flex;align-items:center;justify-content:center;font-size:2.5rem;margin-bottom:1.5rem;border:2px solid var(--border);}
+        .feat-block h2{font-family:'Syne',sans-serif;font-size:1.8rem;font-weight:800;color:var(--primary);margin-bottom:1rem;letter-spacing:-0.5px;}
+        .feat-block p{color:var(--text-muted);font-size:1rem;line-height:1.8;margin-bottom:1.5rem;}
+        .feat-bullets{display:flex;flex-direction:column;gap:0.8rem;}
+        .feat-bullet{display:flex;align-items:flex-start;gap:0.8rem;font-size:0.95rem;color:var(--dark);}
+        .feat-bullet::before{content:'✓';width:22px;height:22px;background:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:white;flex-shrink:0;margin-top:2px;}
+        .feat-visual{background:var(--lighter);border-radius:20px;padding:2rem;border:1px solid var(--border);min-height:300px;display:flex;align-items:center;justify-content:center;}
+        .feat-card-mini{background:white;border-radius:16px;padding:1.5rem;box-shadow:var(--shadow-sm);width:100%;max-width:320px;}
+        .mini-header{font-family:'Syne',sans-serif;font-size:0.9rem;font-weight:700;color:var(--primary);margin-bottom:1rem;padding-bottom:0.8rem;border-bottom:1px solid var(--border);}
+        .mini-row{display:flex;justify-content:space-between;align-items:center;padding:0.6rem 0;border-bottom:1px solid var(--border);font-size:0.85rem;}
+        .mini-row:last-child{border-bottom:none;}
+        .mini-label{color:var(--text-muted);}
+        .mini-val{font-weight:600;color:var(--primary);}
+        .badge{display:inline-block;padding:0.15rem 0.6rem;border-radius:20px;font-size:0.72rem;font-weight:600;}
+        .badge-green{background:rgba(40,202,65,0.1);color:#1a8a33;}
+        .badge-blue{background:rgba(0,170,255,0.1);color:var(--accent);}
+        .badge-gold{background:rgba(244,185,66,0.15);color:#c48a00;}
+        .qr-mock{width:100px;height:100px;background:var(--primary);border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:2rem;margin:0 auto 1rem;}
+        .card-id{text-align:center;font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;color:var(--primary);letter-spacing:2px;}
+        .card-name{text-align:center;font-size:0.85rem;color:var(--text-muted);margin-top:0.3rem;}
+
+        /* CTA */
+        .cta-section{background:var(--gradient);padding:6rem 2rem;text-align:center;}
+        .cta-section h2{font-family:'Syne',sans-serif;font-size:clamp(2rem,4vw,3rem);font-weight:900;color:white;letter-spacing:-1px;margin-bottom:1rem;}
+        .cta-section p{color:rgba(255,255,255,0.8);font-size:1.1rem;max-width:500px;margin:0 auto 2.5rem;}
+        .cta-btns{display:flex;gap:1rem;justify-content:center;flex-wrap:wrap;}
+        .btn-cta-gold{padding:1rem 2.5rem;background:var(--gold);color:var(--dark);border-radius:10px;text-decoration:none;font-weight:700;font-size:1rem;transition:all 0.2s;}
+        .btn-cta-gold:hover{background:#e0a830;transform:translateY(-2px);}
+        .btn-cta-white{padding:1rem 2.5rem;background:transparent;color:white;border-radius:10px;text-decoration:none;font-weight:600;font-size:1rem;border:2px solid rgba(255,255,255,0.5);transition:all 0.2s;}
+        .btn-cta-white:hover{background:rgba(255,255,255,0.1);}
+
+        /* FOOTER */
+        footer{background:var(--dark);color:rgba(255,255,255,0.7);padding:4rem 2rem 2rem;}
+        .footer-inner{max-width:1400px;margin:0 auto;}
+        .footer-top{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:3rem;margin-bottom:3rem;}
+        .footer-brand .logo-name{color:white;font-size:1.4rem;}
+        .footer-brand p{margin-top:1rem;font-size:0.9rem;line-height:1.8;max-width:280px;}
+        .footer-contact{margin-top:1.2rem;display:flex;flex-direction:column;gap:0.5rem;}
+        .footer-contact a{color:rgba(255,255,255,0.7);text-decoration:none;font-size:0.88rem;display:flex;align-items:center;gap:0.5rem;transition:color 0.2s;}
+        .footer-contact a:hover{color:var(--gold);}
+        .footer-col h4{font-family:'Syne',sans-serif;font-size:0.95rem;font-weight:700;color:white;margin-bottom:1.2rem;}
+        .footer-col ul{list-style:none;display:flex;flex-direction:column;gap:0.7rem;}
+        .footer-col ul li a{color:rgba(255,255,255,0.6);text-decoration:none;font-size:0.88rem;transition:color 0.2s;}
+        .footer-col ul li a:hover{color:white;}
+        .footer-bottom{border-top:1px solid rgba(255,255,255,0.1);padding-top:2rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;}
+        .footer-bottom p,.powered-by{font-size:0.82rem;}
+        .powered-by strong{color:rgba(255,255,255,0.8);}
+        .wa-float{position:fixed;bottom:2rem;right:2rem;z-index:9999;}
+        .wa-float a{display:flex;align-items:center;justify-content:center;width:60px;height:60px;background:#25D366;border-radius:50%;text-decoration:none;box-shadow:0 8px 25px rgba(37,211,102,0.4);transition:all 0.3s;font-size:1.6rem;}
+        .wa-float a:hover{transform:scale(1.1);}
+        .wa-tooltip{position:absolute;right:70px;top:50%;transform:translateY(-50%);background:var(--dark);color:white;white-space:nowrap;padding:0.5rem 1rem;border-radius:8px;font-size:0.82rem;font-weight:500;opacity:0;pointer-events:none;transition:opacity 0.2s;}
+        .wa-float:hover .wa-tooltip{opacity:1;}
+        @media(max-width:1024px){.feat-block{grid-template-columns:1fr;gap:2rem;}.feat-block.reverse{direction:ltr;}.footer-top{grid-template-columns:1fr 1fr;}}
+        @media(max-width:768px){.nav-center,.nav-right .btn-demo,.nav-right .btn-start{display:none;}.hamburger{display:flex;}.footer-top{grid-template-columns:1fr;}.footer-bottom{flex-direction:column;text-align:center;}}
+    </style>
+</head>
+<body>
+<nav class="navbar" id="navbar">
+    <div class="nav-container">
+        <a href="index.html" class="logo-wrap">
+            <div class="logo-name">Member<span>Sync</span></div>
+            <div class="logo-sub">A Product of Next Solution</div>
+        </a>
+        <div class="nav-center">
+            <a href="index.html">Home</a>
+            <a href="features.html" class="active">Features</a>
+            <a href="solutions.html">Solutions</a>
+            <a href="pricing.html">Pricing</a>
+            <a href="how-it-works.html">How It Works</a>
+            <a href="about.html">About</a>
+            <a href="contact.html">Contact</a>
+        </div>
+        <div class="nav-right">
+            <button class="lang-btn active" id="btn-en" onclick="setLang('en')">EN</button>
+            <button class="lang-btn" id="btn-fr" onclick="setLang('fr')">FR</button>
+            <a href="contact.html" class="btn-demo">Request Demo</a>
+            <a href="https://memberssync.com" target="_blank" class="btn-start">Get Started</a>
+        </div>
+        <div class="hamburger" onclick="toggleMobile()"><span></span><span></span><span></span></div>
+    </div>
+</nav>
+<div class="mobile-nav" id="mobileNav">
+    <a href="index.html">Home</a><a href="features.html">Features</a><a href="solutions.html">Solutions</a>
+    <a href="pricing.html">Pricing</a><a href="how-it-works.html">How It Works</a><a href="about.html">About</a><a href="contact.html">Contact</a>
+    <div class="mobile-btns"><a href="contact.html" class="btn-demo">Request Demo</a><a href="https://memberssync.com" class="btn-start">Get Started</a></div>
+</div>
+
+<!-- PAGE HERO -->
+<section class="page-hero">
+    <div class="page-hero-content">
+        <div class="page-tag" data-lang-en="Platform Features" data-lang-fr="Fonctionnalités Plateforme">Platform Features</div>
+        <h1 data-lang-en="Powerful Tools for <em>Modern Organizations</em>" data-lang-fr="Outils Puissants pour les <em>Organisations Modernes</em>">Powerful Tools for <em>Modern Organizations</em></h1>
+        <p data-lang-en="Six core features designed to eliminate manual work, improve member experience, and give you full control of your organization." data-lang-fr="Six fonctionnalités principales conçues pour éliminer le travail manuel, améliorer l'expérience des membres et vous donner le contrôle total de votre organisation.">Six core features designed to eliminate manual work, improve member experience, and give you full control of your organization.</p>
+    </div>
+</section>
+
+<!-- FEATURES DETAIL -->
+<section class="section">
+    <div class="section-inner">
+
+        <!-- Feature 1: Registration -->
+        <div class="feat-block">
+            <div>
+                <div class="feat-icon-big">👤</div>
+                <div class="section-tag" data-lang-en="Feature 01" data-lang-fr="Fonctionnalité 01">Feature 01</div>
+                <h2 data-lang-en="Member Registration System" data-lang-fr="Système d'Inscription des Membres">Member Registration System</h2>
+                <p data-lang-en="Replace paper forms forever. MemberSync provides a complete online registration system with admin control, allowing organizations to onboard members quickly and keep all data in one secure place." data-lang-fr="Remplacez les formulaires papier pour toujours. MemberSync fournit un système d'inscription en ligne complet avec contrôle administrateur.">Replace paper forms forever. MemberSync provides a complete online registration system with admin control, allowing organizations to onboard members quickly and keep all data in one secure place.</p>
+                <div class="feat-bullets">
+                    <div class="feat-bullet" data-lang-en="Online registration form accessible from any device" data-lang-fr="Formulaire d'inscription en ligne accessible depuis n'importe quel appareil">Online registration form accessible from any device</div>
+                    <div class="feat-bullet" data-lang-en="Admin approval workflow before member activation" data-lang-fr="Workflow d'approbation administrateur avant activation du membre">Admin approval workflow before member activation</div>
+                    <div class="feat-bullet" data-lang-en="Complete member profiles with custom fields" data-lang-fr="Profils membres complets avec champs personnalisables">Complete member profiles with custom fields</div>
+                    <div class="feat-bullet" data-lang-en="Member history, notes, and activity tracking" data-lang-fr="Historique des membres, notes et suivi des activités">Member history, notes, and activity tracking</div>
+                    <div class="feat-bullet" data-lang-en="Organization and group tracking per member" data-lang-fr="Suivi des organisations et groupes par membre">Organization and group tracking per member</div>
+                </div>
+            </div>
+            <div class="feat-visual">
+                <div class="feat-card-mini">
+                    <div class="mini-header">New Member — Registration</div>
+                    <div class="mini-row"><span class="mini-label">Name</span><span class="mini-val">Jean Nguele</span></div>
+                    <div class="mini-row"><span class="mini-label">Organization</span><span class="mini-val">Church Alpha</span></div>
+                    <div class="mini-row"><span class="mini-label">Plan</span><span class="mini-val"><span class="badge badge-gold">Premium</span></span></div>
+                    <div class="mini-row"><span class="mini-label">Status</span><span class="mini-val"><span class="badge badge-green">✓ Approved</span></span></div>
+                    <div class="mini-row"><span class="mini-label">Joined</span><span class="mini-val">Feb 18, 2026</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature 2: Digital Cards -->
+        <div class="feat-block reverse">
+            <div>
+                <div class="feat-icon-big">🪪</div>
+                <div class="section-tag" data-lang-en="Feature 02" data-lang-fr="Fonctionnalité 02">Feature 02</div>
+                <h2 data-lang-en="Digital Membership Cards" data-lang-fr="Cartes de Membre Numériques">Digital Membership Cards</h2>
+                <p data-lang-en="Every member gets a secure, professional digital membership card — instantly. No printing, no waiting, no lost cards. Just scan and verify." data-lang-fr="Chaque membre obtient une carte de membre numérique sécurisée et professionnelle instantanément. Pas d'impression, pas d'attente, pas de cartes perdues.">Every member gets a secure, professional digital membership card — instantly. No printing, no waiting, no lost cards. Just scan and verify.</p>
+                <div class="feat-bullets">
+                    <div class="feat-bullet" data-lang-en="Unique QR code per member, generated automatically" data-lang-fr="QR code unique par membre, généré automatiquement">Unique QR code per member, generated automatically</div>
+                    <div class="feat-bullet" data-lang-en="Unique Member ID number (scannable at entry points)" data-lang-fr="Numéro d'identifiant membre unique (scannable aux points d'entrée)">Unique Member ID number (scannable at entry points)</div>
+                    <div class="feat-bullet" data-lang-en="Instant card generation on membership approval" data-lang-fr="Génération instantanée de la carte à l'approbation de l'adhésion">Instant card generation on membership approval</div>
+                    <div class="feat-bullet" data-lang-en="Anti-fraud verification system" data-lang-fr="Système de vérification anti-fraude">Anti-fraud verification system</div>
+                    <div class="feat-bullet" data-lang-en="Shareable via WhatsApp or email" data-lang-fr="Partageable via WhatsApp ou e-mail">Shareable via WhatsApp or email</div>
+                </div>
+            </div>
+            <div class="feat-visual">
+                <div class="feat-card-mini" style="text-align:center">
+                    <div class="mini-header" style="text-align:center">Digital Membership Card</div>
+                    <div class="qr-mock">⬛</div>
+                    <div class="card-id">MS-2026-04871</div>
+                    <div class="card-name">Jean Nguele · Premium Member</div>
+                    <div style="margin-top:1rem"><span class="badge badge-green">✓ Active & Verified</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature 3: Payment -->
+        <div class="feat-block">
+            <div>
+                <div class="feat-icon-big">💰</div>
+                <div class="section-tag" data-lang-en="Feature 03" data-lang-fr="Fonctionnalité 03">Feature 03</div>
+                <h2 data-lang-en="Payment & Wallet System" data-lang-fr="Système de Paiement et Portefeuille">Payment &amp; Wallet System</h2>
+                <p data-lang-en="Never lose track of who paid. MemberSync's integrated payment system lets you manage member wallets, track all transactions, and run a full rewards program." data-lang-fr="Ne perdez plus jamais la trace de qui a payé. Le système de paiement intégré de MemberSync vous permet de gérer les portefeuilles des membres et de suivre toutes les transactions.">Never lose track of who paid. MemberSync's integrated payment system lets you manage member wallets, track all transactions, and run a full rewards program.</p>
+                <div class="feat-bullets">
+                    <div class="feat-bullet" data-lang-en="Add money to member accounts (prepaid system)" data-lang-fr="Ajouter de l'argent aux comptes des membres (système prépayé)">Add money to member accounts (prepaid system)</div>
+                    <div class="feat-bullet" data-lang-en="Complete transaction history per member" data-lang-fr="Historique complet des transactions par membre">Complete transaction history per member</div>
+                    <div class="feat-bullet" data-lang-en="Reward points system for loyalty" data-lang-fr="Système de points de récompense pour la fidélité">Reward points system for loyalty</div>
+                    <div class="feat-bullet" data-lang-en="Membership dues tracking and reminders" data-lang-fr="Suivi des cotisations et rappels">Membership dues tracking and reminders</div>
+                    <div class="feat-bullet" data-lang-en="Financial reports and balance summaries" data-lang-fr="Rapports financiers et résumés de solde">Financial reports and balance summaries</div>
+                </div>
+            </div>
+            <div class="feat-visual">
+                <div class="feat-card-mini">
+                    <div class="mini-header">Wallet — Amina Fouda</div>
+                    <div class="mini-row"><span class="mini-label">Balance</span><span class="mini-val" style="color:var(--primary);font-size:1.1rem">25,000 FCFA</span></div>
+                    <div class="mini-row"><span class="mini-label">Last Payment</span><span class="mini-val">5,000 FCFA</span></div>
+                    <div class="mini-row"><span class="mini-label">Reward Points</span><span class="mini-val"><span class="badge badge-gold">450 pts</span></span></div>
+                    <div class="mini-row"><span class="mini-label">Status</span><span class="mini-val"><span class="badge badge-green">Up to Date</span></span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature 4: Dashboard -->
+        <div class="feat-block reverse">
+            <div>
+                <div class="feat-icon-big">📊</div>
+                <div class="section-tag" data-lang-en="Feature 04" data-lang-fr="Fonctionnalité 04">Feature 04</div>
+                <h2 data-lang-en="Organization Dashboard" data-lang-fr="Tableau de Bord Organisation">Organization Dashboard</h2>
+                <p data-lang-en="Your complete command center. The admin dashboard gives you real-time visibility into every aspect of your organization — from member counts to financial performance." data-lang-fr="Votre centre de commande complet. Le tableau de bord admin vous donne une visibilité en temps réel sur chaque aspect de votre organisation.">Your complete command center. The admin dashboard gives you real-time visibility into every aspect of your organization — from member counts to financial performance.</p>
+                <div class="feat-bullets">
+                    <div class="feat-bullet" data-lang-en="Full admin control panel with role-based access" data-lang-fr="Panneau de contrôle admin complet avec accès basé sur les rôles">Full admin control panel with role-based access</div>
+                    <div class="feat-bullet" data-lang-en="Real-time analytics and member statistics" data-lang-fr="Analyses en temps réel et statistiques des membres">Real-time analytics and member statistics</div>
+                    <div class="feat-bullet" data-lang-en="Export member data to CSV for external use" data-lang-fr="Exporter les données des membres en CSV pour usage externe">Export member data to CSV for external use</div>
+                    <div class="feat-bullet" data-lang-en="Financial tracking: income, payments, balances" data-lang-fr="Suivi financier : revenus, paiements, soldes">Financial tracking: income, payments, balances</div>
+                    <div class="feat-bullet" data-lang-en="Customizable reports by date range or category" data-lang-fr="Rapports personnalisables par plage de dates ou catégorie">Customizable reports by date range or category</div>
+                </div>
+            </div>
+            <div class="feat-visual">
+                <div class="feat-card-mini">
+                    <div class="mini-header">Dashboard Overview</div>
+                    <div class="mini-row"><span class="mini-label">Total Members</span><span class="mini-val">1,248</span></div>
+                    <div class="mini-row"><span class="mini-label">Active This Month</span><span class="mini-val"><span class="badge badge-green">94%</span></span></div>
+                    <div class="mini-row"><span class="mini-label">Monthly Revenue</span><span class="mini-val">485,000 FCFA</span></div>
+                    <div class="mini-row"><span class="mini-label">Pending Approvals</span><span class="mini-val"><span class="badge badge-gold">12 new</span></span></div>
+                    <div class="mini-row"><span class="mini-label">Export</span><span class="mini-val"><span class="badge badge-blue">📥 CSV Ready</span></span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature 5: Communication -->
+        <div class="feat-block">
+            <div>
+                <div class="feat-icon-big">📢</div>
+                <div class="section-tag" data-lang-en="Feature 05" data-lang-fr="Fonctionnalité 05">Feature 05</div>
+                <h2 data-lang-en="Communication Tools" data-lang-fr="Outils de Communication">Communication Tools</h2>
+                <p data-lang-en="Stay connected with your members effortlessly. Send targeted messages, announcements, and notifications to your entire membership or specific groups." data-lang-fr="Restez connecté avec vos membres sans effort. Envoyez des messages ciblés, des annonces et des notifications à l'ensemble de vos membres ou à des groupes spécifiques.">Stay connected with your members effortlessly. Send targeted messages, announcements, and notifications to your entire membership or specific groups.</p>
+                <div class="feat-bullets">
+                    <div class="feat-bullet" data-lang-en="Broadcast email notifications to all members" data-lang-fr="Notifications e-mail en diffusion à tous les membres">Broadcast email notifications to all members</div>
+                    <div class="feat-bullet" data-lang-en="Target specific groups or membership tiers" data-lang-fr="Cibler des groupes spécifiques ou des niveaux d'adhésion">Target specific groups or membership tiers</div>
+                    <div class="feat-bullet" data-lang-en="Automated renewal and payment reminders" data-lang-fr="Rappels automatisés de renouvellement et de paiement">Automated renewal and payment reminders</div>
+                    <div class="feat-bullet" data-lang-en="Event announcements and notices" data-lang-fr="Annonces d'événements et avis">Event announcements and notices</div>
+                    <div class="feat-bullet" data-lang-en="SMS integration coming soon" data-lang-fr="Intégration SMS bientôt disponible">SMS integration coming soon</div>
+                </div>
+            </div>
+            <div class="feat-visual">
+                <div class="feat-card-mini">
+                    <div class="mini-header">📨 Send Announcement</div>
+                    <div class="mini-row"><span class="mini-label">Recipients</span><span class="mini-val">All Members (1,248)</span></div>
+                    <div class="mini-row"><span class="mini-label">Channel</span><span class="mini-val"><span class="badge badge-blue">Email</span></span></div>
+                    <div class="mini-row"><span class="mini-label">Subject</span><span class="mini-val">Monthly Meeting Notice</span></div>
+                    <div class="mini-row"><span class="mini-label">Status</span><span class="mini-val"><span class="badge badge-green">✓ Sent</span></span></div>
+                    <div class="mini-row"><span class="mini-label">Opened</span><span class="mini-val">78% open rate</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Feature 6: Multi-org -->
+        <div class="feat-block reverse">
+            <div>
+                <div class="feat-icon-big">🏢</div>
+                <div class="section-tag" data-lang-en="Feature 06" data-lang-fr="Fonctionnalité 06">Feature 06</div>
+                <h2 data-lang-en="Multi-Organization Management" data-lang-fr="Gestion Multi-Organisations">Multi-Organization Management</h2>
+                <p data-lang-en="Managing multiple branches, clubs, or organizations? No problem. MemberSync lets you handle them all from one platform, with complete data separation and dedicated dashboards." data-lang-fr="Vous gérez plusieurs succursales, clubs ou organisations ? Aucun problème. MemberSync vous permet de tout gérer depuis une seule plateforme.">Managing multiple branches, clubs, or organizations? No problem. MemberSync lets you handle them all from one platform, with complete data separation and dedicated dashboards.</p>
+                <div class="feat-bullets">
+                    <div class="feat-bullet" data-lang-en="Manage multiple organizations from one login" data-lang-fr="Gérer plusieurs organisations depuis une seule connexion">Manage multiple organizations from one login</div>
+                    <div class="feat-bullet" data-lang-en="Each organization has its own separate dashboard" data-lang-fr="Chaque organisation a son propre tableau de bord séparé">Each organization has its own separate dashboard</div>
+                    <div class="feat-bullet" data-lang-en="Strict data isolation between organizations" data-lang-fr="Isolation stricte des données entre organisations">Strict data isolation between organizations</div>
+                    <div class="feat-bullet" data-lang-en="Cross-organization reporting at the super-admin level" data-lang-fr="Rapports inter-organisations au niveau super-admin">Cross-organization reporting at the super-admin level</div>
+                    <div class="feat-bullet" data-lang-en="Scalable from 1 to 100+ branches" data-lang-fr="Évolutif de 1 à 100+ succursales">Scalable from 1 to 100+ branches</div>
+                </div>
+            </div>
+            <div class="feat-visual">
+                <div class="feat-card-mini">
+                    <div class="mini-header">Your Organizations</div>
+                    <div class="mini-row"><span class="mini-val">🏪 Alpha Business Club</span><span class="badge badge-green">248 members</span></div>
+                    <div class="mini-row"><span class="mini-val">⛪ Église Bethel</span><span class="badge badge-blue">512 members</span></div>
+                    <div class="mini-row"><span class="mini-val">🏋️ FitZone Gym</span><span class="badge badge-gold">184 members</span></div>
+                    <div class="mini-row"><span class="mini-val">🎓 Institut Kamga</span><span class="badge badge-green">304 members</span></div>
+                    <div class="mini-row" style="justify-content:center"><span style="color:var(--accent);font-weight:600;font-size:0.85rem">+ Add Organization</span></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+    <h2 data-lang-en="Ready to Experience MemberSync?" data-lang-fr="Prêt à Expérimenter MemberSync ?">Ready to Experience MemberSync?</h2>
+    <p data-lang-en="Get all six powerful features from day one. No complicated setup, no technical skills required." data-lang-fr="Obtenez les six fonctionnalités puissantes dès le premier jour. Pas de configuration compliquée, pas de compétences techniques requises.">Get all six powerful features from day one. No complicated setup, no technical skills required.</p>
+    <div class="cta-btns">
+        <a href="https://memberssync.com" target="_blank" class="btn-cta-gold" data-lang-en="Get Started Free" data-lang-fr="Commencer Gratuitement">Get Started Free</a>
+        <a href="contact.html" class="btn-cta-white" data-lang-en="Request a Demo" data-lang-fr="Demander une Démo">Request a Demo</a>
+    </div>
+</section>
+
+<!-- FOOTER -->
+<footer><div class="footer-inner">
+    <div class="footer-top">
+        <div class="footer-brand">
+            <a href="index.html" class="logo-wrap" style="margin-bottom:1rem"><div class="logo-name">Member<span style="color:var(--accent)">Sync</span></div><div class="logo-sub" style="color:rgba(255,255,255,0.5)">A Product of Next Solution</div></a>
+            <p>Smart membership management for growing organizations across Africa and beyond.</p>
+            <div class="footer-contact"><a href="tel:+237658504815">📞 +237 658 50 48 15</a><a href="mailto:support@memberssync.com">✉️ support@memberssync.com</a><a href="https://wa.me/237658504815" target="_blank">💬 WhatsApp</a></div>
+        </div>
+        <div class="footer-col"><h4>Product</h4><ul><li><a href="features.html">Features</a></li><li><a href="solutions.html">Solutions</a></li><li><a href="pricing.html">Pricing</a></li><li><a href="how-it-works.html">How It Works</a></li><li><a href="contact.html">Request Demo</a></li></ul></div>
+        <div class="footer-col"><h4>Company</h4><ul><li><a href="about.html">About Us</a></li><li><a href="contact.html">Contact</a></li><li><a href="#">Privacy Policy</a></li><li><a href="#">Terms of Service</a></li></ul></div>
+        <div class="footer-col"><h4>Powered By</h4><p style="color:rgba(255,255,255,0.6);font-size:0.88rem;line-height:1.8;">Next Solution — Technology &amp; business services company in Cameroon.</p></div>
+    </div>
+    <div class="footer-bottom"><p>© 2026 MemberSync. All rights reserved.</p><div class="powered-by">A product by <strong>Next Solution</strong> — Cameroon 🇨🇲</div></div>
+</div></footer>
+
+<div class="wa-float"><div class="wa-tooltip">Chat on WhatsApp</div><a href="https://wa.me/237658504815" target="_blank">💬</a></div>
+
+<script>
+    const navbar=document.getElementById('navbar');
+    window.addEventListener('scroll',()=>{navbar.classList.toggle('scrolled',window.scrollY>50);});
+    function toggleMobile(){document.getElementById('mobileNav').classList.toggle('open');}
+    let currentLang=localStorage.getItem('ms-lang')||'en';
+    function setLang(lang){currentLang=lang;localStorage.setItem('ms-lang',lang);document.getElementById('btn-en').classList.toggle('active',lang==='en');document.getElementById('btn-fr').classList.toggle('active',lang==='fr');document.querySelectorAll('[data-lang-en]').forEach(el=>{const val=el.getAttribute('data-lang-'+lang);if(val)el.innerHTML=val;});}
+    setLang(currentLang);
+</script>
+</body>
+</html>

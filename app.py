@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for, Response, session, flash, g, send_file, jsonify
+from flask import Flask, render_template, request, redirect, url_for, Response, session, flash, g, send_file, jsonify, send_from_directory
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 import os
@@ -3667,9 +3667,32 @@ def logout():
 
 @app.route('/')
 def index():
-    if 'user_id' in session:
-        return redirect(url_for('dashboard'))
-    return redirect(url_for('login'))
+    # Serve the memberssyncwebsite index.html as the landing page
+    return send_from_directory('memberssync-website', 'index.html')
+
+@app.route('/features.html')
+def features():
+    return send_from_directory('memberssync-website', 'features.html')
+
+@app.route('/solutions.html')
+def solutions():
+    return send_from_directory('memberssync-website', 'solutions.html')
+
+@app.route('/pricing.html')
+def pricing():
+    return send_from_directory('memberssync-website', 'pricing.html')
+
+@app.route('/how-it-works.html')
+def how_it_works():
+    return send_from_directory('memberssync-website', 'how-it-works.html')
+
+@app.route('/about.html')
+def about():
+    return send_from_directory('memberssync-website', 'about.html')
+
+@app.route('/contact.html')
+def contact():
+    return send_from_directory('memberssync-website', 'contact.html')
 
 @app.route('/dashboard')
 @require_login
