@@ -3670,10 +3670,10 @@ def index():
     # Serve the memberssync-website index.html as the landing page
     return send_from_directory('memberssync-website', 'index.html')
 
-@app.route('/index.html')
-def index_html():
+# @app.route('/index.html')
+#def index_html():
     # Handle requests for /index.html (for navigation links)
-    return send_from_directory('memberssync-website', 'index.html')
+    #return send_from_directory('memberssync-website', 'index.html')
 
 @app.route('/features.html')
 def features():
