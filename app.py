@@ -3756,6 +3756,7 @@ def dashboard():
             current_org_id = get_user_organization_id()
             org_filter = "WHERE m.organization_id = ?"
             org_params = (current_org_id,)
+            
 
         # Get comprehensive member statistics
         cursor.execute(f'''
