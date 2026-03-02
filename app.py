@@ -1,4 +1,5 @@
-from flask import Flask, render_template, request, redirect, url_for, Response, session, flash, g, send_file, jsonify, send_from_directory
+from flask import Flask, render_template, request, redirect, url_for, Response, session, flash, g, send_file, jsonify, send_from_directory, stream_with_context
+from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 import sqlite3
 import os
@@ -56,6 +57,14 @@ MAX_FILE_SIZE = 5 * 1024 * 1024  # 5MB
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'your_secret_key_here')  # Use environment variable
+
+# Configure CORS
+CORS(app, 
+     origins=['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5000', 'http://127.0.0.1:5000', 'https://unneighborly-keturah-noncontingent.ngrok-free.dev'],
+     methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+     allow_headers=['Content-Type', 'Authorization'],
+     supports_credentials=True
+)
 
 # ============================================================================
 # MIDDLEWARE
@@ -937,13 +946,13 @@ def init_db():
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS notifications (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    membership_id TEXT NOT NULL,
-                    type TEXT NOT NULL,
-                    message TEXT NOT NULL,
-                    sent_at TEXT DEFAULT CURRENT_TIMESTAMP,
-                    status TEXT DEFAULT 'sent',
+                    membership_id TEXT,
                     organization_id INTEGER NOT NULL,
-                    FOREIGN KEY (membership_id, organization_id) REFERENCES members(membership_id, organization_id) ON DELETE CASCADE,
+                    title TEXT NOT NULL,
+                    message TEXT NOT NULL,
+                    type TEXT NOT NULL DEFAULT 'info',
+                    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    read_at TEXT,
                     FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
                 )
             ''')
@@ -3667,37 +3676,37 @@ def logout():
 
 @app.route('/')
 def index():
-    # Serve the memberssync-website index.html as the landing page
-    return send_from_directory('memberssync-website', 'index.html')
+    # Serve the React website index.html as the landing page
+    return send_from_directory('reactwebsite/dist', 'index.html')
 
-@app.route('/index.html')
-def index_html():
-    # Handle requests for /index.html (for navigation links)
-    return send_from_directory('memberssync-website', 'index.html')
+@app.route('/membersync/assets/<path:filename>')
+def react_assets(filename):
+    # Serve React app static assets (JS, CSS, images) - React expects /membersync/assets/ path
+    return send_from_directory('reactwebsite/dist/assets', filename)
 
-@app.route('/features.html')
-def features():
-    return send_from_directory('memberssync-website', 'features.html')
+@app.route('/assets/<path:filename>')
+def react_assets_alt(filename):
+    # Alternative route for direct /assets/ access
+    return send_from_directory('reactwebsite/dist/assets', filename)
 
-@app.route('/solutions.html')
-def solutions():
-    return send_from_directory('memberssync-website', 'solutions.html')
-
-@app.route('/pricing.html')
-def pricing():
-    return send_from_directory('memberssync-website', 'pricing.html')
-
-@app.route('/how-it-works.html')
-def how_it_works():
-    return send_from_directory('memberssync-website', 'how-it-works.html')
-
-@app.route('/about.html')
-def about():
-    return send_from_directory('memberssync-website', 'about.html')
-
-@app.route('/contact.html')
-def contact():
-    return send_from_directory('memberssync-website', 'contact.html')
+# Add a catch-all for any asset files that might be requested
+@app.route('/<path:filename>')
+def serve_react_assets(filename):
+    # Check if it's an asset file (has a file extension)
+    if '.' in filename and filename.split('.')[-1] in ['js', 'css', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'ico', 'woff', 'woff2', 'ttf', 'eot']:
+        try:
+            # Try to serve from assets directory first
+            return send_from_directory('reactwebsite/dist/assets', filename)
+        except:
+            try:
+                # Try from dist root
+                return send_from_directory('reactwebsite/dist', filename)
+            except:
+                # If not found, return 404
+                return "File not found", 404
+    else:
+        # For non-asset paths, serve index.html for React Router
+        return send_from_directory('reactwebsite/dist', 'index.html')
 
 @app.route('/dashboard')
 @require_login
@@ -13842,37 +13851,31 @@ def add_member_password_column():
 
 @app.route('/api/v1/login', methods=['POST'])
 def api_member_login():
-    """API Endpoint for Member Login"""
+    """API Endpoint for Member Login - Membership ID only (no password)"""
     try:
         data = request.get_json()
         if not data:
             return jsonify({'success': False, 'error': 'No data provided'}), 400
             
-        identifier = data.get('identifier', '').strip() # Can be email, phone, or membership_id
-        password = data.get('password', '')
+        membership_id = data.get('membership_id', '').strip()
         
-        if not identifier or not password:
-            return jsonify({'success': False, 'error': 'Identifier and password required'}), 400
+        if not membership_id:
+            return jsonify({'success': False, 'error': 'Membership ID required'}), 400
             
         db = get_db()
         cursor = db.cursor()
         
-        # Find member by email, phone, or membership_id
+        # Find member by membership_id
         cursor.execute('''
-            SELECT membership_id, name, email, phone, password_hash, status, organization_id, photo_filename
+            SELECT membership_id, name, email, phone, status, organization_id, photo_filename
             FROM members 
-            WHERE email = ? OR phone = ? OR membership_id = ?
-        ''', (identifier, identifier, identifier))
+            WHERE membership_id = ?
+        ''', (membership_id,))
         
         member = cursor.fetchone()
         
         if not member:
-            return jsonify({'success': False, 'error': 'Invalid credentials'}), 401
-            
-        # Check password
-        stored_hash = member['password_hash']
-        if not stored_hash or not check_password_hash(stored_hash, password):
-            return jsonify({'success': False, 'error': 'Invalid credentials'}), 401
+            return jsonify({'success': False, 'error': 'Invalid membership ID'}), 401
             
         if member['status'] != 'active':
             return jsonify({'success': False, 'error': 'Account is not active'}), 403
@@ -14017,7 +14020,7 @@ def api_get_profile(membership_id):
 
 @app.route('/api/v1/members/<membership_id>/prepaid', methods=['GET'])
 def api_get_prepaid(membership_id):
-    """Get prepaid balance and recent transactions"""
+    """Gehtmlt prepaid balance and recent transactions"""
     try:
         db = get_db()
         cursor = db.cursor()
@@ -14072,6 +14075,316 @@ def api_get_checkins(membership_id):
         })
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/v1/members/<membership_id>/profile', methods=['PUT'])
+def api_update_profile(membership_id):
+    """Update member profile data"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'No data provided'}), 400
+        
+        # Get allowed fields for update
+        allowed_fields = ['name', 'email', 'phone']
+        update_fields = {}
+        
+        for field in allowed_fields:
+            if field in data and data[field]:
+                update_fields[field] = data[field].strip()
+        
+        if not update_fields:
+            return jsonify({'success': False, 'error': 'No valid fields to update'}), 400
+        
+        db = get_db()
+        cursor = db.cursor()
+        
+        # Check if member exists
+        cursor.execute('SELECT id FROM members WHERE membership_id = ?', (membership_id,))
+        if not cursor.fetchone():
+            return jsonify({'success': False, 'error': 'Member not found'}), 404
+        
+        # Check for duplicate email or phone if updating those fields
+        if 'email' in update_fields:
+            cursor.execute('SELECT id FROM members WHERE email = ? AND membership_id != ?', 
+                          (update_fields['email'], membership_id))
+            if cursor.fetchone():
+                return jsonify({'success': False, 'error': 'Email already exists'}), 409
+        
+        if 'phone' in update_fields:
+            cursor.execute('SELECT id FROM members WHERE phone = ? AND membership_id != ?', 
+                          (update_fields['phone'], membership_id))
+            if cursor.fetchone():
+                return jsonify({'success': False, 'error': 'Phone number already exists'}), 409
+        
+        # Build update query
+        set_clause = ', '.join([f"{field} = ?" for field in update_fields.keys()])
+        values = list(update_fields.values()) + [membership_id]
+        
+        cursor.execute(f'''
+            UPDATE members 
+            SET {set_clause}, updated_at = CURRENT_TIMESTAMP
+            WHERE membership_id = ?
+        ''', values)
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Profile updated successfully',
+            'updated_fields': list(update_fields.keys())
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/v1/members/<membership_id>/checkin', methods=['POST'])
+def api_member_checkin(membership_id):
+    """Member self check-in"""
+    try:
+        data = request.get_json() or {}
+        service_type = data.get('service_type', 'General')
+        location_id = data.get('location_id', 1)  # Default location
+        
+        db = get_db()
+        cursor = db.cursor()
+        
+        # Check if member exists and is active
+        cursor.execute('''
+            SELECT id, name, status, membership_type 
+            FROM members 
+            WHERE membership_id = ?
+        ''', (membership_id,))
+        
+        member = cursor.fetchone()
+        if not member:
+            return jsonify({'success': False, 'error': 'Member not found'}), 404
+        
+        if member['status'] != 'active':
+            return jsonify({'success': False, 'error': 'Member account is not active'}), 403
+        
+        # Check if already checked in (no checkout)
+        cursor.execute('''
+            SELECT id FROM checkins 
+            WHERE membership_id = ? AND checkout_time IS NULL 
+            ORDER BY checkin_time DESC LIMIT 1
+        ''', (membership_id,))
+        
+        active_checkin = cursor.fetchone()
+        if active_checkin:
+            return jsonify({'success': False, 'error': 'Member already checked in'}), 409
+        
+        # Create check-in record
+        cursor.execute('''
+            INSERT INTO checkins (membership_id, checkin_time, service_type, location_id, status)
+            VALUES (?, CURRENT_TIMESTAMP, ?, ?, 'active')
+        ''', (membership_id, service_type, location_id))
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Check-in successful',
+            'member_name': member['name'],
+            'membership_type': member['membership_type'],
+            'checkin_time': datetime.now().isoformat(),
+            'service_type': service_type
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/v1/members/<membership_id>/renew', methods=['POST'])
+def api_renew_membership(membership_id):
+    """Renew membership"""
+    try:
+        data = request.get_json() or {}
+        renewal_months = data.get('months', 1)
+        payment_method = data.get('payment_method', 'prepaid')
+        amount = data.get('amount')
+        
+        if renewal_months < 1 or renewal_months > 12:
+            return jsonify({'success': False, 'error': 'Renewal period must be between 1 and 12 months'}), 400
+        
+        db = get_db()
+        cursor = db.cursor()
+        
+        # Check if member exists
+        cursor.execute('''
+            SELECT id, name, email, phone, membership_type, status, expiry_date
+            FROM members 
+            WHERE membership_id = ?
+        ''', (membership_id,))
+        
+        member = cursor.fetchone()
+        if not member:
+            return jsonify({'success': False, 'error': 'Member not found'}), 404
+        
+        # Calculate new expiry date
+        current_expiry = member['expiry_date']
+        if current_expiry and datetime.strptime(current_expiry, '%Y-%m-%d') > datetime.now():
+            # Extend from current expiry
+            new_expiry = datetime.strptime(current_expiry, '%Y-%m-%d') + timedelta(days=30 * renewal_months)
+        else:
+            # Start from today
+            new_expiry = datetime.now() + timedelta(days=30 * renewal_months)
+        
+        # Get membership pricing
+        cursor.execute('SELECT price FROM membership_types WHERE name = ?', (member['membership_type'],))
+        pricing = cursor.fetchone()
+        monthly_price = pricing['price'] if pricing else 5000  # Default price
+        total_amount = amount or (monthly_price * renewal_months)
+        
+        # Update member expiry
+        cursor.execute('''
+            UPDATE members 
+            SET expiry_date = ?, status = 'active', updated_at = CURRENT_TIMESTAMP
+            WHERE membership_id = ?
+        ''', (new_expiry.strftime('%Y-%m-%d'), membership_id))
+        
+        # Record payment
+        cursor.execute('''
+            INSERT INTO payments (membership_id, amount, payment_type, payment_method, payment_date, notes)
+            VALUES (?, ?, 'renewal', ?, CURRENT_TIMESTAMP, ?)
+        ''', (membership_id, total_amount, payment_method, f'Renewal for {renewal_months} month(s)'))
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Membership renewed successfully',
+            'member_name': member['name'],
+            'new_expiry_date': new_expiry.strftime('%Y-%m-%d'),
+            'renewal_months': renewal_months,
+            'amount_paid': total_amount,
+            'payment_method': payment_method
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/v1/members/<membership_id>/notifications', methods=['GET'])
+def api_get_notifications(membership_id):
+    """Get member notifications"""
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        
+        # Check if member exists
+        cursor.execute('SELECT id FROM members WHERE membership_id = ?', (membership_id,))
+        if not cursor.fetchone():
+            return jsonify({'success': False, 'error': 'Member not found'}), 404
+        
+        # Get notifications (unread first, then recent read)
+        cursor.execute('''
+            SELECT id, title, message, type, created_at, read_at
+            FROM notifications 
+            WHERE membership_id = ? OR organization_id = (
+                SELECT organization_id FROM members WHERE membership_id = ?
+            )
+            ORDER BY 
+                CASE WHEN read_at IS NULL THEN 0 ELSE 1 END,
+                created_at DESC
+            LIMIT 50
+        ''', (membership_id, membership_id))
+        
+        notifications = []
+        for row in cursor.fetchall():
+            notifications.append({
+                'id': row['id'],
+                'title': row['title'],
+                'message': row['message'],
+                'type': row['type'],  # 'info', 'warning', 'success', 'emergency'
+                'created_at': row['created_at'],
+                'read_at': row['read_at'],
+                'is_read': row['read_at'] is not None
+            })
+        
+        return jsonify({
+            'success': True,
+            'notifications': notifications,
+            'unread_count': len([n for n in notifications if not n['is_read']])
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/v1/members/<membership_id>/notifications/<int:notification_id>/read', methods=['POST'])
+def api_mark_notification_read(membership_id, notification_id):
+    """Mark notification as read"""
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        
+        cursor.execute('''
+            UPDATE notifications 
+            SET read_at = CURRENT_TIMESTAMP 
+            WHERE id = ? AND (membership_id = ? OR organization_id = (
+                SELECT organization_id FROM members WHERE membership_id = ?
+            ))
+        ''', (notification_id, membership_id, membership_id))
+        
+        db.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Notification marked as read'
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/v1/members/<membership_id>/notifications/stream')
+def notification_stream(membership_id):
+    """SSE stream for real-time notifications"""
+    def generate():
+        try:
+            db = get_db()
+            cursor = db.cursor()
+            
+            # Check if member exists
+            cursor.execute('SELECT id, organization_id FROM members WHERE membership_id = ?', (membership_id,))
+            member = cursor.fetchone()
+            if not member:
+                yield f"data: {json.dumps({'error': 'Member not found'})}\n\n"
+                return
+            
+            last_check = datetime.now()
+            
+            while True:
+                # Check for new notifications since last check
+                cursor.execute('''
+                    SELECT id, title, message, type, created_at
+                    FROM notifications 
+                    WHERE (membership_id = ? OR organization_id = ?)
+                    AND created_at > ?
+                    ORDER BY created_at DESC
+                ''', (membership_id, member['organization_id'], last_check))
+                
+                new_notifications = cursor.fetchall()
+                
+                for notification in new_notifications:
+                    data = {
+                        'id': notification['id'],
+                        'title': notification['title'],
+                        'message': notification['message'],
+                        'type': notification['type'],
+                        'created_at': notification['created_at']
+                    }
+                    yield f"data: {json.dumps(data)}\n\n"
+                
+                last_check = datetime.now()
+                time.sleep(5)  # Check every 5 seconds
+                
+        except Exception as e:
+            yield f"data: {json.dumps({'error': str(e)})}\n\n"
+    
+    return Response(stream_with_context(generate()),
+                   mimetype='text/event-stream',
+                   headers={
+                       'Cache-Control': 'no-cache',
+                       'Connection': 'keep-alive',
+                       'Access-Control-Allow-Origin': '*'
+                   })
 
 if __name__ == '__main__':
     # Initialize database
