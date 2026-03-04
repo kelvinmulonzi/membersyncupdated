@@ -14020,7 +14020,7 @@ def api_get_profile(membership_id):
 
 @app.route('/api/v1/members/<membership_id>/prepaid', methods=['GET'])
 def api_get_prepaid(membership_id):
-    """Gehtmlt prepaid balance and recent transactions"""
+    """Get prepaid balance and recent transactions"""
     try:
         db = get_db()
         cursor = db.cursor()
@@ -14276,14 +14276,14 @@ def api_get_notifications(membership_id):
         
         # Get notifications (unread first, then recent read)
         cursor.execute('''
-            SELECT id, title, message, type, created_at, read_at
+            SELECT id, type, message, sent_at, status, organization_id
             FROM notifications 
             WHERE membership_id = ? OR organization_id = (
                 SELECT organization_id FROM members WHERE membership_id = ?
             )
             ORDER BY 
-                CASE WHEN read_at IS NULL THEN 0 ELSE 1 END,
-                created_at DESC
+                CASE WHEN status = 'sent' THEN 0 ELSE 1 END,
+                sent_at DESC
             LIMIT 50
         ''', (membership_id, membership_id))
         
@@ -14291,12 +14291,12 @@ def api_get_notifications(membership_id):
         for row in cursor.fetchall():
             notifications.append({
                 'id': row['id'],
-                'title': row['title'],
+                'title': 'Notification',  # Generic title since no title column exists
                 'message': row['message'],
                 'type': row['type'],  # 'info', 'warning', 'success', 'emergency'
-                'created_at': row['created_at'],
-                'read_at': row['read_at'],
-                'is_read': row['read_at'] is not None
+                'created_at': row['sent_at'],  # Use sent_at as created_at
+                'read_at': None,  # No read_at column, always None
+                'is_read': row['status'] == 'read'  # Consider 'read' status as read
             })
         
         return jsonify({
@@ -14317,7 +14317,7 @@ def api_mark_notification_read(membership_id, notification_id):
         
         cursor.execute('''
             UPDATE notifications 
-            SET read_at = CURRENT_TIMESTAMP 
+            SET status = 'read'
             WHERE id = ? AND (membership_id = ? OR organization_id = (
                 SELECT organization_id FROM members WHERE membership_id = ?
             ))
