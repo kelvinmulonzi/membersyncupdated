@@ -13896,6 +13896,39 @@ def api_member_login():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+@app.route('/api/v1/organizations', methods=['GET'])
+def api_get_organizations():
+    """Get list of available organizations for registration"""
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        
+        # Get active organizations
+        cursor.execute('''
+            SELECT id, name, industry, location, status
+            FROM organizations 
+            WHERE status = 'active'
+            ORDER BY name
+        ''')
+        
+        organizations = []
+        for row in cursor.fetchall():
+            organizations.append({
+                'id': row['id'],
+                'name': row['name'],
+                'industry': row['industry'],
+                'location': row['location'],
+                'status': row['status']
+            })
+        
+        return jsonify({
+            'success': True,
+            'organizations': organizations
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/api/v1/register', methods=['POST'])
 def api_member_register():
     """API Endpoint for Member Self-Registration"""
@@ -13913,9 +13946,19 @@ def api_member_register():
         
         if not all([name, email, phone, password]):
             return jsonify({'success': False, 'error': 'Name, email, phone, and password are required'}), 400
+        
+        # Validate organization_id is provided
+        if not organization_id:
+            return jsonify({'success': False, 'error': 'Organization selection is required'}), 400
             
         db = get_db()
         cursor = db.cursor()
+        
+        # Check if organization exists and is active
+        cursor.execute('SELECT id, name FROM organizations WHERE id = ? AND status = ?', (organization_id, 'active'))
+        org_result = cursor.fetchone()
+        if not org_result:
+            return jsonify({'success': False, 'error': 'Invalid or inactive organization'}), 400
         
         # Check if email or phone already exists
         cursor.execute('SELECT id FROM members WHERE email = ? OR phone = ?', (email, phone))
