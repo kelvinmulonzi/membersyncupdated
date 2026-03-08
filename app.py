@@ -60,7 +60,7 @@ app.secret_key = os.getenv('SECRET_KEY', 'your_secret_key_here')  # Use environm
 
 # Configure CORS
 CORS(app, 
-     origins=['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5000', 'http://127.0.0.1:5000', 'https://unneighborly-keturah-noncontingent.ngrok-free.dev'],
+     origins=['http://localhost:3000', 'http://127.0.0.1:3000', 'http://192.168.0.103:3000', 'http://localhost:5000', 'http://127.0.0.1:5000', 'http://192.168.0.103:5000', 'https://unneighborly-keturah-noncontingent.ngrok-free.dev'],
      methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
      allow_headers=['Content-Type', 'Authorization'],
      supports_credentials=True
@@ -14020,7 +14020,7 @@ def api_get_profile(membership_id):
 
 @app.route('/api/v1/members/<membership_id>/prepaid', methods=['GET'])
 def api_get_prepaid(membership_id):
-    """Get prepaid balance and recent transactions"""
+    """Gehtmlt prepaid balance and recent transactions"""
     try:
         db = get_db()
         cursor = db.cursor()
@@ -14353,22 +14353,28 @@ def notification_stream(membership_id):
             while True:
                 # Check for new notifications since last check
                 cursor.execute('''
-                    SELECT id, title, message, type, created_at
+                    SELECT id, type, message, sent_at, status
                     FROM notifications 
-                    WHERE (membership_id = ? OR organization_id = ?)
-                    AND created_at > ?
-                    ORDER BY created_at DESC
-                ''', (membership_id, member['organization_id'], last_check))
+                    WHERE membership_id = ?
+                    OR (
+                        organization_id = (SELECT organization_id FROM members WHERE membership_id = ?)
+                        AND membership_id IS NULL
+                        AND type IN ('info', 'warning', 'emergency', 'success')
+                    )
+                    AND sent_at > ?
+                    ORDER BY sent_at DESC
+                ''', (membership_id, membership_id, last_check))
                 
                 new_notifications = cursor.fetchall()
                 
                 for notification in new_notifications:
                     data = {
                         'id': notification['id'],
-                        'title': notification['title'],
+                        'title': 'Notification',  # Generic title since no title column exists
                         'message': notification['message'],
                         'type': notification['type'],
-                        'created_at': notification['created_at']
+                        'created_at': notification['sent_at'],  # Use sent_at as created_at
+                        'is_read': notification['status'] == 'read'
                     }
                     yield f"data: {json.dumps(data)}\n\n"
                 
