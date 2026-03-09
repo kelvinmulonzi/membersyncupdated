@@ -72,14 +72,14 @@ http://localhost:5000/api/v1
 ```json
 {
   "success": false,
-  "error": "Invalid or inactive organization"
+  "error": "You are already registered with this organization"
 }
 ```
 
 **Status Codes:**
 - `200` - Success
 - `400` - Bad Request (missing data or invalid organization)
-- `409` - Email/phone already exists
+- `409` - Email/phone already exists in same organization
 
 ---
 

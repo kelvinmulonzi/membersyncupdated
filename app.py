@@ -13851,48 +13851,89 @@ def add_member_password_column():
 
 @app.route('/api/v1/login', methods=['POST'])
 def api_member_login():
-    """API Endpoint for Member Login - Membership ID only (no password)"""
+    """
+    Login with email + password.
+    Returns ALL memberships tied to that email so the member app
+    can show an org picker when the user belongs to multiple orgs.
+    """
     try:
         data = request.get_json()
         if not data:
             return jsonify({'success': False, 'error': 'No data provided'}), 400
-            
-        membership_id = data.get('membership_id', '').strip()
-        
-        if not membership_id:
-            return jsonify({'success': False, 'error': 'Membership ID required'}), 400
-            
-        db = get_db()
-        cursor = db.cursor()
-        
-        # Find member by membership_id
-        cursor.execute('''
-            SELECT membership_id, name, email, phone, status, organization_id, photo_filename
-            FROM members 
-            WHERE membership_id = ?
-        ''', (membership_id,))
-        
-        member = cursor.fetchone()
-        
-        if not member:
-            return jsonify({'success': False, 'error': 'Invalid membership ID'}), 401
-            
-        if member['status'] != 'active':
-            return jsonify({'success': False, 'error': 'Account is not active'}), 403
 
-        # Return member data (In a real app, you would return a JWT token here)
+        email    = data.get('email', '').strip().lower()
+        password = data.get('password', '').strip()
+
+        if not email or not password:
+            return jsonify({'success': False, 'error': 'Email and password are required'}), 400
+
+        db     = get_db()
+        cursor = db.cursor()
+
+        # Find every membership row that shares this email
+        cursor.execute('''
+            SELECT
+                m.membership_id,
+                m.name,
+                m.email,
+                m.phone,
+                m.membership_type,
+                m.expiration_date,
+                m.status,
+                m.password_hash,
+                m.organization_id,
+                m.photo_filename,
+                o.name AS organization_name
+            FROM members m
+            LEFT JOIN organizations o ON o.id = m.organization_id
+            WHERE LOWER(m.email) = ?
+            ORDER BY m.status DESC, o.name ASC
+        ''', (email,))
+
+        rows = cursor.fetchall()
+
+        if not rows:
+            return jsonify({'success': False, 'error': 'No account found with that email'}), 401
+
+        # Verify password — use the first row that has a password_hash set.
+        # All memberships for the same person should share the same password.
+        password_verified = False
+        for row in rows:
+            if row['password_hash']:
+                if check_password_hash(row['password_hash'], password):
+                    password_verified = True
+                break   # Only check the first hashed password found
+
+        if not password_verified:
+            return jsonify({'success': False, 'error': 'Incorrect password'}), 401
+
+        # Build the memberships list for the frontend
+        memberships = []
+        for r in rows:
+            memberships.append({
+                'membership_id':    r['membership_id'],
+                'name':             r['name'],
+                'email':            r['email'],
+                'phone':            r['phone'],
+                'type':             r['membership_type'],
+                'expiration':       r['expiration_date'],
+                'status':           r['status'],
+                'organization_id':  r['organization_id'],
+                'organization_name': r['organization_name'] or 'Organization',
+                'photo_url': url_for(
+                    'member_photo',
+                    membership_id=r['membership_id'],
+                    _external=True
+                ) if r['photo_filename'] else None,
+            })
+
         return jsonify({
-            'success': True,
-            'member': {
-                'membership_id': member['membership_id'],
-                'name': member['name'],
-                'email': member['email'],
-                'phone': member['phone'],
-                'organization_id': member['organization_id'],
-                'photo_url': url_for('member_photo', membership_id=member['membership_id'], _external=True) if member['photo_filename'] else None
-            }
+            'success':     True,
+            'memberships': memberships,
+            # Convenience: also return count so frontend can branch easily
+            'count':       len(memberships),
         })
-        
+
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
@@ -13960,10 +14001,20 @@ def api_member_register():
         if not org_result:
             return jsonify({'success': False, 'error': 'Invalid or inactive organization'}), 400
         
-        # Check if email or phone already exists
-        cursor.execute('SELECT id FROM members WHERE email = ? OR phone = ?', (email, phone))
+        # Check if email or phone already exists in the same organization
+        cursor.execute('''
+            SELECT id FROM members 
+            WHERE email = ? AND organization_id = ?
+        ''', (email, organization_id))
         if cursor.fetchone():
-            return jsonify({'success': False, 'error': 'Email or phone already registered'}), 409
+            return jsonify({'success': False, 'error': 'You are already registered with this organization'}), 409
+        
+        cursor.execute('''
+            SELECT id FROM members 
+            WHERE phone = ? AND organization_id = ?
+        ''', (phone, organization_id))
+        if cursor.fetchone():
+            return jsonify({'success': False, 'error': 'Phone number already registered with this organization'}), 409
             
         # Generate ID and Hash Password
         membership_id = generate_unique_membership_id(organization_id, "MBR")
@@ -14003,28 +14054,47 @@ def api_member_register():
 
 @app.route('/api/v1/set-password', methods=['POST'])
 def api_set_password():
-    """Helper endpoint to set password for existing members (since they don't have one)"""
+    """
+    Set or update password for a member.
+    Accepts either email (updates all rows with that email) or
+    membership_id (updates just that one row).
+    """
     try:
-        data = request.get_json()
-        membership_id = data.get('membership_id')
-        password = data.get('password')
-        
-        if not membership_id or not password:
-            return jsonify({'success': False, 'error': 'Missing data'}), 400
-            
-        db = get_db()
-        cursor = db.cursor()
-        
-        password_hash = generate_password_hash(password)
-        
-        cursor.execute('UPDATE members SET password_hash = ? WHERE membership_id = ?', 
-                      (password_hash, membership_id))
+        data          = request.get_json()
+        email         = data.get('email', '').strip().lower()
+        membership_id = data.get('membership_id', '').strip()
+        password      = data.get('password', '').strip()
+
+        if not password:
+            return jsonify({'success': False, 'error': 'Password is required'}), 400
+
+        if len(password) < 6:
+            return jsonify({'success': False, 'error': 'Password must be at least 6 characters'}), 400
+
+        if not email and not membership_id:
+            return jsonify({'success': False, 'error': 'Email or membership_id required'}), 400
+
+        db     = get_db()
+        hashed = generate_password_hash(password)
+
+        if email:
+            # Update ALL memberships sharing this email (same person, multiple orgs)
+            db.execute(
+                'UPDATE members SET password_hash = ? WHERE LOWER(email) = ?',
+                (hashed, email)
+            )
+        else:
+            db.execute(
+                'UPDATE members SET password_hash = ? WHERE membership_id = ?',
+                (hashed, membership_id)
+            )
+
         db.commit()
-        
-        return jsonify({'success': True, 'message': 'Password set successfully'})
+        return jsonify({'success': True, 'message': 'Password updated successfully'})
+
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
-
+        
 @app.route('/api/v1/members/<membership_id>/profile', methods=['GET'])
 def api_get_profile(membership_id):
     """Get member profile data"""
