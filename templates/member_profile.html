@@ -58,6 +58,14 @@
                                 <td>{{ member[3] or 'Not provided' }}</td>
                             </tr>
                             <tr>
+                                <td><strong>Birthdate:</strong></td>
+                                <td>{{ member[11] or 'Not provided' }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Gender:</strong></td>
+                                <td>{{ member[12] or 'Not provided' }}</td>
+                            </tr>
+                            <tr>
                                 <td><strong>Membership Type:</strong></td>
                                 <td><span class="badge bg-primary">{{ member[4] }}</span></td>
                             </tr>
@@ -349,7 +357,7 @@
                                     </td>
                                     <td>
                                         {% if checkin[4] %}
-                                            <small class="text-muted">{{ checkin[4][:50] }}{% if checkin[4]|length > 50 %}...{% endif %}</small>
+                                            <small class="text-muted">{{ checkin[4] }} hours</small>
                                         {% else %}
                                             <span class="text-muted">-</span>
                                         {% endif %}

@@ -469,6 +469,8 @@ export default function MemberSync() {
                 }}>{l}</button>
               ))}
             </div>
+            <button style={{ background:"transparent", color:"var(--blue)", padding:"0.45rem 1.2rem", borderRadius:10, border:"2px solid var(--blue)", fontWeight:700, fontSize:"0.85rem", fontFamily:"'Exo 2',sans-serif", cursor:"pointer" }}
+              onClick={() => window.location.href="/signup"}>{lang===0 ? "S'inscrire" : "Register"}</button>
             <button style={{ background:"#F4B942", color:"#0D1B2A", padding:"0.45rem 1.2rem", borderRadius:10, border:"none", fontWeight:700, fontSize:"0.85rem", fontFamily:"'Exo 2',sans-serif", cursor:"pointer" }}
               onClick={() => scrollTo("contact")}>{tr(T.nav.demo, lang)}</button>
           </div>
@@ -492,6 +494,8 @@ export default function MemberSync() {
               {["FR","EN"].map((l,i) => (
                 <button key={l} onClick={() => { setLang(i); setMobileOpen(false); }} style={{ background:lang===i?"var(--blue)":"none", color:lang===i?"white":"#666", border:"1px solid var(--border)", padding:"0.3rem 0.9rem", borderRadius:6, fontSize:"0.8rem", cursor:"pointer", fontWeight:700 }}>{l}</button>
               ))}
+              <button style={{ background:"transparent", color:"var(--blue)", padding:"0.45rem 1.2rem", borderRadius:10, border:"2px solid var(--blue)", fontWeight:700, fontSize:"0.85rem", fontFamily:"'Exo 2',sans-serif", cursor:"pointer" }}
+                onClick={() => { window.location.href="/signup"; setMobileOpen(false); }}>{lang===0 ? "S'inscrire" : "Register"}</button>
               <button style={{ marginLeft:"auto", background:"#F4B942", color:"#0D1B2A", padding:"0.45rem 1.2rem", borderRadius:10, border:"none", fontWeight:700, fontSize:"0.85rem", fontFamily:"'Exo 2',sans-serif", cursor:"pointer" }}
                 onClick={() => scrollTo("contact")}>{tr(T.nav.demo, lang)}</button>
             </div>

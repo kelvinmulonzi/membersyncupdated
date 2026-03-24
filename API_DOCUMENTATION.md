@@ -49,6 +49,8 @@ http://localhost:5000/api/v1
   "email": "string" (required),
   "phone": "string" (required), 
   "password": "string" (required),
+  "birthdate": "string" (optional, format: YYYY-MM-DD),
+  "gender": "string" (optional, values: "Male", "Female", "Other"),
   "organization_id": "number" (required),
   "membership_type": "string" (optional, default: "Standard")
 }
@@ -212,7 +214,9 @@ http://localhost:5000/api/v1
     "expiration": "string|null",
     "status": "string",
     "organization": "string",
-    "photo_url": "string|null"
+    "photo_url": "string|null",
+    "birthdate": "string|null",
+    "gender": "string|null"
   }
 }
 ```
@@ -562,7 +566,31 @@ The API supports CORS for the following origins:
 
 ---
 
-## 📱 Usage Examples
+## �️ Environment Variables
+
+Create a `.env` file in your project root with the following variables:
+
+```bash
+# Application Base URL (IMPORTANT for password reset links)
+APP_BASE_URL=http://localhost:5000  # Development
+# APP_BASE_URL=https://membersync.com  # Production
+
+# Database
+DATABASE=database.db
+
+# Flask
+SECRET_KEY=your_secret_key_here
+
+# Email
+EMAIL_ADDRESS=your_email@gmail.com
+EMAIL_PASSWORD=your_app_password
+```
+
+**Note**: Copy `.env.example` to `.env` and update values for your environment.
+
+---
+
+## �📱 Usage Examples
 
 ### Registration Flow
 ```javascript
@@ -584,6 +612,8 @@ const registerResponse = await fetch('/api/v1/register', {
     email: 'john@example.com',
     phone: '+1234567890',
     password: 'securepassword123',
+    birthdate: '1990-05-15',
+    gender: 'Male',
     organization_id: 1,  // Selected organization ID
     membership_type: 'Premium'
   })

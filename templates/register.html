@@ -41,6 +41,38 @@
                                 <div id="phone-validation-feedback" class="mt-1"></div>
                             </div>
                             
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="birthdate" class="form-label">
+                                            <i class="fas fa-calendar"></i> Birthdate
+                                        </label>
+                                        <input type="date" class="form-control" id="birthdate" name="birthdate">
+                                        <small class="form-text text-muted">
+                                            <i class="fas fa-info-circle"></i>
+                                            Optional: Format YYYY-MM-DD
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="mb-3">
+                                        <label for="gender" class="form-label">
+                                            <i class="fas fa-user"></i> Gender
+                                        </label>
+                                        <select class="form-control" id="gender" name="gender">
+                                            <option value="">Select Gender</option>
+                                            <option value="Male">Male</option>
+                                            <option value="Female">Female</option>
+                                            <option value="Other">Other</option>
+                                        </select>
+                                        <small class="form-text text-muted">
+                                            <i class="fas fa-info-circle"></i>
+                                            Optional: Select gender
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                            
                             <div class="mb-3">
                                 <label for="membership_type" class="form-label">Membership Type *</label>
                                 <select class="form-control" id="membership_type" name="membership_type" required>

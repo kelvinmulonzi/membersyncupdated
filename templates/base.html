@@ -1198,7 +1198,12 @@
     
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container">
-            <a class="navbar-brand" href="/"><i class="fas fa-users"></i> MemberSync</a>
+            <a class="navbar-brand" href="/">
+    <img src="{{ url_for('static', filename='images/logo.png') }}" 
+         alt="Company Logo" 
+         style="height: 60px; width: auto; margin-right: 12px;">
+    MemberSync
+</a>
             
             <!-- Mobile toggle button -->
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">

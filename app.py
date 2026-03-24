@@ -60,7 +60,7 @@ app.secret_key = os.getenv('SECRET_KEY', 'your_secret_key_here')  # Use environm
 
 # Configure CORS
 CORS(app, 
-     origins=['http://localhost:3000', 'http://127.0.0.1:3000', 'http://192.168.0.103:3000', 'http://localhost:5000', 'http://127.0.0.1:5000', 'http://192.168.0.103:5000', 'https://unneighborly-keturah-noncontingent.ngrok-free.dev'],
+     origins='*',
      methods=['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
      allow_headers=['Content-Type', 'Authorization'],
      supports_credentials=True
@@ -4042,6 +4042,8 @@ def register():
         name = request.form.get('name', '').strip()
         email = request.form.get('email', '').strip()
         phone = request.form.get('phone', '').strip()
+        birthdate = request.form.get('birthdate', '').strip()
+        gender = request.form.get('gender', '').strip()
         membership_type = request.form.get('membership_type', '').strip()
         photo = request.files.get('photo')
         initial_prepaid = request.form.get('initial_prepaid', '0').strip()
@@ -4132,9 +4134,9 @@ def register():
             # Insert the new member with the generated ID and pending status
             cursor.execute('''
                 INSERT INTO members (membership_id, name, email, phone, membership_type, 
-                                  organization_id, location_id, photo_filename, status, payment_status, created_by)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'Unpaid', ?)
-            ''', (membership_id, name, email, phone, membership_type, org_id, location_id, photo_filename, created_by))
+                                  organization_id, location_id, photo_filename, status, payment_status, created_by, birthdate, gender)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'pending', 'Unpaid', ?, ?, ?)
+            ''', (membership_id, name, email, phone, membership_type, org_id, location_id, photo_filename, created_by, birthdate, gender))
 
             # Log audit trail for member creation
             log_audit(
@@ -4146,6 +4148,8 @@ def register():
                     'email': email,
                     'phone': phone,
                     'membership_type': membership_type,
+                    'birthdate': birthdate,
+                    'gender': gender,
                     'status': 'pending'
                 }
             )
@@ -4527,7 +4531,7 @@ def member_profile(membership_id):
             SELECT
                 m.membership_id, m.name, m.email, m.phone, m.membership_type,
                 m.expiration_date, m.status, m.created_at, m.photo_filename,
-                m.organization_id, o.name as organization_name
+                m.organization_id, o.name as organization_name, m.birthdate, m.gender
             FROM members m
             JOIN organizations o ON m.organization_id = o.id
             WHERE m.membership_id = ?
@@ -4652,6 +4656,13 @@ def member_profile(membership_id):
                 LIMIT 5
             ''', (membership_id, org_id))
             recent_checkins = cursor.fetchall()
+            
+            # Debug: Log the structure of recent_checkins
+            print(f"DEBUG - recent_checkins type: {type(recent_checkins)}")
+            if recent_checkins:
+                print(f"DEBUG - first checkin type: {type(recent_checkins[0])}")
+                print(f"DEBUG - first checkin value: {recent_checkins[0]}")
+                
         except Exception as e:
             print(f"Error getting recent check-ins for member {membership_id}: {e}")
             recent_checkins = []
@@ -4677,11 +4688,20 @@ def member_profile(membership_id):
 
             # Convert to dict for easier template access
             if checkin_stats:
-                checkin_stats = {
-                    'total_visits': int(checkin_stats[0]) if checkin_stats[0] is not None else 0,
-                    'visits_last_30_days': int(checkin_stats[1]) if checkin_stats[1] is not None else 0,
-                    'avg_duration_hours': round(float(checkin_stats[2]) if checkin_stats[2] is not None else 0, 1)
-                }
+                # Handle both tuple and single value cases
+                if isinstance(checkin_stats, (list, tuple)) and len(checkin_stats) >= 3:
+                    checkin_stats = {
+                        'total_visits': int(checkin_stats[0]) if checkin_stats[0] is not None else 0,
+                        'visits_last_30_days': int(checkin_stats[1]) if checkin_stats[1] is not None else 0,
+                        'avg_duration_hours': round(float(checkin_stats[2]) if checkin_stats[2] is not None else 0, 1)
+                    }
+                else:
+                    # Fallback for unexpected result format
+                    checkin_stats = {
+                        'total_visits': 0,
+                        'visits_last_30_days': 0,
+                        'avg_duration_hours': 0
+                    }
             else:
                 checkin_stats = {
                     'total_visits': 0,
@@ -4871,7 +4891,7 @@ def edit_member(membership_id):
 
         cursor.execute('''
             SELECT m.name, m.email, m.phone, m.membership_type, m.expiration_date, m.photo_filename, m.organization_id,
-                   o.name as organization_name
+                   o.name as organization_name, m.birthdate, m.gender
             FROM members m
             LEFT JOIN organizations o ON m.organization_id = o.id
             WHERE m.membership_id = ?
@@ -11168,7 +11188,9 @@ def mark_token_as_used(token):
 def send_password_reset_email(email, token, username):
     """Send password reset email"""
     try:
-        reset_link = f"http://localhost:5000/reset-password/{token}"
+        # Use environment variable for base URL, fallback to localhost for development
+        base_url = os.getenv('APP_BASE_URL', 'http://localhost:5000')
+        reset_link = f"{base_url}/reset-password/{token}"
 
         html_content = f"""
         <!DOCTYPE html>
@@ -13831,6 +13853,40 @@ if __name__ == "__main__":
 # API ROUTES FOR MEMBER APPLICATION
 # ============================================================================
 
+def add_member_demographics_columns():
+    """Migration: Add birthdate and gender columns to members table"""
+    try:
+        with sqlite3.connect(DATABASE, timeout=20.0) as conn:
+            cursor = conn.cursor()
+            
+            # Check if columns exist
+            cursor.execute("PRAGMA table_info(members)")
+            columns = [column[1] for column in cursor.fetchall()]
+            
+            added_columns = []
+            
+            if 'birthdate' not in columns:
+                print("🔧 Adding 'birthdate' column to members table...")
+                cursor.execute('ALTER TABLE members ADD COLUMN birthdate TEXT')
+                added_columns.append('birthdate')
+            
+            if 'gender' not in columns:
+                print("🔧 Adding 'gender' column to members table...")
+                cursor.execute('ALTER TABLE members ADD COLUMN gender TEXT')
+                added_columns.append('gender')
+            
+            if added_columns:
+                conn.commit()
+                print(f"✅ Added columns to members table: {', '.join(added_columns)}")
+                return True
+            else:
+                print("ℹ️  Birthdate and gender columns already exist")
+                return True
+                
+    except Exception as e:
+        print(f"❌ Error adding demographics columns: {e}")
+        return False
+
 def add_member_password_column():
     """Migration: Add password_hash to members table for member app login"""
     try:
@@ -13982,6 +14038,8 @@ def api_member_register():
         email = data.get('email', '').strip()
         phone = data.get('phone', '').strip()
         password = data.get('password', '')
+        birthdate = data.get('birthdate', '').strip()
+        gender = data.get('gender', '').strip()
         organization_id = data.get('organization_id', 1) # Default to org 1 if not specified
         membership_type = data.get('membership_type', 'Standard')
         
@@ -14023,9 +14081,9 @@ def api_member_register():
         # Insert Member
         cursor.execute('''
             INSERT INTO members (membership_id, name, email, phone, password_hash, 
-                               membership_type, organization_id, status, created_at, payment_status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'active', datetime('now'), 'Unpaid')
-        ''', (membership_id, name, email, phone, password_hash, membership_type, organization_id))
+                               membership_type, organization_id, status, created_at, payment_status, birthdate, gender)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'active', datetime('now'), 'Unpaid', ?, ?)
+        ''', (membership_id, name, email, phone, password_hash, membership_type, organization_id, birthdate, gender))
         
         db.commit()
         
@@ -14104,7 +14162,8 @@ def api_get_profile(membership_id):
         
         cursor.execute('''
             SELECT m.membership_id, m.name, m.email, m.phone, m.membership_type, 
-                   m.expiration_date, m.status, m.photo_filename, o.name as org_name
+                   m.expiration_date, m.status, m.photo_filename, m.birthdate, m.gender,
+                   o.name as org_name
             FROM members m
             JOIN organizations o ON m.organization_id = o.id
             WHERE m.membership_id = ?
@@ -14125,7 +14184,9 @@ def api_get_profile(membership_id):
                 'expiration': member['expiration_date'],
                 'status': member['status'],
                 'organization': member['org_name'],
-                'photo_url': url_for('member_photo', membership_id=member['membership_id'], _external=True) if member['photo_filename'] else None
+                'photo_url': url_for('member_photo', membership_id=member['membership_id'], _external=True) if member['photo_filename'] else None,
+                'birthdate': member['birthdate'],
+                'gender': member['gender']
             }
         })
     except Exception as e:
@@ -14511,6 +14572,9 @@ if __name__ == '__main__':
     
     # Ensure members have password column for API
     add_member_password_column()
+    
+    # Add birthdate and gender columns
+    add_member_demographics_columns()
     
     # Seed default locations
     seed_default_locations()
