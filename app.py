@@ -11222,14 +11222,14 @@ def mark_token_as_used(token):
 def send_password_reset_email(email, token, username):
     """Send password reset email"""
     try:
-        # Use environment variable for base URL. It MUST be set in production.
-        base_url = os.getenv('APP_BASE_URL')
-        if not base_url:
-            print("FATAL: APP_BASE_URL environment variable is not set. Password reset links will be incorrect.")
-            # Fallback for development, but this should not happen in production.
-            base_url = 'http://localhost:5000'
-
-        reset_link = f"{base_url}/reset-password/{token}"
+        # Prefer the environment variable if explicitly set
+        env_base_url = os.getenv('APP_BASE_URL')
+        
+        if env_base_url:
+            reset_link = f"{env_base_url.rstrip('/')}/reset-password/{token}"
+        else:
+            # Dynamically generate the full absolute URL based on the domain the user is currently visiting
+            reset_link = url_for('reset_password', token=token, _external=True)
 
         html_content = f"""
         <!DOCTYPE html>
