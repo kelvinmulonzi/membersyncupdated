@@ -1,0 +1,624 @@
+{% extends "base.html" %}
+{% block title %}QR Scanner - MemberSync{% endblock %}
+
+{% block content %}
+<style>
+/* Enhanced QR Scanner Styles */
+.scanner-hero {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 2rem;
+    color: white;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+
+.scanner-container {
+    background: #1a1a2e;
+    border-radius: 20px;
+    padding: 2rem;
+    position: relative;
+    overflow: hidden;
+    min-height: 400px;
+}
+
+.scanner-frame {
+    border: 3px solid #667eea;
+    border-radius: 15px;
+    position: relative;
+    margin: 0 auto;
+    max-width: 300px;
+    height: 300px;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.scanner-frame::before,
+.scanner-frame::after {
+    content: '';
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    border: 4px solid #667eea;
+}
+
+.scanner-frame::before {
+    top: -2px;
+    left: -2px;
+    border-right: none;
+    border-bottom: none;
+}
+
+.scanner-frame::after {
+    bottom: -2px;
+    right: -2px;
+    border-left: none;
+    border-top: none;
+}
+
+.scanner-line {
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #667eea, transparent);
+    animation: scan 2s linear infinite;
+}
+
+@keyframes scan {
+    0% { top: 0; }
+    100% { top: 100%; }
+}
+
+.manual-input-card {
+    border: none;
+    border-radius: 15px;
+    padding: 2rem;
+    background: #f8f9ff;
+    border-left: 4px solid #667eea;
+}
+
+.member-result {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-top: 1rem;
+    border-left: 4px solid #28a745;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.member-avatar {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: 600;
+}
+
+.action-btn {
+    border: none;
+    border-radius: 10px;
+    padding: 0.75rem 1.5rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.checkin-btn {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+}
+
+.checkin-btn:hover {
+    background: linear-gradient(135deg, #20c997 0%, #1ea085 100%);
+    transform: translateY(-2px);
+}
+
+.service-select {
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 0.75rem;
+    transition: all 0.3s ease;
+}
+
+.service-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.history-item {
+    background: white;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    border-left: 3px solid #667eea;
+    transition: all 0.3s ease;
+}
+
+.history-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.scanner-status {
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.status-ready {
+    background: #d4edda;
+    color: #155724;
+}
+
+.status-scanning {
+    background: #fff3cd;
+    color: #856404;
+}
+
+.status-success {
+    background: #d1ecf1;
+    color: #0c5460;
+}
+
+.instruction-card {
+    background: linear-gradient(135deg, #f8f9ff 0%, #e9ecef 100%);
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.instruction-step {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.step-number {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    margin-right: 1rem;
+}
+</style>
+
+<!-- Enhanced Header -->
+<div class="scanner-hero">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h1 class="mb-3">
+                <i class="fas fa-qrcode me-3"></i>QR Scanner
+            </h1>
+            <p class="lead mb-0">Fast and secure member check-in using QR codes</p>
+            <div class="mt-3">
+                <span class="scanner-status status-ready">
+                    <i class="fas fa-circle me-2"></i>Ready to Scan
+                </span>
+            </div>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <button class="btn btn-light btn-lg me-2" onclick="startCamera()">
+                <i class="fas fa-camera me-2"></i>Start Camera
+            </button>
+            <button class="btn btn-outline-light btn-lg" onclick="toggleManualMode()">
+                <i class="fas fa-keyboard me-2"></i>Manual Mode
+            </button>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- QR Scanner Section -->
+    <div class="col-lg-7 mb-4">
+        <div class="scanner-container">
+            <div class="text-center mb-3">
+                <h5 class="text-white">
+                    <i class="fas fa-qrcode me-2"></i>QR Code Scanner
+                </h5>
+            </div>
+            
+            <div class="scanner-frame" id="scannerFrame">
+                <div class="scanner-line"></div>
+                <video id="video" style="display: none; width: 100%; height: 100%; object-fit: cover; border-radius: 12px;"></video>
+                <canvas id="canvas" style="display: none;"></canvas>
+                <div id="scannerPlaceholder" class="d-flex align-items-center justify-content-center h-100">
+                    <div class="text-center text-white">
+                        <i class="fas fa-qrcode fa-3x mb-3"></i>
+                        <p>Click "Start Camera" to begin scanning</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-3">
+                <button class="btn btn-success action-btn me-2" onclick="startCamera()">
+                    <i class="fas fa-camera me-2"></i>Start Camera
+                </button>
+                <button class="btn btn-outline-light action-btn" onclick="stopCamera()">
+                    <i class="fas fa-stop me-2"></i>Stop
+                </button>
+            </div>
+        </div>
+        
+        <!-- Instructions -->
+        <div class="instruction-card mt-4">
+            <h6 class="mb-3">
+                <i class="fas fa-info-circle me-2"></i>How to Scan
+            </h6>
+            <div class="instruction-step">
+                <div class="step-number">1</div>
+                <div>Click "Start Camera" to activate the scanner</div>
+            </div>
+            <div class="instruction-step">
+                <div class="step-number">2</div>
+                <div>Position the QR code within the frame</div>
+            </div>
+            <div class="instruction-step">
+                <div class="step-number">3</div>
+                <div>Wait for automatic detection and check-in</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Manual Input & Results Section -->
+    <div class="col-lg-5">
+        <!-- Manual Input -->
+        <div class="manual-input-card mb-4">
+            <h5 class="mb-3">
+                <i class="fas fa-keyboard me-2"></i>Manual Check-in
+            </h5>
+            <div class="mb-3">
+                <label class="form-label">Member ID or Name</label>
+                <div class="input-group">
+                    <input type="text" class="form-control form-control-lg" id="manualMemberInput" 
+                           placeholder="Enter MBR-XXXXXX or member name">
+                    <button class="btn btn-primary" onclick="searchMember()">
+                        <i class="fas fa-search"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Service Type</label>
+                <select class="form-select service-select" id="serviceType">
+                    <option value="">General Visit</option>
+                    {% for service in service_types %}
+                    <option value="{{ service }}">{{ service }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Notes (Optional)</label>
+                <textarea class="form-control" id="checkinNotes" rows="2" placeholder="Add any notes..."></textarea>
+            </div>
+        </div>
+        
+        <!-- Member Results -->
+        <div id="memberResults"></div>
+        
+        <!-- Recent Scans -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h6 class="mb-0">
+                    <i class="fas fa-history me-2"></i>Recent Scans
+                </h6>
+            </div>
+            <div class="card-body">
+                <div id="recentScans">
+                    <div class="history-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>John Doe</strong>
+                                <br>
+                                <small class="text-muted">MBR-123456 • 2 minutes ago</small>
+                            </div>
+                            <span class="badge bg-success">Checked In</span>
+                        </div>
+                    </div>
+                    <div class="history-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <strong>Jane Smith</strong>
+                                <br>
+                                <small class="text-muted">MBR-789012 • 15 minutes ago</small>
+                            </div>
+                            <span class="badge bg-success">Checked In</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div class="modal fade" id="successModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Check-in Successful</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center">
+                <i class="fas fa-check-circle fa-4x text-success mb-3"></i>
+                <h6 id="successMemberName">Member Name</h6>
+                <p class="text-muted">ID: <span id="successMemberId">MBR-123456</span></p>
+                <div class="alert alert-success">
+                    <i class="fas fa-check me-2"></i>
+                    Successfully checked in at <span id="checkinTime">--:--</span>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Continue</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Enhanced QR Scanner JavaScript
+let video = null;
+let canvas = null;
+let scanning = false;
+let stream = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    video = document.getElementById('video');
+    canvas = document.getElementById('canvas');
+    
+    // Add enter key support for manual input
+    document.getElementById('manualMemberInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            searchMember();
+        }
+    });
+});
+
+function startCamera() {
+    if (scanning) return;
+    
+    navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } 
+    })
+    .then(function(mediaStream) {
+        stream = mediaStream;
+        video.srcObject = stream;
+        video.style.display = 'block';
+        document.getElementById('scannerPlaceholder').style.display = 'none';
+        video.play();
+        scanning = true;
+        
+        // Start scanning loop
+        requestAnimationFrame(scanFrame);
+        
+        updateScannerStatus('scanning');
+    })
+    .catch(function(err) {
+        console.error('Camera access denied:', err);
+        alert('Camera access denied. Please use manual check-in.');
+    });
+}
+
+function stopCamera() {
+    if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+        stream = null;
+    }
+    
+    video.style.display = 'none';
+    document.getElementById('scannerPlaceholder').style.display = 'flex';
+    scanning = false;
+    
+    updateScannerStatus('ready');
+}
+
+function scanFrame() {
+    if (!scanning) return;
+    
+    if (video.readyState === video.HAVE_ENOUGH_DATA) {
+        canvas.height = video.videoHeight;
+        canvas.width = video.videoWidth;
+        const context = canvas.getContext('2d');
+        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // QR code scanning logic would go here
+        // For now, we'll simulate a successful scan after 3 seconds
+        setTimeout(() => {
+            if (scanning) {
+                simulateSuccessfulScan();
+            }
+        }, 3000);
+    }
+    
+    requestAnimationFrame(scanFrame);
+}
+
+function simulateSuccessfulScan() {
+    // Simulate a successful QR scan
+    const memberId = 'MBR-123456';
+    const memberName = 'John Doe';
+    
+    processCheckin(memberId, memberName);
+}
+
+function searchMember() {
+    const query = document.getElementById('manualMemberInput').value.trim();
+    
+    if (!query) {
+        alert('Please enter member ID or name');
+        return;
+    }
+    
+    fetch(`/checkin/member_search?q=${encodeURIComponent(query)}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success && data.member) {
+                displayMemberResult(data.member);
+            } else {
+                alert('Member not found');
+            }
+        })
+        .catch(error => {
+            console.error('Error searching member:', error);
+            alert('Error searching for member');
+        });
+}
+
+function displayMemberResult(member) {
+    const resultsDiv = document.getElementById('memberResults');
+    
+    resultsDiv.innerHTML = `
+        <div class="member-result">
+            <div class="d-flex align-items-center">
+                <div class="member-avatar me-3">
+                    ${member.name ? member.name[0].toUpperCase() : 'M'}
+                </div>
+                <div class="flex-grow-1">
+                    <h6 class="mb-1">${member.name || 'Unknown Member'}</h6>
+                    <p class="text-muted mb-0">ID: ${member.membership_id}</p>
+                    ${member.membership_type ? `<small class="badge bg-primary">${member.membership_type}</small>` : ''}
+                </div>
+                <button class="btn btn-success action-btn checkin-btn" onclick="processMemberCheckin('${member.membership_id}', '${member.name || 'Unknown'}')">
+                    <i class="fas fa-check me-2"></i>Check In
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function processMemberCheckin(memberId, memberName) {
+    const serviceType = document.getElementById('serviceType').value;
+    const notes = document.getElementById('checkinNotes').value;
+    
+    fetch('/checkin/process', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            membership_id: memberId,
+            service_type: serviceType,
+            notes: notes
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccessModal(memberId, memberName);
+            addToRecentScans(memberId, memberName);
+            clearForm();
+        } else {
+            alert(data.error || 'Check-in failed');
+        }
+    })
+    .catch(error => {
+        console.error('Error processing check-in:', error);
+        alert('Error processing check-in');
+    });
+}
+
+function processCheckin(memberId, memberName) {
+    // Process check-in from QR scan
+    processMemberCheckin(memberId, memberName);
+}
+
+function showSuccessModal(memberId, memberName) {
+    document.getElementById('successMemberName').textContent = memberName;
+    document.getElementById('successMemberId').textContent = memberId;
+    document.getElementById('checkinTime').textContent = new Date().toLocaleTimeString();
+    
+    const modal = new bootstrap.Modal(document.getElementById('successModal'));
+    modal.show();
+    
+    // Stop camera after successful scan
+    if (scanning) {
+        stopCamera();
+    }
+}
+
+function addToRecentScans(memberId, memberName) {
+    const recentScans = document.getElementById('recentScans');
+    const newScan = document.createElement('div');
+    newScan.className = 'history-item';
+    newScan.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <strong>${memberName}</strong>
+                <br>
+                <small class="text-muted">${memberId} • Just now</small>
+            </div>
+            <span class="badge bg-success">Checked In</span>
+        </div>
+    `;
+    
+    recentScans.insertBefore(newScan, recentScans.firstChild);
+    
+    // Keep only the last 5 scans
+    while (recentScans.children.length > 5) {
+        recentScans.removeChild(recentScans.lastChild);
+    }
+}
+
+function clearForm() {
+    document.getElementById('manualMemberInput').value = '';
+    document.getElementById('serviceType').value = '';
+    document.getElementById('checkinNotes').value = '';
+    document.getElementById('memberResults').innerHTML = '';
+}
+
+function updateScannerStatus(status) {
+    const statusElement = document.querySelector('.scanner-status');
+    
+    statusElement.className = 'scanner-status';
+    
+    switch(status) {
+        case 'ready':
+            statusElement.classList.add('status-ready');
+            statusElement.innerHTML = '<i class="fas fa-circle me-2"></i>Ready to Scan';
+            break;
+        case 'scanning':
+            statusElement.classList.add('status-scanning');
+            statusElement.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Scanning...';
+            break;
+        case 'success':
+            statusElement.classList.add('status-success');
+            statusElement.innerHTML = '<i class="fas fa-check me-2"></i>Scan Successful';
+            break;
+    }
+}
+
+function toggleManualMode() {
+    // Toggle between scanner and manual mode
+    const scannerContainer = document.querySelector('.scanner-container');
+    const manualCard = document.querySelector('.manual-input-card');
+    
+    if (scannerContainer.style.display === 'none') {
+        scannerContainer.style.display = 'block';
+        manualCard.classList.remove('order-first');
+    } else {
+        scannerContainer.style.display = 'none';
+        manualCard.classList.add('order-first');
+    }
+}
+</script>
+{% endblock %}

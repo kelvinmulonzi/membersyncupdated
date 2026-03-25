@@ -12784,7 +12784,6 @@ def send_checkin_notification(membership_id, organization_id, action, service_ty
 @require_login
 def checkin_dashboard():
     """Check-in dashboard with current status and quick actions"""
-    import json
     try:
         db = get_db()
         cursor = db.cursor()
@@ -12797,8 +12796,6 @@ def checkin_dashboard():
         if is_global_superadmin():
             cursor.execute('SELECT id, name FROM organizations WHERE status = "active" ORDER BY name')
             organizations = cursor.fetchall()
-            org_filter = ""
-            org_params = ()
         
         # Get today's check-in statistics
         if is_global_superadmin():
@@ -12812,8 +12809,6 @@ def checkin_dashboard():
                 WHERE date(checkin_time) = date('now')
             ''')
         else:
-            org_filter = "WHERE organization_id = ?"
-            org_params = (org_id,)
             # Org admin: get stats from specific organization
             cursor.execute('''
                 SELECT 
@@ -12821,7 +12816,7 @@ def checkin_dashboard():
                     COUNT(CASE WHEN status = 'checked_in' THEN 1 END) as currently_checked_in,
                     COUNT(DISTINCT membership_id) as unique_visitors
                 FROM checkins
-                WHERE organization_id = ? AND date(checkin_time) = date('now', 'localtime')
+                WHERE organization_id = ? AND date(checkin_time) = date('now')
             ''', (org_id,))
         
         today_stats = cursor.fetchone()
@@ -12883,44 +12878,12 @@ def checkin_dashboard():
             # Org admin: get service types from specific organization
             service_types = get_service_types(org_id)
         
-        # Data for hourly check-in chart
-        hourly_query = f'''
-            SELECT strftime('%H', checkin_time) as hour, COUNT(*) as count
-            FROM checkins
-            {org_filter}
-            {'AND' if org_filter else 'WHERE'} date(checkin_time) = date('now', 'localtime')
-            GROUP BY hour
-            ORDER BY hour
-        '''
-        cursor.execute(hourly_query, org_params)
-        hourly_data = cursor.fetchall()
-        hourly_labels = [f"{int(h[0]):02d}:00" for h in hourly_data]
-        hourly_values = [h[1] for h in hourly_data]
-
-        # Data for service type breakdown of CURRENTLY checked-in members
-        service_query = f'''
-            SELECT COALESCE(service_type, 'General') as service, COUNT(*) as count
-            FROM checkins
-            {org_filter}
-            {'AND' if org_filter else 'WHERE'} status = 'checked_in'
-            GROUP BY service
-            ORDER BY count DESC
-        '''
-        cursor.execute(service_query, org_params)
-        service_data = cursor.fetchall()
-        service_labels = [s[0] for s in service_data]
-        service_values = [s[1] for s in service_data]
-
         return render_template('checkin_dashboard.html',
                              today_stats=today_stats,
                              current_checkins=current_checkins,
                              recent_checkins=recent_checkins,
                              service_types=service_types,
-                             organizations=organizations,
-                             hourly_labels=json.dumps(hourly_labels),
-                             hourly_values=json.dumps(hourly_values),
-                             service_labels=json.dumps(service_labels),
-                             service_values=json.dumps(service_values))
+                             organizations=organizations)
         
     except Exception as e:
         flash(f'Error loading check-in dashboard: {e}', 'danger')
@@ -12929,11 +12892,7 @@ def checkin_dashboard():
                              current_checkins=[],
                              recent_checkins=[],
                              service_types=[],
-                             organizations=[],
-                             hourly_labels='[]',
-                             hourly_values='[]',
-                             service_labels='[]',
-                             service_values='[]')
+                             organizations=[])
 
 @app.route('/checkin/scan')
 @require_login
@@ -13809,6 +13768,305 @@ def checkin_member_status(membership_id):
             'error': f'Error checking member status: {str(e)}'
         }
 
+@app.route('/checkin/member_search')
+@require_login
+def checkin_member_search():
+    """Search member by ID or name for manual check-in"""
+    try:
+        query = request.args.get('q', '').strip()
+        if not query:
+            return jsonify({'success': False, 'error': 'Query required'})
+        
+        db = get_db()
+        cursor = db.cursor()
+        
+        # Get organization_id
+        if is_global_superadmin():
+            org_id = request.args.get('organization_id', type=int)
+            if not org_id:
+                return jsonify({'success': False, 'error': 'Organization ID required for global admin'})
+        else:
+            org_id = session.get('organization_id')
+        
+        # Search by membership ID or name
+        cursor.execute('''
+            SELECT membership_id, name, email, phone, membership_type, photo_filename
+            FROM members 
+            WHERE organization_id = ? 
+            AND (membership_id LIKE ? OR name LIKE ?)
+            AND status = 'active'
+            ORDER BY name
+            LIMIT 10
+        ''', (org_id, f'%{query}%', f'%{query}%'))
+        
+        members = cursor.fetchall()
+        
+        if members:
+            member_list = []
+            for member in members:
+                member_list.append({
+                    'membership_id': member[0],
+                    'name': member[1],
+                    'email': member[2],
+                    'phone': member[3],
+                    'membership_type': member[4],
+                    'photo_filename': member[5]
+                })
+            
+            return jsonify({'success': True, 'members': member_list})
+        else:
+            return jsonify({'success': False, 'error': 'No members found'})
+            
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/checkin/bulk', methods=['POST'])
+@require_login
+def bulk_checkin():
+    """Process bulk check-in for multiple members"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'success': False, 'error': 'No data received'})
+        
+        membership_ids = data.get('membership_ids', [])
+        service_type = data.get('service_type', '')
+        notes = data.get('notes', '')
+        
+        if not membership_ids:
+            return jsonify({'success': False, 'error': 'No member IDs provided'})
+        
+        # Get organization_id
+        if is_global_superadmin():
+            org_id = data.get('organization_id')
+            if not org_id:
+                return jsonify({'success': False, 'error': 'Organization ID required'})
+        else:
+            org_id = session.get('organization_id')
+        
+        results = []
+        successful = 0
+        failed = 0
+        
+        for membership_id in membership_ids:
+            try:
+                # Check if member is already checked in
+                if is_member_checked_in(membership_id):
+                    results.append({
+                        'membership_id': membership_id,
+                        'success': False,
+                        'error': 'Member already checked in'
+                    })
+                    failed += 1
+                    continue
+                
+                # Process check-in
+                success, message = process_member_checkin(
+                    membership_id, org_id, service_type, notes
+                )
+                
+                if success:
+                    results.append({
+                        'membership_id': membership_id,
+                        'success': True,
+                        'message': message
+                    })
+                    successful += 1
+                else:
+                    results.append({
+                        'membership_id': membership_id,
+                        'success': False,
+                        'error': message
+                    })
+                    failed += 1
+                    
+            except Exception as e:
+                results.append({
+                    'membership_id': membership_id,
+                    'success': False,
+                    'error': str(e)
+                })
+                failed += 1
+        
+        return jsonify({
+            'success': True,
+            'results': results,
+            'summary': {
+                'total': len(membership_ids),
+                'successful': successful,
+                'failed': failed
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/checkin/recent_activity')
+@require_login
+def recent_activity():
+    """Get recent check-in activity for dashboard"""
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        
+        # Get organization_id
+        if is_global_superadmin():
+            org_id = request.args.get('organization_id', type=int)
+            if not org_id:
+                org_id = session.get('organization_id')
+        else:
+            org_id = session.get('organization_id')
+        
+        # Get recent check-ins (last 24 hours)
+        cursor.execute('''
+            SELECT c.membership_id, m.name, c.checkin_time, c.checkout_time, c.service_type
+            FROM checkins c
+            JOIN members m ON c.membership_id = m.membership_id
+            WHERE c.organization_id = ? 
+            AND c.checkin_time >= datetime('now', '-24 hours')
+            ORDER BY c.checkin_time DESC
+            LIMIT 20
+        ''', (org_id,))
+        
+        activities = cursor.fetchall()
+        
+        activity_list = []
+        for activity in activities:
+            activity_list.append({
+                'membership_id': activity[0],
+                'member_name': activity[1],
+                'checkin_time': activity[2],
+                'checkout_time': activity[3],
+                'service_type': activity[4],
+                'is_checked_in': activity[3] is None
+            })
+        
+        return jsonify({'success': True, 'activities': activity_list})
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/checkin/export_current')
+@require_login
+def export_current_checkins():
+    """Export current check-ins to CSV"""
+    try:
+        import csv
+        from io import StringIO
+        from flask import Response
+        
+        db = get_db()
+        cursor = db.cursor()
+        
+        # Get organization_id
+        if is_global_superadmin():
+            org_id = request.args.get('organization_id', type=int)
+            if not org_id:
+                org_id = session.get('organization_id')
+        else:
+            org_id = session.get('organization_id')
+        
+        # Get current check-ins
+        cursor.execute('''
+            SELECT c.membership_id, m.name, m.email, m.phone, c.checkin_time, c.service_type
+            FROM checkins c
+            JOIN members m ON c.membership_id = m.membership_id
+            WHERE c.organization_id = ? 
+            AND c.checkout_time IS NULL
+            ORDER BY c.checkin_time DESC
+        ''', (org_id,))
+        
+        checkins = cursor.fetchall()
+        
+        # Create CSV
+        output = StringIO()
+        writer = csv.writer(output)
+        
+        # Header
+        writer.writerow(['Membership ID', 'Name', 'Email', 'Phone', 'Check-in Time', 'Service Type'])
+        
+        # Data
+        for checkin in checkins:
+            writer.writerow([
+                checkin[0], checkin[1], checkin[2], checkin[3], 
+                checkin[4], checkin[5] if checkin[5] else 'General'
+            ])
+        
+        # Create response
+        output.seek(0)
+        response = Response(
+            output.getvalue(),
+            mimetype='text/csv',
+            headers={
+                'Content-Disposition': f'attachment; filename=current_checkins_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+            }
+        )
+        
+        return response
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)})
+
+@app.route('/checkin/process', methods=['POST'])
+@require_login
+def checkin_process():
+    """Process check-in from scanner - AJAX endpoint"""
+    try:
+        data = request.get_json()
+        if not data:
+            return {'success': False, 'error': 'No data received'}
+        
+        membership_id = data.get('membership_id', '').strip()
+        service_type = data.get('service_type', '').strip()
+        location_id = data.get('location_id')
+        notes = data.get('notes', '').strip()
+        
+        if not membership_id:
+            return {'success': False, 'error': 'Membership ID is required'}
+        
+        # Normalize membership ID format
+        membership_id = membership_id.replace('/', '-')
+        
+        # Get organization_id - use member data for global admins, session for org admins
+        if is_global_superadmin():
+            # Global admin: get organization_id from member data
+            db = get_db()
+            cursor = db.cursor()
+            cursor.execute('SELECT organization_id FROM members WHERE membership_id = ?', (membership_id,))
+            member_result = cursor.fetchone()
+            if not member_result:
+                return {'success': False, 'error': 'Member not found'}
+            org_id = member_result[0]
+        else:
+            # Org admin: use session organization_id
+            org_id = session.get('organization_id')
+            if not org_id:
+                return {'success': False, 'error': 'Organization not found'}
+        
+        admin_user_id = session.get('user_id')
+        
+        # Process the check-in
+        success, result = process_member_checkin(
+            membership_id, org_id, service_type, notes, location_id, admin_user_id
+        )
+        
+        if success:
+            return {
+                'success': True,
+                'data': {
+                    'message': f"✅ {result['member_name']} checked in successfully!",
+                    'member_name': result['member_name'],
+                    'service_type': result.get('service_type'),
+                    'checkin_time': result.get('checkin_time'),
+                    'checkin_id': result.get('checkin_id')
+                }
+            }
+        else:
+            return {'success': False, 'error': result}
+            
+    except Exception as e:
+        print(f"Error in checkin_process: {e}")
+        return {'success': False, 'error': f'Processing error: {str(e)}'}
 
 @app.route('/checkin/checkout', methods=['POST'])
 @require_login

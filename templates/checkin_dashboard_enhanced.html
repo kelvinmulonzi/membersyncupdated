@@ -1,0 +1,895 @@
+{% extends "base.html" %}
+{% block title %}Check-in Dashboard - MemberSync{% endblock %}
+
+{% block content %}
+<style>
+/* Enhanced Check-in Dashboard Styles */
+.checkin-hero {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 2rem;
+    color: white;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+
+.stat-card {
+    border: none;
+    border-radius: 15px;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.quick-action-card {
+    border: none;
+    border-radius: 15px;
+    padding: 1.5rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    height: 100%;
+}
+
+.quick-action-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+}
+
+.quick-action-icon {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    margin: 0 auto 1rem;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.member-row {
+    border-left: 4px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.member-row:hover {
+    border-left-color: #667eea;
+    background-color: #f8f9ff;
+}
+
+.member-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+}
+
+.duration-badge {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 600;
+}
+
+.service-badge {
+    background: linear-gradient(135deg, #007bff 0%, #0056b3 100%);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+}
+
+.action-btn {
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.checkout-btn {
+    background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%);
+    color: #212529;
+}
+
+.checkout-btn:hover {
+    background: linear-gradient(135deg, #ff8c00 0%, #ff6b00 100%);
+    transform: translateY(-2px);
+}
+
+.profile-btn {
+    background: linear-gradient(135deg, #17a2b8 0%, #138496 100%);
+    color: white;
+}
+
+.profile-btn:hover {
+    background: linear-gradient(135deg, #138496 0%, #117a8b 100%);
+    transform: translateY(-2px);
+}
+
+.activity-timeline {
+    position: relative;
+}
+
+.activity-item {
+    position: relative;
+    padding-left: 40px;
+    margin-bottom: 1.5rem;
+}
+
+.activity-item::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 30px;
+    bottom: -15px;
+    width: 2px;
+    background: #e9ecef;
+}
+
+.activity-item:last-child::before {
+    display: none;
+}
+
+.activity-dot {
+    position: absolute;
+    left: 10px;
+    top: 5px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.activity-time {
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+}
+
+.activity-content {
+    background: #f8f9fa;
+    padding: 0.75rem;
+    border-radius: 8px;
+    border-left: 3px solid #667eea;
+}
+
+.real-time-indicator {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    background: #28a745;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+    margin-right: 0.5rem;
+}
+
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+
+.search-box {
+    position: relative;
+}
+
+.search-box input {
+    border-radius: 25px;
+    border: 2px solid #e9ecef;
+    padding: 0.75rem 1rem 0.75rem 3rem;
+    transition: all 0.3s ease;
+}
+
+.search-box input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+}
+
+.search-box i {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #6c757d;
+}
+
+.filter-chip {
+    background: #e9ecef;
+    border: none;
+    border-radius: 20px;
+    padding: 0.5rem 1rem;
+    margin: 0.25rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.filter-chip.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.weather-widget {
+    background: linear-gradient(135deg, #74b9ff 0%, #0984e3 100%);
+    border-radius: 15px;
+    padding: 1rem;
+    color: white;
+    text-align: center;
+}
+
+.capacity-meter {
+    height: 8px;
+    background: #e9ecef;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: 0.5rem;
+}
+
+.capacity-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #28a745 0%, #ffc107 70%, #dc3545 100%);
+    transition: width 0.3s ease;
+}
+</style>
+
+<!-- Enhanced Header -->
+<div class="checkin-hero">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h1 class="mb-3">
+                <i class="fas fa-qrcode me-3"></i>Check-in Dashboard
+            </h1>
+            <p class="lead mb-0">Real-time facility monitoring and member management</p>
+            <div class="mt-3">
+                <span class="real-time-indicator"></span>
+                <span>Live Updates</span>
+                <span class="ms-3">
+                    <i class="fas fa-users me-2"></i>
+                    <span id="current-occupancy">{{ current_checkins|length if current_checkins else 0 }}</span> / 
+                    <span id="max-capacity">100</span> Members
+                </span>
+            </div>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <div class="weather-widget mb-3">
+                <i class="fas fa-cloud-sun me-2"></i>
+                <span>Today: Sunny, 24°C</span>
+            </div>
+            <div>
+                <a href="{{ url_for('checkin_scan') }}" class="btn btn-light btn-lg me-2">
+                    <i class="fas fa-camera me-2"></i>Start Scanner
+                </a>
+                <a href="{{ url_for('checkin_reports') }}" class="btn btn-outline-light btn-lg">
+                    <i class="fas fa-chart-bar me-2"></i>Reports
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card stat-card h-100">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white;">
+                <i class="fas fa-sign-in-alt"></i>
+            </div>
+            <div class="stat-number text-primary">{{ today_stats[0] if today_stats else 0 }}</div>
+            <div class="text-muted">Today's Check-ins</div>
+            <div class="mt-2">
+                <small class="text-success">
+                    <i class="fas fa-arrow-up"></i> +12% from yesterday
+                </small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card stat-card h-100">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white;">
+                <i class="fas fa-user-clock"></i>
+            </div>
+            <div class="stat-number text-success">{{ today_stats[1] if today_stats else 0 }}</div>
+            <div class="text-muted">Currently In</div>
+            <div class="capacity-meter">
+                <div class="capacity-fill" style="width: {{ (today_stats[1] / 100 * 100) if today_stats else 0 }}%"></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card stat-card h-100">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #17a2b8 0%, #138496 100%); color: white;">
+                <i class="fas fa-users"></i>
+            </div>
+            <div class="stat-number text-info">{{ today_stats[2] if today_stats else 0 }}</div>
+            <div class="text-muted">Unique Visitors</div>
+            <div class="mt-2">
+                <small class="text-info">
+                    <i class="fas fa-clock"></i> Avg. 2.3h visit
+                </small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-3 col-md-6 mb-3">
+        <div class="card stat-card h-100">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #ffc107 0%, #ff8c00 100%); color: white;">
+                <i class="fas fa-clock"></i>
+            </div>
+            <div class="stat-number text-warning" id="current-time">--:--</div>
+            <div class="text-muted">Current Time</div>
+            <div class="mt-2">
+                <small class="text-muted">
+                    <i class="fas fa-calendar"></i> {{ "now"|date }}
+                </small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Quick Actions -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5 class="mb-0">
+            <i class="fas fa-bolt text-warning me-2"></i>Quick Actions
+        </h5>
+    </div>
+    <div class="card-body">
+        <div class="row">
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="quick-action-card" onclick="window.location.href='{{ url_for('checkin_scan') }}'">
+                    <div class="quick-action-icon">
+                        <i class="fas fa-qrcode"></i>
+                    </div>
+                    <h6>Scan QR Code</h6>
+                    <p class="text-muted small">Fast check-in with QR scanner</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="quick-action-card" onclick="showManualCheckin()">
+                    <div class="quick-action-icon">
+                        <i class="fas fa-keyboard"></i>
+                    </div>
+                    <h6>Manual Check-in</h6>
+                    <p class="text-muted small">Search and check-in manually</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="quick-action-card" onclick="showBulkCheckin()">
+                    <div class="quick-action-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h6>Bulk Check-in</h6>
+                    <p class="text-muted small">Check-in multiple members</p>
+                </div>
+            </div>
+            <div class="col-md-3 col-sm-6 mb-3">
+                <div class="quick-action-card" onclick="window.location.href='{{ url_for('members') }}'">
+                    <div class="quick-action-icon">
+                        <i class="fas fa-search"></i>
+                    </div>
+                    <h6>Find Member</h6>
+                    <p class="text-muted small">Search member directory</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter Bar -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-4">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" class="form-control" id="memberSearch" placeholder="Search members...">
+                </div>
+            </div>
+            <div class="col-md-8">
+                <div class="d-flex flex-wrap gap-2">
+                    <button class="filter-chip active" data-filter="all">All</button>
+                    <button class="filter-chip" data-filter="checked-in">Checked In</button>
+                    <button class="filter-chip" data-filter="vip">VIP Members</button>
+                    <button class="filter-chip" data-filter="new">New Today</button>
+                    <select class="form-select form-select-sm" style="width: auto;">
+                        <option>All Services</option>
+                        <option>Gym</option>
+                        <option>Spa</option>
+                        <option>Pool</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Currently Checked In Members -->
+{% if current_checkins %}
+<div class="card mb-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-user-clock text-success me-2"></i>
+            Currently Checked In ({{ current_checkins|length }})
+        </h5>
+        <div>
+            <button class="btn btn-sm btn-outline-primary me-2" onclick="refreshCurrentCheckins()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+            <button class="btn btn-sm btn-outline-success" onclick="exportCurrentCheckins()">
+                <i class="fas fa-download"></i> Export
+            </button>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Member</th>
+                        <th>ID</th>
+                        <th>Check-in Time</th>
+                        <th>Service</th>
+                        <th>Duration</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for checkin in current_checkins %}
+                    <tr class="member-row" id="checkin-{{ checkin[0] }}">
+                        <td>
+                            <div class="d-flex align-items-center">
+                                <div class="member-avatar me-3">
+                                    {{ checkin[1][0]|upper if checkin[1] else 'M' }}
+                                </div>
+                                <div>
+                                    <strong>{{ checkin[1] }}</strong>
+                                    <br>
+                                    <small class="text-muted">Member</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('member_profile', membership_id=checkin[0]) }}" 
+                               class="text-decoration-none">
+                                <code>{{ checkin[0] }}</code>
+                            </a>
+                        </td>
+                        <td>
+                            <i class="fas fa-sign-in-alt text-success me-2"></i>
+                            <strong>{{ checkin[2][11:16] if checkin[2] else '' }}</strong>
+                            <br>
+                            <small class="text-muted">{{ checkin[2][:10] if checkin[2] else '' }}</small>
+                        </td>
+                        <td>
+                            {% if checkin[3] %}
+                                <span class="service-badge">{{ checkin[3] }}</span>
+                            {% else %}
+                                <span class="text-muted">General</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="duration-badge">{{ checkin[4] }}h</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-success">Active</span>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm action-btn checkout-btn me-2" 
+                                    onclick="quickCheckout('{{ checkin[0] }}', '{{ checkin[1] }}')">
+                                <i class="fas fa-sign-out-alt"></i> Check Out
+                            </button>
+                            <a href="{{ url_for('member_profile', membership_id=checkin[0]) }}" 
+                               class="btn btn-sm action-btn profile-btn">
+                                <i class="fas fa-user"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card mb-4">
+    <div class="card-body text-center py-5">
+        <div class="mb-4">
+            <i class="fas fa-user-clock fa-4x text-muted"></i>
+        </div>
+        <h5>No Members Currently Checked In</h5>
+        <p class="text-muted mb-4">Check-ins will appear here in real-time</p>
+        <a href="{{ url_for('checkin_scan') }}" class="btn btn-primary btn-lg me-2">
+            <i class="fas fa-qrcode me-2"></i>Start Scanning
+        </a>
+        <button class="btn btn-outline-primary btn-lg" onclick="showManualCheckin()">
+            <i class="fas fa-keyboard me-2"></i>Manual Check-in
+        </button>
+    </div>
+</div>
+{% endif %}
+
+<!-- Enhanced Recent Activity Timeline -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">
+            <i class="fas fa-history text-info me-2"></i>Recent Activity
+        </h5>
+        <div>
+            <button class="btn btn-sm btn-outline-primary me-2" onclick="refreshRecentActivity()">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+            <a href="{{ url_for('checkin_reports') }}" class="btn btn-sm btn-outline-info">
+                <i class="fas fa-chart-bar me-2"></i>View Reports
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        <div class="activity-timeline">
+            <!-- Activity items will be dynamically loaded here -->
+            <div class="activity-item">
+                <div class="activity-dot"></div>
+                <div class="activity-time">2 minutes ago</div>
+                <div class="activity-content">
+                    <strong>John Doe</strong> checked in for <span class="badge bg-primary">Gym</span>
+                    <div class="text-muted small">ID: MBR-123456</div>
+                </div>
+            </div>
+            <div class="activity-item">
+                <div class="activity-dot"></div>
+                <div class="activity-time">15 minutes ago</div>
+                <div class="activity-content">
+                    <strong>Jane Smith</strong> checked out from <span class="badge bg-success">Spa</span>
+                    <div class="text-muted small">Duration: 2h 15m</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block modals %}
+<!-- Manual Check-in Modal -->
+<div class="modal fade" id="manualCheckinModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Manual Check-in</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="search-box mb-3">
+                    <i class="fas fa-search"></i>
+                    <input type="text" class="form-control" id="manualMemberSearch" placeholder="Search member by name or ID...">
+                </div>
+                <div id="memberSearchResults"></div>
+                <div class="mt-3">
+                    <label class="form-label">Service Type</label>
+                    <select class="form-select" id="manualServiceType">
+                        <option value="">General</option>
+                        <option value="Gym">Gym</option>
+                        <option value="Spa">Spa</option>
+                        <option value="Pool">Pool</option>
+                    </select>
+                </div>
+                <div class="mt-3">
+                    <label class="form-label">Notes (Optional)</label>
+                    <textarea class="form-control" id="manualNotes" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="processManualCheckin()">Check In</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Check-in Modal -->
+<div class="modal fade" id="bulkCheckinModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Bulk Check-in</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <label class="form-label">Select Members</label>
+                        <div class="border rounded p-3" style="height: 300px; overflow-y: auto;">
+                            <!-- Member checkboxes will be loaded here -->
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Service Type</label>
+                        <select class="form-select mb-3">
+                            <option value="">General</option>
+                            <option value="Gym">Gym</option>
+                            <option value="Spa">Spa</option>
+                            <option value="Pool">Pool</option>
+                        </select>
+                        <label class="form-label">Notes</label>
+                        <textarea class="form-control" rows="4"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="processBulkCheckin()">Check In All</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Checkout Modal -->
+<div class="modal fade" id="quickCheckoutModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Quick Check-out</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-4">
+                    <i class="fas fa-user-check fa-3x text-warning mb-3"></i>
+                    <h6 id="checkoutMemberName">Member Name</h6>
+                    <p class="text-muted">ID: <span id="checkoutMemberId">MBR-123456</span></p>
+                </div>
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    Check-out time: <strong id="checkoutTime">--:--</strong>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Check-out Notes (Optional)</label>
+                    <textarea class="form-control" id="checkoutNotes" rows="3"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-warning" onclick="confirmCheckout()">
+                    <i class="fas fa-sign-out-alt me-2"></i>Check Out
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Enhanced Check-in Dashboard JavaScript
+let currentCheckoutMember = null;
+
+// Initialize dashboard
+document.addEventListener('DOMContentLoaded', function() {
+    updateCurrentTime();
+    setInterval(updateCurrentTime, 1000);
+    initializeSearch();
+    initializeFilters();
+    loadRecentActivity();
+    setInterval(loadRecentActivity, 30000); // Refresh every 30 seconds
+});
+
+function updateCurrentTime() {
+    const now = new Date();
+    const timeString = now.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+    });
+    const timeElement = document.getElementById('current-time');
+    if (timeElement) {
+        timeElement.textContent = timeString;
+    }
+}
+
+function initializeSearch() {
+    const searchInput = document.getElementById('memberSearch');
+    if (searchInput) {
+        searchInput.addEventListener('input', function() {
+            const query = this.value.toLowerCase();
+            const rows = document.querySelectorAll('.member-row');
+            
+            rows.forEach(row => {
+                const memberName = row.querySelector('strong').textContent.toLowerCase();
+                const memberId = row.querySelector('code').textContent.toLowerCase();
+                
+                if (memberName.includes(query) || memberId.includes(query)) {
+                    row.style.display = '';
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+        });
+    }
+}
+
+function initializeFilters() {
+    const filterChips = document.querySelectorAll('.filter-chip');
+    filterChips.forEach(chip => {
+        chip.addEventListener('click', function() {
+            filterChips.forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            // Apply filter logic here
+        });
+    });
+}
+
+function showManualCheckin() {
+    const modal = new bootstrap.Modal(document.getElementById('manualCheckinModal'));
+    modal.show();
+}
+
+function showBulkCheckin() {
+    const modal = new bootstrap.Modal(document.getElementById('bulkCheckinModal'));
+    modal.show();
+}
+
+function quickCheckout(membershipId, memberName) {
+    currentCheckoutMember = { id: membershipId, name: memberName };
+    
+    document.getElementById('checkoutMemberName').textContent = memberName;
+    document.getElementById('checkoutMemberId').textContent = membershipId;
+    document.getElementById('checkoutTime').textContent = new Date().toLocaleTimeString();
+    
+    const modal = new bootstrap.Modal(document.getElementById('quickCheckoutModal'));
+    modal.show();
+}
+
+function confirmCheckout() {
+    if (!currentCheckoutMember) return;
+    
+    const notes = document.getElementById('checkoutNotes').value;
+    
+    fetch('/checkin/checkout', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            membership_id: currentCheckoutMember.id,
+            notes: notes
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('quickCheckoutModal')).hide();
+            showToast('success', data.message);
+            refreshCurrentCheckins();
+        } else {
+            showToast('error', data.error || 'Check-out failed');
+        }
+    })
+    .catch(error => {
+        showToast('error', 'Network error occurred');
+    });
+}
+
+function refreshCurrentCheckins() {
+    location.reload();
+}
+
+function refreshRecentActivity() {
+    loadRecentActivity();
+}
+
+function loadRecentActivity() {
+    // Load recent activity via AJAX
+    fetch('/checkin/recent_activity')
+        .then(response => response.json())
+        .then(data => {
+            // Update activity timeline
+        })
+        .catch(error => {
+            console.error('Error loading recent activity:', error);
+        });
+}
+
+function exportCurrentCheckins() {
+    // Export current check-ins to CSV
+    window.open('/checkin/export_current');
+}
+
+function processManualCheckin() {
+    // Process manual check-in logic
+    const memberId = document.getElementById('manualMemberSearch').value;
+    const serviceType = document.getElementById('manualServiceType').value;
+    const notes = document.getElementById('manualNotes').value;
+    
+    if (!memberId) {
+        showToast('error', 'Please select a member');
+        return;
+    }
+    
+    fetch('/checkin/process', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            membership_id: memberId,
+            service_type: serviceType,
+            notes: notes
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            bootstrap.Modal.getInstance(document.getElementById('manualCheckinModal')).hide();
+            showToast('success', 'Member checked in successfully');
+            refreshCurrentCheckins();
+        } else {
+            showToast('error', data.error || 'Check-in failed');
+        }
+    })
+    .catch(error => {
+        showToast('error', 'Network error occurred');
+    });
+}
+
+function processBulkCheckin() {
+    // Process bulk check-in logic
+    showToast('info', 'Bulk check-in feature coming soon!');
+}
+
+function showToast(type, message) {
+    // Simple toast notification
+    const toast = document.createElement('div');
+    toast.className = `alert alert-${type} position-fixed top-0 end-0 m-3`;
+    toast.style.zIndex = '9999';
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+</script>
+{% endblock %}
