@@ -2457,7 +2457,7 @@ def send_org_superadmin_welcome_email(username, email, org_name, user_id):
                     </div>
                     
                     <div style="text-align: center;">
-                        <a href="http://localhost:5000/login" class="button">Login to Your Dashboard</a>
+                        <a href="https://memberssync.com/login" class="button">Login to Your Dashboard</a>
                     </div>
                     
                     <div class="box" style="background: #fff3cd; border-left-color: #ffc107;">
@@ -11222,8 +11222,8 @@ def mark_token_as_used(token):
 def send_password_reset_email(email, token, username):
     """Send password reset email"""
     try:
-        # Use environment variable for base URL, fallback to localhost for development
-        base_url = os.getenv('APP_BASE_URL', 'http://localhost:5000')
+        # Use environment variable for base URL, fallback to memberssync.com for production
+        base_url = os.getenv('APP_BASE_URL', 'https://memberssync.com')
         reset_link = f"{base_url}/reset-password/{token}"
 
         html_content = f"""
@@ -14109,7 +14109,7 @@ if __name__ == "__main__":
     print("\n" + "="*60)
     print("🚀 MemberSync Flask Application Starting...")
     print("="*60)
-    print("📱 Access your application at: http://localhost:5000")
+    print("📱 Access your application at: https://memberssync.com")
     print("🔐 Default global admin login:")
     print("   Username: globaladmin")
     print("   Password: ChangeMe123!")
