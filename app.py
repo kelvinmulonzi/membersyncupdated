@@ -951,12 +951,22 @@ def init_db():
                     title TEXT NOT NULL,
                     message TEXT NOT NULL,
                     type TEXT NOT NULL DEFAULT 'info',
-                    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    created_at TEXT DEFAULT (datetime('now', 'localtime')),
                     read_at TEXT,
                     FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
                 )
             ''')
 
+            # NOTIFICATION_READS (track read status per member)
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS notification_reads (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    notification_id INTEGER NOT NULL,
+                    membership_id TEXT NOT NULL,
+                    read_at DATETIME DEFAULT (datetime('now')),
+                    UNIQUE(notification_id, membership_id)
+                );
+            ''')
             # SETTINGS (organization-specific settings)
             cursor.execute('''
                 CREATE TABLE IF NOT EXISTS settings (
@@ -964,7 +974,7 @@ def init_db():
                     setting_key TEXT NOT NULL,
                     setting_value TEXT NOT NULL,
                     organization_id INTEGER NOT NULL,
-                    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TEXT DEFAULT (datetime('now', 'localtime')),
                     FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
                     UNIQUE(setting_key, organization_id)
                 )
@@ -976,7 +986,7 @@ def init_db():
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     setting_key TEXT UNIQUE NOT NULL,
                     setting_value TEXT NOT NULL,
-                    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+                    updated_at TEXT DEFAULT (datetime('now', 'localtime'))
                 )
             ''')
 
@@ -990,7 +1000,7 @@ def init_db():
                     schedule_time TEXT,
                     status TEXT DEFAULT 'active',
                     organization_id INTEGER,
-                    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    created_at TEXT DEFAULT (datetime('now', 'localtime')),
                     FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
                 )
             ''')
@@ -1041,7 +1051,7 @@ def init_db():
                     token TEXT UNIQUE NOT NULL,
                     expires_at TEXT NOT NULL,
                     used INTEGER DEFAULT 0,
-                    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    created_at TEXT DEFAULT (datetime('now', 'localtime')),
                     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
                 )
             ''')
@@ -1089,7 +1099,7 @@ def init_db():
                     balance_after REAL NOT NULL,
                     description TEXT,
                     admin_user_id INTEGER,
-                    transaction_date TEXT DEFAULT CURRENT_TIMESTAMP,
+                    transaction_date TEXT DEFAULT (datetime('now', 'localtime')),
                     FOREIGN KEY (membership_id, organization_id) REFERENCES members(membership_id, organization_id) ON DELETE CASCADE,
                     FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
                     FOREIGN KEY (admin_user_id) REFERENCES users(id) ON DELETE SET NULL
@@ -1106,7 +1116,7 @@ def init_db():
                     max_amount REAL,
                     bonus_percentage REAL NOT NULL,
                     is_active INTEGER DEFAULT 1,
-                    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    created_at TEXT DEFAULT (datetime('now', 'localtime')),
                     FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
                 )
             ''')
@@ -1145,7 +1155,7 @@ def init_db():
                     ip_address TEXT,
                     user_agent TEXT,
                     organization_id INTEGER,
-                    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    created_at TEXT DEFAULT (datetime('now', 'localtime')),
                     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL,
                     FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE
                 )
@@ -1206,7 +1216,7 @@ def init_db():
                     color TEXT DEFAULT '#007bff',
                     is_active INTEGER DEFAULT 1,
                     sort_order INTEGER DEFAULT 0,
-                    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                    created_at TEXT DEFAULT (datetime('now', 'localtime')),
                     FOREIGN KEY (organization_id) REFERENCES organizations(id) ON DELETE CASCADE,
                     UNIQUE(name, organization_id)
                 )
@@ -3867,8 +3877,8 @@ def dashboard():
                 COUNT(CASE WHEN status = 'checked_in' THEN 1 END) as currently_checked_in,
                 COUNT(DISTINCT membership_id) as unique_visitors_today
             FROM checkins c
-            {checkin_org_filter}
-            {'AND' if checkin_org_filter else 'WHERE'} date(c.checkin_time) = date('now')
+            {checkin_org_filter} 
+            {'AND' if checkin_org_filter else 'WHERE'} date(c.checkin_time) = date('now', 'localtime')
         ''', org_params)
         checkin_stats = cursor.fetchone()
 
@@ -4648,7 +4658,7 @@ def member_profile(membership_id):
                         WHEN checkout_time IS NOT NULL THEN
                             ROUND((julianday(checkout_time) - julianday(checkin_time)) * 24, 1)
                         ELSE
-                            ROUND((julianday('now') - julianday(checkin_time)) * 24, 1)
+                            ROUND((julianday('now', 'localtime') - julianday(checkin_time)) * 24, 1)
                     END as duration_hours
                 FROM checkins
                 WHERE membership_id = ? AND organization_id = ?
@@ -9140,9 +9150,9 @@ def auto_checkout_forgotten_sessions():
             if (now - checkin_time).total_seconds() / 3600 > auto_checkout_hours:
                 cursor.execute('''
                     UPDATE checkins 
-                    SET checkout_time = ?, status = 'checked_out', notes = COALESCE(notes || '; Auto-checked out', 'Auto-checked out')
+                    SET checkout_time = (datetime('now', 'localtime')), status = 'checked_out', notes = COALESCE(notes || '; Auto-checked out', 'Auto-checked out')
                     WHERE id = ?
-                ''', (now.strftime('%Y-%m-%d %H:%M:%S'), checkin_id))
+                ''', (checkin_id,))
                 
         db.commit()
     except Exception as e:
@@ -11228,8 +11238,8 @@ def send_password_reset_email(email, token, username):
         if env_base_url:
             reset_link = f"{env_base_url.rstrip('/')}/reset-password/{token}"
         else:
-            # Dynamically generate the full absolute URL based on the domain the user is currently visiting
-            reset_link = url_for('reset_password', token=token, _external=True)
+            # Use production domain as fallback
+            reset_link = f"https://memberssync.com/reset-password/{token}"
 
         html_content = f"""
         <!DOCTYPE html>
@@ -12717,7 +12727,7 @@ def process_member_checkout(membership_id, organization_id):
         # Update check-in record
         cursor.execute('''
             UPDATE checkins
-            SET checkout_time = CURRENT_TIMESTAMP, status = 'checked_out'
+            SET checkout_time = (datetime('now', 'localtime')), status = 'checked_out'
             WHERE id = ?
         ''', (checkin_id,))
         
@@ -12836,7 +12846,7 @@ def checkin_dashboard():
             # Global admin: get from all organizations
             cursor.execute('''
                 SELECT c.membership_id, m.name, c.checkin_time, c.service_type,
-                       ROUND((julianday('now') - julianday(c.checkin_time)) * 24, 1) as hours_checked_in
+                       ROUND((julianday('now', 'localtime') - julianday(c.checkin_time)) * 24, 1) as hours_checked_in
                 FROM checkins c
                 JOIN members m ON c.membership_id = m.membership_id AND c.organization_id = m.organization_id
                 WHERE c.status = 'checked_in'
@@ -12846,7 +12856,7 @@ def checkin_dashboard():
             # Org admin: get from specific organization
             cursor.execute('''
                 SELECT c.membership_id, m.name, c.checkin_time, c.service_type,
-                       ROUND((julianday('now') - julianday(c.checkin_time)) * 24, 1) as hours_checked_in
+                       ROUND((julianday('now', 'localtime') - julianday(c.checkin_time)) * 24, 1) as hours_checked_in
                 FROM checkins c
                 JOIN members m ON c.membership_id = m.membership_id AND c.organization_id = m.organization_id
                 WHERE c.organization_id = ? AND c.status = 'checked_in'
@@ -13415,7 +13425,7 @@ def member_checkin_history(membership_id):
                        WHEN checkout_time IS NOT NULL THEN 
                            ROUND((julianday(checkout_time) - julianday(checkin_time)) * 24, 1)
                        ELSE 
-                           ROUND((julianday('now') - julianday(checkin_time)) * 24, 1)
+                           ROUND((julianday('now', 'localtime') - julianday(checkin_time)) * 24, 1)
                    END as duration_hours
             FROM checkins
             WHERE membership_id = ? AND organization_id = ?
@@ -13952,8 +13962,8 @@ def process_member_checkin(membership_id, organization_id, service_type=None, no
         
         # Process check-in
         cursor.execute('''
-            INSERT INTO checkins (membership_id, organization_id, service_type, notes, admin_user_id, status, location_id)
-            VALUES (?, ?, ?, ?, ?, 'checked_in', ?)
+            INSERT INTO checkins (membership_id, organization_id, checkin_time, service_type, notes, admin_user_id, status, location_id)
+            VALUES (?, ?, datetime('now', 'localtime'), ?, ?, ?, 'checked_in', ?)
         ''', (membership_id, organization_id, service_type, notes, admin_user_id, location_id))
         
         checkin_id = cursor.lastrowid
@@ -14015,10 +14025,10 @@ def process_member_checkout(membership_id, organization_id, notes=""):
         
         # Update check-in record
         cursor.execute('''
-            UPDATE checkins
-            SET checkout_time = CURRENT_TIMESTAMP, status = 'checked_out', notes = COALESCE(notes || '; ' || ?, notes, ?)
+            UPDATE checkins 
+            SET checkout_time = datetime('now', 'localtime'), status = 'checked_out', notes = COALESCE(notes || '; ' || ?, notes, ?)
             WHERE id = ?
-        ''', (notes, notes, checkin_id))
+        ''', (notes, notes, checkin_id,))
         
         # Send notification
         settings = get_checkin_settings(organization_id)
@@ -14425,6 +14435,138 @@ def api_set_password():
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
         
+@app.route('/api/v1/members', methods=['GET'])
+def api_get_all_members():
+    """Get all members (with pagination and filtering)"""
+    try:
+        # Get query parameters
+        page = request.args.get('page', 1, type=int)
+        per_page = request.args.get('per_page', 50, type=int)
+        search = request.args.get('search', '')
+        status = request.args.get('status', '')
+        org_id = request.args.get('org_id', type=int)
+        
+        # Build query
+        query = '''
+            SELECT m.*, o.name as org_name
+            FROM members m
+            JOIN organizations o ON m.organization_id = o.id
+            WHERE 1=1
+        '''
+        params = []
+        
+        if search:
+            query += ' AND (m.name LIKE ? OR m.email LIKE ? OR m.membership_id LIKE ?)'
+            params.extend([f'%{search}%', f'%{search}%', f'%{search}%'])
+        
+        if status:
+            query += ' AND m.status = ?'
+            params.append(status)
+        
+        if org_id:
+            query += ' AND m.organization_id = ?'
+            params.append(org_id)
+        
+        # Add pagination
+        offset = (page - 1) * per_page
+        query += ' ORDER BY m.created_at DESC LIMIT ? OFFSET ?'
+        params.extend([per_page, offset])
+        
+        # Execute query
+        db = get_db()
+        cursor = db.cursor()
+        cursor.execute(query, params)
+        members = cursor.fetchall()
+        
+        # Convert to list of dicts
+        members_list = []
+        for member in members:
+            members_list.append({
+                'id': member['id'],
+                'membership_id': member['membership_id'],
+                'name': member['name'],
+                'email': member['email'],
+                'phone': member['phone'],
+                'membership_type': member['membership_type'],
+                'status': member['status'],
+                'expiration_date': member['expiration_date'],
+                'organization': member['org_name'],
+                'created_at': member['created_at']
+            })
+        
+        # Get total count for pagination
+        count_query = 'SELECT COUNT(*) as total FROM members m WHERE 1=1'
+        count_params = []
+        
+        if search:
+            count_query += ' AND (m.name LIKE ? OR m.email LIKE ? OR m.membership_id LIKE ?)'
+            count_params.extend([f'%{search}%', f'%{search}%', f'%{search}%'])
+        
+        if status:
+            count_query += ' AND m.status = ?'
+            count_params.append(status)
+        
+        if org_id:
+            count_query += ' AND m.organization_id = ?'
+            count_params.append(org_id)
+        
+        cursor.execute(count_query, count_params)
+        total = cursor.fetchone()['total']
+        
+        return jsonify({
+            'success': True,
+            'data': members_list,
+            'pagination': {
+                'page': page,
+                'per_page': per_page,
+                'total': total,
+                'pages': (total + per_page - 1) // per_page
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@app.route('/api/v1/members/<membership_id>', methods=['GET'])
+def api_get_member(membership_id):
+    """Get specific member details"""
+    try:
+        db = get_db()
+        cursor = db.cursor()
+        
+        cursor.execute('''
+            SELECT m.*, o.name as org_name
+            FROM members m
+            JOIN organizations o ON m.organization_id = o.id
+            WHERE m.membership_id = ?
+        ''', (membership_id,))
+        
+        member = cursor.fetchone()
+        
+        if not member:
+            return jsonify({'success': False, 'error': 'Member not found'}), 404
+        
+        return jsonify({
+            'success': True,
+            'data': {
+                'id': member['id'],
+                'membership_id': member['membership_id'],
+                'name': member['name'],
+                'email': member['email'],
+                'phone': member['phone'],
+                'membership_type': member['membership_type'],
+                'status': member['status'],
+                'expiration_date': member['expiration_date'],
+                'organization': member['org_name'],
+                'created_at': member['created_at'],
+                'birthdate': member['birthdate'],
+                'gender': member['gender']
+            }
+        })
+        
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 @app.route('/api/v1/members/<membership_id>/profile', methods=['GET'])
 def api_get_profile(membership_id):
     """Get member profile data"""
@@ -14710,72 +14852,80 @@ def api_renew_membership(membership_id):
 
 @app.route('/api/v1/members/<membership_id>/notifications', methods=['GET'])
 def api_get_notifications(membership_id):
-    """Get member notifications"""
     try:
         db = get_db()
         cursor = db.cursor()
-        
-        # Check if member exists
-        cursor.execute('SELECT id FROM members WHERE membership_id = ?', (membership_id,))
-        if not cursor.fetchone():
+
+        cursor.execute('SELECT id, organization_id FROM members WHERE membership_id = ?', (membership_id,))
+        member = cursor.fetchone()
+        if not member:
             return jsonify({'success': False, 'error': 'Member not found'}), 404
-        
-        # Get notifications (unread first, then recent read)
+
+        org_id = member['organization_id']
+
+        # Fetch notifications belonging to this member OR org-wide broadcasts
+        # Join with notification_reads to get per-member read status
         cursor.execute('''
-            SELECT id, type, message, sent_at, status, organization_id
-            FROM notifications 
-            WHERE membership_id = ? OR organization_id = (
-                SELECT organization_id FROM members WHERE membership_id = ?
+            SELECT 
+                n.id, n.type, n.message, n.sent_at, n.status, n.membership_id,
+                CASE WHEN nr.id IS NOT NULL THEN 1 ELSE 0 END AS is_read
+            FROM notifications n
+            LEFT JOIN notification_reads nr 
+                ON nr.notification_id = n.id AND nr.membership_id = ?
+            WHERE (
+                n.membership_id = ?
+                OR (n.organization_id = ? AND n.membership_id IS NULL 
+                    AND n.type IN ('info', 'warning', 'emergency', 'success'))
             )
-            ORDER BY 
-                CASE WHEN status = 'sent' THEN 0 ELSE 1 END,
-                sent_at DESC
+            ORDER BY n.sent_at DESC
             LIMIT 50
-        ''', (membership_id, membership_id))
-        
+        ''', (membership_id, membership_id, org_id))
+
         notifications = []
         for row in cursor.fetchall():
             notifications.append({
                 'id': row['id'],
-                'title': 'Notification',  # Generic title since no title column exists
                 'message': row['message'],
-                'type': row['type'],  # 'info', 'warning', 'success', 'emergency'
-                'created_at': row['sent_at'],  # Use sent_at as created_at
-                'read_at': None,  # No read_at column, always None
-                'is_read': row['status'] == 'read'  # Consider 'read' status as read
+                'type': row['type'],
+                'sent_at': row['sent_at'],
+                'created_at': row['sent_at'],
+                'is_read': bool(row['is_read']),
+                'status': 'read' if row['is_read'] else 'sent',
             })
-        
+
+        unread_count = sum(1 for n in notifications if not n['is_read'])
+
         return jsonify({
             'success': True,
             'notifications': notifications,
-            'unread_count': len([n for n in notifications if not n['is_read']])
+            'unread_count': unread_count,
         })
-        
+
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
+
 @app.route('/api/v1/members/<membership_id>/notifications/<int:notification_id>/read', methods=['POST'])
 def api_mark_notification_read(membership_id, notification_id):
-    """Mark notification as read"""
     try:
         db = get_db()
         cursor = db.cursor()
-        
+
+        cursor.execute('SELECT id FROM members WHERE membership_id = ?', (membership_id,))
+        if not cursor.fetchone():
+            return jsonify({'success': False, 'error': 'Member not found'}), 404
+
+        # Insert a read receipt — per member, per notification
+        # INSERT OR IGNORE means calling it twice is safe
         cursor.execute('''
-            UPDATE notifications 
-            SET status = 'read'
-            WHERE id = ? AND (membership_id = ? OR organization_id = (
-                SELECT organization_id FROM members WHERE membership_id = ?
-            ))
-        ''', (notification_id, membership_id, membership_id))
-        
+            INSERT OR IGNORE INTO notification_reads (notification_id, membership_id)
+            VALUES (?, ?)
+        ''', (notification_id, membership_id))
+
         db.commit()
-        
-        return jsonify({
-            'success': True,
-            'message': 'Notification marked as read'
-        })
-        
+
+        return jsonify({'success': True, 'message': 'Notification marked as read'})
+
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
